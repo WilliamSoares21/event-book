@@ -1,0 +1,16 @@
+.login-page {
+  display: flex;
+  height: 100vh;
+}
+
+.login-banner {
+  flex: 1;
+  background: #1f2937;
+  color: white;
+}
+
+.login-form {
+  flex: 1;
+  background: white;
+  padding: 40px;
+}
