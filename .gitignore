@@ -1,30 +1,18 @@
-# Java / Maven
-backend/target/
-*.class
-
-# Node / Angular
-frontend/**/node_modules/
-frontend/**/dist/
-frontend/**/.angular/
-frontend/**/.cache/
-npm-debug.log*
-
-# Environment and local configuration
-.env
-.env.*
-!.env.example
-*.local
-
-# IDE and operating-system files
 .idea/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/launch.json
 !.vscode/tasks.json
 *.iml
+.vscode/
+
+
 .DS_Store
 Thumbs.db
 
 # Test and coverage reports
 coverage/
 .nyc_output/
+
+.env
+.env.local
