@@ -1,3 +1,35 @@
 spring:
   application:
     name: backend
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+checkin:
+  grace-period-hours: 6
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.eventbook.backend: DEBUG
+    org.hibernate.SQL: DEBUG
