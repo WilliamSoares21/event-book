@@ -1,1 +1,26 @@
-#só pra não ficar vazio
+name: Repository validation
+
+on:
+  push:
+    branches: ["main", "1-inicializar-estrutura-do-monorepo"]
+  pull_request:
+
+jobs:
+  structure:
+    name: Validate repository structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check shared files and directories
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f README.md
+          test -f .gitignore
+          test -f docs/doc.md
+          test -f docs/contributing.md
+          test -f infra/README.md
+          test -d .github/workflows
+          echo "Repository structure is valid."
