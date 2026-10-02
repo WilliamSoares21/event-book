@@ -1,59 +1,99 @@
-# EventBookFrontend
+# EventBook Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.4.
+Frontend do projeto EventBook, desenvolvido em Angular para apoiar o fluxo de autenticação, cadastro e onboarding de usuários.
 
-## Development server
+## 🚀 Tecnologias
 
-To start a local development server, run:
+- Angular 22
+- TypeScript
+- Bootstrap
+- RxJS
+- Angular SSR
+- npm
+
+## 📋 Pré-requisitos
+
+Antes de iniciar, certifique-se de ter instalado:
+
+- Node.js 20 ou superior
+- npm 10 ou superior
+
+## 🔧 Instalação
+
+Clone o repositório e instale as dependências:
+
+```bash
+git clone <url-do-repositorio>
+cd event-book-frontend
+npm install
+```
+
+## ▶️ Executando o projeto
+
+Para iniciar o ambiente de desenvolvimento:
+
+```bash
+npm start
+```
+
+ou:
 
 ```bash
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+A aplicação ficará disponível em:
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+```text
+http://localhost:4200
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## 🏗️ Build de produção
+
+Para gerar a build de produção:
 
 ```bash
-ng generate --help
+npm run build
 ```
 
-## Building
+Os arquivos compilados serão gerados na pasta `dist/`.
 
-To build the project run:
+## ✅ Testes
+
+Para executar os testes unitários:
 
 ```bash
-ng build
+npm test
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## 📁 Estrutura principal
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
+```text
+src/
+  app/
+    components/
+    pages/
+      login/
+      singup/
+      singup-perfil-type/
+    services/
+  styles.css
 ```
 
-## Running end-to-end tests
+## 🧩 Observações
 
-For end-to-end (e2e) testing, run:
+- O projeto utiliza a arquitetura de componentes do Angular.
+- A estrutura atual já contempla páginas de login e cadastro.
+- O projeto pode evoluir com integração com backend e autenticação real.
 
-```bash
-ng e2e
-```
+## 👨‍💻 Fluxo de desenvolvimento
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+1. Crie uma branch para a funcionalidade ou correção.
+2. Faça as alterações necessárias.
+3. Execute os testes e valide a aplicação.
+4. Abra um pull request com a descrição da mudança.
 
-## Additional Resources
+## 📚 Recursos adicionais
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- [Documentação do Angular](https://angular.dev/)
+- [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli)
