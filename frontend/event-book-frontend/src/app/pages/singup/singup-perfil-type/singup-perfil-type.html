@@ -11,32 +11,57 @@
       </div>
       <section class="cards">
         <div class="row">
-          <div class="card">
+          <div class="card"
+          [class.selected]="perfilSelecionado === 'comprador'"
+          (click)="selecionarPerfil('comprador')"
+          >
             <img src="/assets/img-woman-singup.png" class="card-img-top" alt="...">
             <div class="card-body">
-              <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card’s content.</p>
+              <div class="card-title">
+                <h5>Comprador</h5>
+              </div>
+              <p class="card-text">Encontre os melhores eventos, compre ingressos com segurança e gerencie suas reservas em um só lugar.</p>
             </div>
           </div>
 
-          <div class="card">
+          <div class="card"
+          [class.selected]="perfilSelecionado === 'vendedor'"
+          (click)="selecionarPerfil('vendedor')"
+          >
             <img src="/assets/img-vendendor-singup.png" class="card-img-top" alt="...">
             <div class="card-body">
-              <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card’s content.</p>
+              <div class="card-title">
+                <h5>Vendedor</h5>
+              </div>
+              <p class="card-text">Organize eventos profissionais, venda ingressos e acompanhe o desempenho com análises avançadas.</p>
             </div>
           </div>
 
-          <div class="card">
+          <div class="card"
+          [class.selected]="perfilSelecionado === 'staff'"
+          (click)="selecionarPerfil('staff')"
+          >
             <img src="/assets/staff-singup.png" class="card-img-top" alt="...">
             <div class="card-body">
-              <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card’s content.</p>
+              <div class="card-title">
+                <h5>Staff</h5>
+              </div>
+              <p class="card-text">Gerencie a logística do evento, realize check-ins e coordene operações no local de forma eficiente.</p>
             </div>
           </div>
         </div>
       </section>
+    <div class="button-container">
+      <button class="btn btn-primary custom-btn" [disabled]="!perfilSelecionado" (click)="continueSingUp()">
+        <span>Continuar</span>
+        <i class="bi bi-arrow-right"></i>
+      </button>
+      <a href="/login" class="">
+        <i class="bi bi-arrow-left"></i>
+        <span>Voltar para entrar</span>
+      </a>
+    </div>
     </main>
-    <!-- <footer>
-      <p>Não tem uma conta? <a href="/singup">Cadastre-se</a></p>
-    </footer> -->
   </div>
     
   <div class="login-banner">
@@ -45,7 +70,7 @@
         <img src="assets/banner-singup.png" alt="Imagem de login" height="50%" width="50%">
         <h3>Eventos melhores, experiências mais simples</h3>
         <p>
-          Crie e gerencie seus eventos com qualidade e praticidade, enquanto seus participantes encontram e compram ingressos online de forma rápida e segura.
+          Tenha acesso exclusivo aos melhores eventos da cidade com um feed personalizado para os seus interesses.
         </p>
       </div>
     </div>

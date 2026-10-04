@@ -1,1 +1,117 @@
-<p>singup works!</p>
+<section class="login-page">
+  <div class="login-form">
+    <header class="brand-header">
+      <div class="brand-header-content">
+        <img src="assets/logo.png" class="logo" alt="Logo do Event Book" height="50" width="50">
+        <h2>Event Book</h2>
+      </div>
+      <a href="/login" class="">
+            <i class="bi bi-arrow-left"></i>
+            <span>Voltar para entrar</span>
+      </a>
+    </header>
+    <main class="main-login">
+      <div>
+        <h1>Crie sua conta</h1>
+        <p>Preencha os dados abaixo para começar sua jornada no EventBook.</p>
+    </div>
+      <section class="cards">
+        <form [formGroup]="singUpForm" (ngSubmit)="onSubmit()">
+        <div class="form-group">
+            <div class="row">
+                <div class="col">
+                    <label for="name">Nome</label>
+                    <input type="text" id="name" formControlName="name" class="form-control" placeholder="Digite seu nome">
+                </div>
+                <div class="col">
+                    <label for="lastName">Sobrenome</label>
+                    <input type="text" id="lastName" formControlName="lastName" class="form-control" placeholder="Digite seu sobrenome">
+                </div>
+            </div>
+        </div>  
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" formControlName="email" class="form-control" placeholder="Digite seu email">
+            <!-- <div *ngIf="singUpForm.get('email')?.invalid && singUpForm.get('email')?.touched" class="error-message">
+              Por favor, insira um email válido.
+            </div> -->
+          </div>
+
+          <div class="form-group">
+            <label for="password">Senha</label>
+            <input type="password" id="password" formControlName="password" class="form-control" placeholder="Digite sua senha">
+            <!-- <div *ngIf="singUpForm.get('password')?.invalid && singUpForm.get('password')?.touched" class="error-message">
+              A senha deve ter pelo menos 6 caracteres.
+            </div> -->
+          </div>
+
+          <button type="submit" class="btn btn-primary custom-btn" [disabled]="singUpForm.invalid">
+            Criar conta
+          </button>
+        </form>
+        <!-- <div class="row">
+          <div class="card"
+          [class.selected]="perfilSelecionado === 'comprador'"
+          (click)="selecionarPerfil('comprador')"
+          >
+            <img src="/assets/img-woman-singup.png" class="card-img-top" alt="...">
+            <div class="card-body">
+              <div class="card-title">
+                <h5>Comprador</h5>
+              </div>
+              <p class="card-text">Encontre os melhores eventos, compre ingressos com segurança e gerencie suas reservas em um só lugar.</p>
+            </div>
+          </div>
+
+          <div class="card"
+          [class.selected]="perfilSelecionado === 'vendedor'"
+          (click)="selecionarPerfil('vendedor')"
+          >
+            <img src="/assets/img-vendendor-singup.png" class="card-img-top" alt="...">
+            <div class="card-body">
+              <div class="card-title">
+                <h5>Vendedor</h5>
+              </div>
+              <p class="card-text">Organize eventos profissionais, venda ingressos e acompanhe o desempenho com análises avançadas.</p>
+            </div>
+          </div>
+
+          <div class="card"
+          [class.selected]="perfilSelecionado === 'staff'"
+          (click)="selecionarPerfil('staff')"
+          >
+            <img src="/assets/staff-singup.png" class="card-img-top" alt="...">
+            <div class="card-body">
+              <div class="card-title">
+                <h5>Staff</h5>
+              </div>
+              <p class="card-text">Gerencie a logística do evento, realize check-ins e coordene operações no local de forma eficiente.</p>
+            </div>
+          </div>
+        </div> -->
+      </section>
+    <!-- <div class="button-container">
+      <button class="btn btn-primary custom-btn" [disabled]="!perfilSelecionado" (click)="continueSingUp()">
+        <span>Continuar</span>
+        <i class="bi bi-arrow-right"></i>
+      </button>
+      <a href="/login" class="">
+        <i class="bi bi-arrow-left"></i>
+        <span>Voltar para entrar</span>
+      </a>
+    </div> -->
+    </main>
+  </div>
+    
+  <div class="login-banner">
+    <!-- <div class="banner-content text-center align-items-center justify-content-center">
+      <div class="banner-visual">
+        <img src="assets/banner-singup.png" alt="Imagem de login" height="50%" width="50%">
+        <h3>Eventos melhores, experiências mais simples</h3>
+        <p>
+          Tenha acesso exclusivo aos melhores eventos da cidade com um feed personalizado para os seus interesses.
+        </p>
+      </div>
+    </div> -->
+  </div>
+</section>
