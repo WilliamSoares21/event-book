@@ -4,11 +4,6 @@
   gap: 12px;
 }
 
-.login-form h2 {
-  color: #2494CF;
-  margin: 0;
-}
-
 .login-page {
   display: flex;
   height: 100vh;
@@ -58,6 +53,16 @@
   flex: 1;
   background: white;
   padding: 40px;
+  width: 40%;
+}
+
+.login-banner {
+  flex: 0 0 60%;
+  width: 60%;
+  margin-top: 2rem;
+  margin-left: 2rem;
+  margin-right: 2rem;
+  font: 400 1.5rem "Inter", sans-serif;
 }
 
 form {
@@ -117,22 +122,6 @@ main {
   margin-left: 2rem;
   margin-right: 2rem;
   font: 400 1.5rem "Inter", sans-serif;
-}
-
-main p {
-  color: #A6ABB0;
-  font-size: 1rem;
-}
-
-main label {
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-main form a {
-  color: #2494CF;
-  text-decoration: none;
-  font-size: 1rem;
 }
 
 .bi {
