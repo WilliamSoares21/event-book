@@ -6,45 +6,59 @@
         <h2>Event Book</h2>
       </div>
       <a href="/login" class="">
-            <i class="bi bi-arrow-left"></i>
-            <span>Voltar para entrar</span>
+        <i class="bi bi-arrow-left"></i>
+        <span>Voltar para entrar</span>
       </a>
     </header>
     <main class="main-login">
-        <div class="row align-items-center">
-          <h1 class="col-6">Crie sua conta</h1>
-          <label class="custom-etiqueta">Perfil selecionado: {{ perfilSelecionado }}</label>
-        </div>
+      <div class="row align-items-center">
+        <h1 class="col-6">Crie sua conta</h1>
+        <label class="custom-etiqueta">Perfil selecionado: {{ perfilSelecionado }}</label>
+      </div>
       <p>Preencha os dados abaixo para começar sua jornada no EventBook.</p>
       <section class="cards">
         <form [formGroup]="singUpForm" (ngSubmit)="onSubmit()">
-        <div class="form-group">
+          <div class="form-group">
             <div class="row">
-                <div class="col">
-                    <label for="name">Nome</label>
-                    <input type="text" id="name" formControlName="name" class="form-control" placeholder="Digite seu nome">
+              <div class="col">
+                <label for="name">Nome</label>
+                <div class="input-group">
+                  <span class="input-group-text" id="name-addon"><i class="bi bi-person-fill"></i></span>
+                  <input type="text" class="form-control" id="name" placeholder="Ex: João" aria-label="Nome"
+                    aria-describedby="name-addon">
                 </div>
-                <div class="col">
-                    <label for="lastName">Sobrenome</label>
-                    <input type="text" id="lastName" formControlName="lastName" class="form-control" placeholder="Digite seu sobrenome">
+              </div>
+              <div class="col">
+                <label for="lastname">Sobrenome</label>
+                <div class="input-group">
+                  <span class="input-group-text" id="lastname-addon"><i class="bi bi-person-fill"></i></span>
+                  <input type="text" class="form-control" id="lastname" placeholder="Ex: Silva" aria-label="Sobrenome"
+                    aria-describedby="lastname-addon">
                 </div>
+              </div>
             </div>
-        </div>  
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" formControlName="email" class="form-control" placeholder="Digite seu email">
-            <!-- <div *ngIf="singUpForm.get('email')?.invalid && singUpForm.get('email')?.touched" class="error-message">
-              Por favor, insira um email válido.
-            </div> -->
           </div>
-
+          <div class="form-group">
+            <label for="email">Email</label>
+            <div class="input-group">
+              <span class="input-group-text" id="email-addon">
+                <i class="bi bi-envelope-fill"></i>
+              </span>
+              <input type="email" class="form-control" id="email" placeholder="seu@email.com" aria-label="Email"
+                aria-describedby="email-addon">
+            </div>
+          </div>
           <div class="form-group">
             <label for="password">Senha</label>
-            <input type="password" id="password" formControlName="password" class="form-control" placeholder="Digite sua senha">
-            <!-- <div *ngIf="singUpForm.get('password')?.invalid && singUpForm.get('password')?.touched" class="error-message">
-              A senha deve ter pelo menos 6 caracteres.
-            </div> -->
+            <div class="input-group">
+              <span class="input-group-text" id="password-addon">
+                <i class="bi bi-lock-fill"></i>
+              </span>
+              <input type="password" class="form-control" id="password" placeholder="Digite sua senha"
+                aria-label="Senha" aria-describedby="password-addon">
+            </div>
           </div>
+
           <div class="alternative-option">
             <p><a href="/singup-perfil-type">Alterar perfil</a></p>
           </div>
@@ -52,7 +66,7 @@
             Criar conta
           </button>
         </form>
-        <!-- <div class="row">
+  <!-- <div class="row">
           <div class="card"
           [class.selected]="perfilSelecionado === 'comprador'"
           (click)="selecionarPerfil('comprador')"
@@ -92,8 +106,8 @@
             </div>
           </div>
         </div> -->
-      </section>
-    <!-- <div class="button-container">
+</section>
+<!-- <div class="button-container">
       <button class="btn btn-primary custom-btn" [disabled]="!perfilSelecionado" (click)="continueSingUp()">
         <span>Continuar</span>
         <i class="bi bi-arrow-right"></i>
@@ -103,11 +117,11 @@
         <span>Voltar para entrar</span>
       </a>
     </div> -->
-    </main>
-  </div>
-    
-  <div class="login-banner">
-    <!-- <div class="banner-content text-center align-items-center justify-content-center">
+</main>
+</div>
+
+<div class="login-banner">
+  <!-- <div class="banner-content text-center align-items-center justify-content-center">
       <div class="banner-visual">
         <img src="assets/banner-singup.png" alt="Imagem de login" height="50%" width="50%">
         <h3>Eventos melhores, experiências mais simples</h3>
@@ -116,5 +130,5 @@
         </p>
       </div>
     </div> -->
-  </div>
+</div>
 </section>
