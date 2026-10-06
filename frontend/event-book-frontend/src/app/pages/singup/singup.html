@@ -11,10 +11,11 @@
       </a>
     </header>
     <main class="main-login">
-      <div>
-        <h1>Crie sua conta</h1>
-        <p>Preencha os dados abaixo para começar sua jornada no EventBook.</p>
-    </div>
+        <div class="row align-items-center">
+          <h1 class="col-6">Crie sua conta</h1>
+          <label class="custom-etiqueta">Perfil selecionado: {{ perfilSelecionado }}</label>
+        </div>
+      <p>Preencha os dados abaixo para começar sua jornada no EventBook.</p>
       <section class="cards">
         <form [formGroup]="singUpForm" (ngSubmit)="onSubmit()">
         <div class="form-group">
@@ -44,7 +45,9 @@
               A senha deve ter pelo menos 6 caracteres.
             </div> -->
           </div>
-
+          <div class="alternative-option">
+            <p><a href="/singup-perfil-type">Alterar perfil</a></p>
+          </div>
           <button type="submit" class="btn btn-primary custom-btn" [disabled]="singUpForm.invalid">
             Criar conta
           </button>

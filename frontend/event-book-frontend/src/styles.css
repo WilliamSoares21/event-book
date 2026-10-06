@@ -80,3 +80,16 @@ body {
   font: 400 1.5rem "Inter", sans-serif;
   width: 100%;
 }
+
+.custom-etiqueta {
+  display: inline-block;
+  width: fit-content;
+  margin: 0 0 0 auto;
+  padding: 0.25rem 0.65rem;
+  border: 0;
+  border-radius: 999px;
+  background-color: #e2f3fb;
+  color: #0785c1;
+  font-size: 0.8rem;
+  font-weight: 500;
+}

@@ -67,3 +67,8 @@ form .custom-btn {
     border: none;
     border-radius: 0.25rem;
 }
+
+.alternative-option {
+  margin-top: 1rem;
+  text-align: right;
+}
