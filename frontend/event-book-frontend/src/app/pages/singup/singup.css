@@ -72,3 +72,43 @@ form .custom-btn {
   margin-top: 1rem;
   text-align: right;
 }
+
+.banner-visual h5 {
+  margin-top: 1rem;
+  margin-bottom: 1.0rem;
+  color: #3A3C41;
+}
+
+.card-custom {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto 0.5rem;
+  background-color: #F5F5F5;
+  border-radius: 0.5rem;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-custom img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border: 0;
+  border-radius: 999px;
+}
+
+.card-custom .card-body {
+  padding: 0.6rem 0.75rem;
+}
+
+.card-custom .card-title {
+  text-align: left;
+  font-size: 1.0rem;
+  margin-bottom: 0.2rem;
+}
+
+.card-custom .card-text {
+  text-align: left;
+  font-size: 0.9rem;
+  line-height: 1.3;
+  margin-bottom: 0;
+}
