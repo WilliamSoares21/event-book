@@ -1,0 +1,38 @@
+.side-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2rem;
+}
+
+.brand-header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  display: inline;
+}
+
+.brand-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+}
+
+.brand-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    display: inline;
+}
+
+.brand-header-content h2 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.brand-header-content p {
+    margin: 0;
+    font-weight: 400;
+    color: #9DA1A7;
+    font-size: 1rem;
+}

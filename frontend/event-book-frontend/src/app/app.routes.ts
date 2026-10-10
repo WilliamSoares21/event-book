@@ -3,6 +3,7 @@ import { LoginComponent } from './pages/login/login';
 import { SingupComponent } from './pages/singup/singup';
 import { SingupPerfilTypeComponet } from './pages/singup/singup-perfil-type/singup-perfil-type';
 import { EventsComponent } from './pages/events-published/events';
+import { TicketsComponent } from './pages/tickets/tickets';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -10,4 +11,5 @@ export const routes: Routes = [
   { path: 'singup-perfil-type', component: SingupPerfilTypeComponet },
   { path: 'singup', component: SingupComponent },
   { path: 'events', component: EventsComponent },
+  { path: 'tickets', component: TicketsComponent },
 ];
