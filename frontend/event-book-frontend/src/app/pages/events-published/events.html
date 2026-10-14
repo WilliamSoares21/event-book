@@ -13,5 +13,28 @@
                 </button>
             </div>
         </header>
+        <main class="side-page-main col-12">
+            <section *ngFor="let event of events" class="card" style="max-width: 220px">
+                <img src="assets/events/default-event.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <h4 class="card-title">{{ event.name }}</h4>
+                    <p class="card-text">{{ event.day }}</p>
+                    <p class="card-text">{{ event.time }}</p>
+                    <p class="card-text">{{ event.location }}</p>
+                    <a href="#" class="btn-solid theme-primary">Mais Informações</a>
+                </div>
+            </section>
+            <nav aria-label="...">
+                <ul class="pagination">
+                    <li class="page-item"><a href="#" class="page-link">Previous</a></li>
+                    <li class="page-item"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item active">
+                    <a class="page-link" href="#" aria-current="page">2</a>
+                    </li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                </ul>
+            </nav>    
+        </main>
     </div>
 </section>
