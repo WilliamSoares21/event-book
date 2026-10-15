@@ -12,13 +12,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Centraliza a tradução de exceções de domínio para respostas HTTP.
- * <p>
- * Open/Closed Principle: para tratar uma exceção nova no futuro (ex:
- * OutsideSalesWindowException, do módulo de pedidos), adicionamos um
- * método @ExceptionHandler novo aqui — nenhum controller precisa mudar.
- */
+
 @RestControllerAdvice
 public class ApiExceptionHandler {
 

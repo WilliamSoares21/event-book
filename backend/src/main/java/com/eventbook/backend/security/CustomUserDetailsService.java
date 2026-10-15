@@ -11,15 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * SRP: a única responsabilidade desta classe é traduzir nosso User (do
- * domínio) para o UserDetails que o Spring Security entende. Nenhuma
- * regra de negócio mora aqui.
- * <p>
- * O prefixo "ROLE_" na authority é uma convenção que o Spring Security
- * exige internamente — @PreAuthorize("hasRole('ORGANIZADOR')"), que vamos
- * usar no futuro, procura por "ROLE_ORGANIZADOR" por trás dos panos.
- */
+
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {

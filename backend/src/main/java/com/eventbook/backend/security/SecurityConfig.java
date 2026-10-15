@@ -8,16 +8,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
-/**
- * Autenticação básica do MVP (HTTP Basic Auth) — literalmente o mecanismo
- * mais simples que existe: usuário:senha no header da requisição, sem
- * gerenciar token nem expiração. JWT fica para uma issue futura, quando o
- * projeto evoluir além do MVP.
- * <p>
- * Endpoints públicos: health check, cadastro de usuário (óbvio — ninguém
- * tem credencial antes de se cadastrar), a documentação Swagger e o /error.
- * Todo o resto exige autenticação.
- */
 @Configuration
 public class SecurityConfig {
 
