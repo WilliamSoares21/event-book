@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { MenuSideBarComponent } from '../../components/menu-side-bar/menu-side-bar';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   imports: [MenuSideBarComponent, CommonModule],
@@ -35,4 +36,10 @@ export class EventsComponent {
       location: 'Location for Event 5'
     }
   ];
+
+  constructor(private router: Router) {}
+
+  createEvent() {
+    this.router.navigate(['/events/create']);
+  }
 }

@@ -14,7 +14,6 @@ export class SingupPerfilTypeComponet {
 
   selecionarPerfil(tipo: string) {
     this.perfilSelecionado = tipo;
-    console.log('Perfil selecionado:', tipo);
   }
 
   continueSingUp() {

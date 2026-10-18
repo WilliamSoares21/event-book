@@ -9,8 +9,9 @@ body {
 
 .side-page {
   display: flex;
+  align-items: stretch;
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
 }
 
 .side-page .side-page-content {

@@ -1,0 +1,142 @@
+.brand-header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  display: inline;
+}
+
+.brand-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+}
+
+.brand-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    display: inline;
+}
+
+.brand-header-content h2 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.brand-header-content p {
+    margin: 0;
+    margin-top: 1rem;
+    font-weight: 400;
+    color: #9DA1A7;
+    font-size: 1rem;
+}
+
+.side-page-main {
+    padding: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.side-page-main form {
+    flex: 1 1 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: #f9f9f9;
+    padding: 2rem;
+    border: 1px solid #D6DCE5;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px #f9f9f9;
+}
+
+.side-page-main h2 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.side-page-main p {
+    margin: 0;
+    font-weight: 400;
+    color: #9DA1A7;
+    font-size: 1rem;
+}
+
+form .form-group h4 {
+    margin-top: 1rem;
+    font-weight: 600;
+}
+
+form .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 400;
+    font-size: 1rem;
+}
+
+form .form-group input,
+form .form-group textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.div-header-img {
+    display: flex;
+    align-items: center;
+    gap: 0px;
+}
+
+.div-header-img h4 {
+    margin: 0;
+}
+
+.div-header-img img {
+    margin-top: 1.5rem;
+}
+
+.div-label-input {
+    padding-left: 3.5rem;
+}
+
+.div-label-input textarea {
+    height: 10rem;
+}
+
+.side-page-main .paragraph-description {
+    margin-top: 0.5rem;
+}
+
+.side-page-main .div-button-cancel-save {
+    flex: 1 1 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: #f9f9f9;
+    padding: 1rem;
+    border: 1px solid #D6DCE5;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px #f9f9f9;
+}
+
+.div-button {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+}
+
+.div-button button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.div-button .btn-cancel {
+    background-color: #F6F7F9;
+    border: 1px solid #D6DCE5;
+    color: #343A40;
+}
