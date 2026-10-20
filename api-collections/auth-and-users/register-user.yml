@@ -1,0 +1,25 @@
+info:
+  name: register-user
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/users"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "fulano",
+        "email": "fulano@example.com",
+        "password": "12345678",
+        "role": "COMPRADOR"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

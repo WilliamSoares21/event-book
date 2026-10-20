@@ -1,0 +1,8 @@
+name: local
+variables:
+  - name: baseUrl
+    value: http://localhost:8080/api
+    description: ""
+  - name: token
+    value: ""
+    description: ""
