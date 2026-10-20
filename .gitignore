@@ -16,3 +16,6 @@ coverage/
 
 .env
 .env.local
+
+api-collections/environments/*.search.yaml
+

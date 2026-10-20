@@ -1,0 +1,20 @@
+info:
+  name: add-event-staff
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/events/:id/staff"
+  params:
+    - name: id
+      value: ""
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
