@@ -1,0 +1,7 @@
+info:
+  name: orders-and-checkout
+  type: folder
+  seq: 5
+
+request:
+  auth: inherit

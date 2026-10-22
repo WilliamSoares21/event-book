@@ -1,0 +1,7 @@
+info:
+  name: tickets-and-check-in
+  type: folder
+  seq: 6
+
+request:
+  auth: inherit

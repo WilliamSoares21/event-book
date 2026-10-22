@@ -1,0 +1,20 @@
+info:
+  name: validate-check-in
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/tickets/:code/check-in"
+  params:
+    - name: code
+      value: ""
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
