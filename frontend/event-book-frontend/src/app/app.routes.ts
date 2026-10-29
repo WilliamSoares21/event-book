@@ -5,6 +5,7 @@ import { SingupPerfilTypeComponet } from './pages/singup/singup-perfil-type/sing
 import { EventsComponent } from './pages/events-published/events';
 import { TicketsComponent } from './pages/tickets/tickets';
 import { CreateEventsComponent } from './pages/events-published/create-events/create-events';
+import { CreateLotsComponents } from './pages/events-published/create-lots/create-lots';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -13,5 +14,6 @@ export const routes: Routes = [
   { path: 'singup', component: SingupComponent },
   { path: 'events', component: EventsComponent },
   { path: 'events/create', component: CreateEventsComponent },
+  { path: 'events/lots/create', component: CreateLotsComponents },
   { path: 'tickets', component: TicketsComponent },
 ];

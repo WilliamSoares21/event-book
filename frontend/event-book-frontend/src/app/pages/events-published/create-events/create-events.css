@@ -109,16 +109,9 @@ form .form-group textarea {
     margin-top: 0.5rem;
 }
 
-.side-page-main .div-button-cancel-save {
+.div-button-cancel-save {
     flex: 1 1 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    background-color: #f9f9f9;
-    padding: 1rem;
-    border: 1px solid #D6DCE5;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px #f9f9f9;
+    padding: 1rem 0;
 }
 
 .div-button {
@@ -136,7 +129,15 @@ form .form-group textarea {
 }
 
 .div-button .btn-cancel {
-    background-color: #F6F7F9;
-    border: 1px solid #D6DCE5;
-    color: #343A40;
+    margin-right: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: #9DA1A7;
+    padding: 1rem;
+}
+
+.div-button .btn-cancel span {
+    font-size: large;
 }

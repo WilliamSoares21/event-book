@@ -76,10 +76,12 @@
             </form>
             <div class="div-button-cancel-save">
                 <div class="col-12 div-button">
-                    <button type="button" class="btn btn-cancel">Cancelar</button>
-                    <button class="btn btn-primary">
-                        <i class="bi bi-calendar"></i>
-                        <span>Criar evento</span>
+                    <a routerLink="/events" class="btn-cancel">
+                        <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                        <span>Voltar</span>
+                    </a>
+                    <button class="btn btn-primary" (click)="createLots()">                        
+                         Próximo
                     </button>
                 </div>                
             </div>

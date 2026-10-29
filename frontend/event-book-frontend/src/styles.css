@@ -117,3 +117,36 @@ body {
   font-size: 0.8rem;
   font-weight: 500;
 }
+
+.brand-header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  display: inline;
+}
+
+.brand-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+}
+
+.brand-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    display: inline;
+}
+
+.brand-header-content h2 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.brand-header-content p {
+    margin: 0;
+    margin-top: 1rem;
+    font-weight: 400;
+    color: #9DA1A7;
+    font-size: 1rem;
+}
