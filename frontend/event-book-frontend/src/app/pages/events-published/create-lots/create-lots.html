@@ -1,0 +1,78 @@
+<section class="side-page">
+     <app-menu-side-bar></app-menu-side-bar>
+      <div class="side-page-content">
+        <header class="brand-header">
+            <div class="brand-header-content">
+                <h2>Adicione os lotes do evento</h2>
+                <p>Crie um ou mais de ingressos para o seu evento. Você pode definir nomes, valores,</p>
+                <p class="div-paragraph">quantidades e período de vendas para cada lote.</p>
+            </div>
+        </header>
+        <main class="side-page-main">
+            @for (lot of lots; track lot.id; let index = $index) {
+            <form>
+                <div class="lot-header">
+                    <h3>Lote {{ index + 1 }}</h3>
+                    <button type="button" class="btn btn-outline-danger remove-lot"
+                        (click)="removeLot(lot.id)" [attr.aria-label]="'Excluir lote ' + (index + 1)"
+                        title="Excluir lote">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                         <label [for]="'nome-lote-' + lot.id">Nome do lote</label>
+                        <div class="input-group">                    
+                            <input type="text" class="form-control" [id]="'nome-lote-' + lot.id" [name]="'nome-lote-' + lot.id" [(ngModel)]="lot.name" aria-label="Nome do lote"/>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                         <label [for]="'valor-ingresso-' + lot.id">Valor do ingresso (R$)</label>
+                        <div class="input-group">                    
+                            <input type="number" class="form-control" [id]="'valor-ingresso-' + lot.id" [name]="'valor-ingresso-' + lot.id" [(ngModel)]="lot.price" aria-label="Valor do ingresso"/>
+                        </div>
+                    </div>
+                     <div class="col-12 col-md-4">
+                         <label [for]="'qtd-ingresso-' + lot.id">Quantidade disponível</label>
+                        <div class="input-group">                    
+                            <input type="number" class="form-control" [id]="'qtd-ingresso-' + lot.id" [name]="'qtd-ingresso-' + lot.id" [(ngModel)]="lot.quantity" aria-label="Quantidade de ingressos disponíveis"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-12 col-md-4">
+                         <label [for]="'data-inicio-vendas-' + lot.id">Início das vendas</label>
+                        <div class="input-group">                    
+                            <input type="date" class="form-control" [id]="'data-inicio-vendas-' + lot.id" [name]="'data-inicio-vendas-' + lot.id" [(ngModel)]="lot.salesStart" aria-label="Data início das vendas"/>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                         <label [for]="'data-fim-vendas-' + lot.id">Fim das vendas</label>
+                        <div class="input-group">                    
+                            <input type="date" class="form-control" [id]="'data-fim-vendas-' + lot.id" [name]="'data-fim-vendas-' + lot.id" [(ngModel)]="lot.salesEnd" aria-label="Data fim das vendas"/>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            }
+            <button type="button" class="btn btn-outline-primary add-lot" (click)="addLot()">
+                <span aria-hidden="true">+</span>
+                Adicionar lote
+            </button>
+            <div class="div-button-cancel-save">
+                <div class="col-12 div-button">
+                    <a routerLink="/events/create" class="btn-cancel">
+                        <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                        <span>Voltar</span>
+                    </a>
+                    <button class="btn btn-primary" (click)="createEvent()">
+                        <i class="bi bi-calendar"></i>
+                        <span>Criar evento</span>
+                    </button>
+                </div>                
+            </div>
+        </main>
+        </div>
+</section>

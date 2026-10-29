@@ -1,0 +1,65 @@
+:host {
+  display: flex;
+  flex: 0 0 20%;
+  min-width: 0;
+}
+
+.side-page-menu {
+  width: 100%;
+  background: white;
+  padding: 40px;
+  padding-left: 1rem;
+  border: 1px solid #ccc;
+}
+
+.side-page-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 2rem;
+}
+
+.side-page-nav a {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.side-page-nav label {
+  text-decoration: none;
+  color: #616367;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+.side-page-nav a:hover {
+  text-decoration: none;
+}
+
+.side-page-nav ul {
+  list-style: none;
+  padding: 0;
+  margin-left: 1rem;
+}
+
+.side-page-nav li {
+  margin: 0;
+  padding: 0;
+}
+
+.side-page-nav li.active a {
+  background-color: #dcedf7;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 1px 1px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.side-page-nav li label {
+  cursor: pointer;
+}
