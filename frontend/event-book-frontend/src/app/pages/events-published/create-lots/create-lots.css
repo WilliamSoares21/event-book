@@ -1,0 +1,100 @@
+.div-paragraph {
+    margin-top: 0px;
+}
+
+.div-button-cancel-save {
+    flex: 1 1 100%;
+    padding: 1rem 0;
+}
+
+.div-button {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1rem;
+}
+
+.div-button button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.div-button .btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: #9DA1A7;
+    margin-right: auto;
+    padding: 1rem;
+}
+
+.div-button .btn-cancel span {
+    font-size: large;
+}
+
+.side-page-main {
+    padding: 2rem;
+}
+
+.side-page-main form {
+    padding: 2rem;
+    background-color: #f9f9f9;
+    border: 1px solid #D6DCE5;
+    border-radius: 8px;
+}
+
+.side-page-main label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+.side-page-main .form-control {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+@media (max-width: 767.98px) {
+    .side-page-main,
+    .side-page-main form {
+        padding: 1rem;
+    }
+}
+.side-page-main form + form {
+    margin-top: 1rem;
+}
+
+.lot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.lot-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.remove-lot,
+.add-lot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+}
+
+.add-lot {
+    margin-top: 1rem;
+}

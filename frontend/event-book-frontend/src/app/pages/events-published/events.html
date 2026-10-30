@@ -1,0 +1,40 @@
+<section class="side-page">
+    <app-menu-side-bar></app-menu-side-bar>
+    <div class="side-page-content">
+        <header class="brand-header">
+            <div class="brand-header-content">
+                <h2>Eventos</h2>
+                <p>Gerencie e acompanhe todos os seus eventos ativos e agendados.</p>
+            </div>
+            <div class="brand-header-content">
+                <button class="btn btn-primary" (click)="createEvent()">
+                    <i class="bi bi-plus"></i>
+                    <span>Criar Evento</span>
+                </button>
+            </div>
+        </header>
+        <main class="side-page-main col-12">
+            <section *ngFor="let event of events" class="card" style="max-width: 220px">
+                <img src="assets/events/default-event.png" class="card-img-top" alt="...">
+                <div class="card-body">
+                    <h4 class="card-title">{{ event.name }}</h4>
+                    <p class="card-text">{{ event.day }}</p>
+                    <p class="card-text">{{ event.time }}</p>
+                    <p class="card-text">{{ event.location }}</p>
+                    <a href="#" class="btn-solid theme-primary">Mais Informações</a>
+                </div>
+            </section>
+            <nav aria-label="...">
+                <ul class="pagination">
+                    <li class="page-item"><a href="#" class="page-link">Previous</a></li>
+                    <li class="page-item"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item active">
+                    <a class="page-link" href="#" aria-current="page">2</a>
+                    </li>
+                    <li class="page-item"><a class="page-link" href="#">3</a></li>
+                    <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                </ul>
+            </nav>    
+        </main>
+    </div>
+</section>

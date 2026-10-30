@@ -7,6 +7,23 @@ body {
   font-family: "Inter", sans-serif;
 }
 
+.side-page {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.side-page .side-page-content {
+  flex: 0 0 80%;
+  width: 80%;
+  max-width: 80%;
+  box-sizing: border-box;
+  margin: 2rem 0 0 0;
+  padding: 0 1rem 0 0;
+  font: 400 1.5rem "Inter", sans-serif;
+}
+
 .login-form h2 {
   color: #2494CF;
   margin: 0;
@@ -38,7 +55,14 @@ body {
 .brand-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.brand-header h5 {
+  margin: 0;
 }
 
 .banner-visual p {
@@ -79,4 +103,50 @@ body {
   margin-right: 2rem;
   font: 400 1.5rem "Inter", sans-serif;
   width: 100%;
+}
+
+.custom-etiqueta {
+  display: inline-block;
+  width: fit-content;
+  margin: 0 0 0 auto;
+  padding: 0.25rem 0.65rem;
+  border: 0;
+  border-radius: 999px;
+  background-color: #e2f3fb;
+  color: #0785c1;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.brand-header-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  display: inline;
+}
+
+.brand-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+}
+
+.brand-header-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    display: inline;
+}
+
+.brand-header-content h2 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.brand-header-content p {
+    margin: 0;
+    margin-top: 1rem;
+    font-weight: 400;
+    color: #9DA1A7;
+    font-size: 1rem;
 }
