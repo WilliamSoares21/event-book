@@ -24,16 +24,8 @@
                 <label for="name">Nome</label>
                 <div class="input-group">
                   <span class="input-group-text" id="name-addon"><i class="bi bi-person-fill"></i></span>
-                  <input type="text" class="form-control" id="name" placeholder="Ex: João" aria-label="Nome"
+                  <input type="text" class="form-control" id="name" formControlName="name" placeholder="Ex: João" aria-label="Nome"
                     aria-describedby="name-addon">
-                </div>
-              </div>
-              <div class="col">
-                <label for="lastname">Sobrenome</label>
-                <div class="input-group">
-                  <span class="input-group-text" id="lastname-addon"><i class="bi bi-person-fill"></i></span>
-                  <input type="text" class="form-control" id="lastname" placeholder="Ex: Silva" aria-label="Sobrenome"
-                    aria-describedby="lastname-addon">
                 </div>
               </div>
             </div>
@@ -44,7 +36,7 @@
               <span class="input-group-text" id="email-addon">
                 <i class="bi bi-envelope-fill"></i>
               </span>
-              <input type="email" class="form-control" id="email" placeholder="seu@email.com" aria-label="Email"
+              <input type="email" class="form-control" id="email" formControlName="email" placeholder="seu@email.com" aria-label="Email"
                 aria-describedby="email-addon">
             </div>
           </div>
@@ -54,7 +46,7 @@
               <span class="input-group-text" id="password-addon">
                 <i class="bi bi-lock-fill"></i>
               </span>
-              <input type="password" class="form-control" id="password" placeholder="Digite sua senha"
+              <input type="password" class="form-control" id="password" formControlName="password" placeholder="Digite sua senha"
                 aria-label="Senha" aria-describedby="password-addon">
             </div>
           </div>

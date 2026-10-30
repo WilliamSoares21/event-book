@@ -1,6 +1,9 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { LoginService } from '../../services/login/login';
+import { LoginRequest } from '../../model/LoginRequest';
+import { response } from 'express';
 
 @Component({
   selector: 'app-singup',
@@ -11,14 +14,15 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class SingupComponent {
   singUpForm: FormGroup;
+  perfilSelecionado!: string;
 
   constructor(
     private route: ActivatedRoute,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private loginService: LoginService
   ) {
     this.singUpForm = this.fb.group({
       name: ['', Validators.required],
-      lastName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
@@ -32,9 +36,20 @@ export class SingupComponent {
 
   onSubmit() {
     if (this.singUpForm.valid) {
-      console.log(this.singUpForm.value);
+      const requestLogin: LoginRequest = {
+        name: this.singUpForm.value.name,
+        email: this.singUpForm.value.email,
+        password: this.singUpForm.value.password
+      }
+
+      this.loginService.register(requestLogin).subscribe({
+        next: (response) => {
+
+        },
+        error: (error) => {
+          console.error('', error)
+        }
+      });
     }
   }
-
-  perfilSelecionado!: string;
 }
