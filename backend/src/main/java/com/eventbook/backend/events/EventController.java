@@ -4,17 +4,16 @@ package com.eventbook.backend.events;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import lombok.RequiredArgsConstructor; 
+import java.util.UUID;
+
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/events")
 public class EventController {
 
   private final EventService eventService;
-
-  public EventController(EventService eventService) {
-    this.eventService = eventService;
-  }
-
 
   // Rota pública liberada pelo SecurityConfig, porque o professor deu a dica de deixar publica 
   @GetMapping
@@ -32,7 +31,7 @@ public class EventController {
   }
   // Precisa ser ajustado para seguir as regras de negocio do projeto
   @PatchMapping("/{id}")
-  public ResponseEntity<EventResponseDTO> updateEvent(@PathVariable Long id, @RequestBody EventUpdateDTO dto) {
+  public ResponseEntity<EventResponseDTO> updateEvent(@PathVariable UUID id, @RequestBody EventUpdateDTO dto) {
       EventResponseDTO updatedEvent = eventService.updateEvent(id, dto);
       return ResponseEntity.ok(updatedEvent);
   }
@@ -40,7 +39,7 @@ public class EventController {
 
   // precisamoa ajustarar para apenas o organizador conseguir publicar evento
   @PostMapping("/{id}/publish")
-  public ResponseEntity<Void> publishEvent(@PathVariable Long id) {
+  public ResponseEntity<Void> publishEvent(@PathVariable UUID id) {
       eventService.publish(id); // Faz as validações da regra 01 e muda status
       return ResponseEntity.noContent().build(); // Retorna 204
   }
