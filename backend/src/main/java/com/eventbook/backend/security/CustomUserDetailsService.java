@@ -52,6 +52,6 @@ public class CustomUserDetailsService implements UserDetailsService {
      * Ajuda o filtro de segurança a saber quem é o dono do token sem fazer buscas pesadas.
      */
     public Optional<String> findEmailById(UUID id) {
-        return userRepository.findById(id).map(User::getEmail);
+        return userRepository.findById(id).map(user -> user.getEmail());
     }
 }

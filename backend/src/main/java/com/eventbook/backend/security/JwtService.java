@@ -5,21 +5,20 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.security.Key;
+import javax.crypto.SecretKey; 
 import java.time.Instant;
 import java.util.Date;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
 public class JwtService {
 
-    private final Key key;
+    private final SecretKey key;
     private final long expirationMs;
 
     public JwtService(@Value("${security.jwt.secret}") String secret,
                       @Value("${security.jwt.expiration-ms}") long expirationMs) {
-        this.key = Keys.hmacShaKeyFor(secret.getBytes()); // HMAC‑SHA256
+        this.key = Keys.hmacShaKeyFor(secret.getBytes()); 
         this.expirationMs = expirationMs;
     }
 
@@ -27,28 +26,28 @@ public class JwtService {
     public String generateToken(AuthenticatedUser user) {
         Instant now = Instant.now();
         return Jwts.builder()
-                .setSubject(user.id().toString())            // UUID como sub
+                .subject(user.id().toString())            // UUID como sub
                 .claim("email", user.email())
                 .claim("role", user.authorities().stream()
                         .findFirst().orElseThrow().getAuthority())
                 .claim("name", user.name())
-                .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(now.plusMillis(expirationMs)))
-                .signWith(key, SignatureAlgorithm.HS256)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusMillis(expirationMs)))
+                .signWith(key) 
                 .compact();
     }
 
     /** Valida token e devolve as claims (lança exceção se inválido) */
     public Jws<Claims> validateToken(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
+        return Jwts.parser()                 
+                .verifyWith(key)             
                 .build()
-                .parseClaimsJws(token);
+                .parseSignedClaims(token); 
     }
 
     /** Extrai o UUID do subject */
     public UUID getUserIdFromToken(String token) {
-        Claims claims = validateToken(token).getBody();
+        Claims claims = validateToken(token).getPayload();
         return UUID.fromString(claims.getSubject());
     }
 }
