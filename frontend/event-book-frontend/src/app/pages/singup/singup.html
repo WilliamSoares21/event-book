@@ -95,5 +95,10 @@
           </div>
       </div>
     </div>
+   @if (mensagemErro()) {
+      <div role="alert" class="mensagem-erro alert alert-danger">
+        {{ mensagemErro() }}
+      </div>
+    }
 </div>
 </section>

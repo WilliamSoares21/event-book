@@ -7,6 +7,8 @@ import { LoginResponse } from '../../model/LoginResponse';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {
+  
+
   constructor(private readonly http: HttpClient) {}
 
   register(credentials: LoginRequest): Observable<LoginResponse> {
