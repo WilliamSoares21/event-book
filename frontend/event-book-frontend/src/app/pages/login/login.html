@@ -50,5 +50,10 @@
         </p>
       </div>
     </div>
+    @if (mensagem()) {
+      <div role="status" class="mensagem-sucesso alert alert-success">
+        {{ mensagem() }}
+      </div>
+    }
   </div>
 </section>
