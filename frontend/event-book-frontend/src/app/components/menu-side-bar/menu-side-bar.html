@@ -11,12 +11,14 @@
                     <label>Eventos</label>
                 </a>
             </li>
+            @if (roleUser === 'COMPRADOR') {
             <li routerLinkActive="active">
                 <a routerLink="/tickets">
                     <img src="assets/tickets/ticket.png" width="20" height="20" alt="Ícone de Tickets"> 
                     <label>Tickets</label> 
                 </a>
             </li>
+            }
         </ul>
     </nav>
 </div>
