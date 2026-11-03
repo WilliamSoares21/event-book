@@ -11,6 +11,12 @@ http:
       value: ""
       type: path
   auth: inherit
+  body:
+    type: json
+    body: |
+      {
+        "title": "Festival EventBook Atualizado"
+      }
 
 settings:
   encodeUrl: true

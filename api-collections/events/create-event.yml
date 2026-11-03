@@ -8,6 +8,17 @@ http:
   url: "{{baseUrl}}/events"
   auth: inherit
 
+  body:
+    type: json
+    body: |
+      {
+        "title": "Festival EventBook",
+        "description": "Evento de demonstração.",
+        "startsAt": "2026-11-20T19:00:00-03:00",
+        "endsAt": "2026-11-20T23:00:00-03:00",
+        "location": "São Paulo"
+      }
+
 settings:
   encodeUrl: true
   timeout: 0
