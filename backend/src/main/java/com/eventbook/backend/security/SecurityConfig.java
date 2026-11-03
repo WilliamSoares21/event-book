@@ -48,6 +48,8 @@ public class SecurityConfig {
                         "/api/events/*/occupancy"
                 ).authenticated()
 
+                .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
+
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
