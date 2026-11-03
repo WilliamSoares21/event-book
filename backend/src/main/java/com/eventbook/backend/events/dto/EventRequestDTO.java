@@ -15,7 +15,6 @@ public class EventRequestDTO {
     @Size(max = 255)
     private String title;
 
-    @NotBlank
     @Size(max = 2000)
     private String description;
 
