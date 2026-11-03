@@ -25,7 +25,7 @@ public class Ticket {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @Column(name = "unique_code", nullable = false, unique = true)
+    @Column(name = "unique_code", nullable = false, unique = true, length = 64)
     private String uniqueCode;
 
     @Enumerated(EnumType.STRING)

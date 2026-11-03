@@ -16,6 +16,13 @@ public interface TicketLotRepository extends JpaRepository <TicketLot, UUID> {
 
     boolean existsByEventIdAndStatus(UUID eventId, LotStatus status);
 
+    @Query("""
+            SELECT COALESCE(SUM(t.capacity), 0)
+            FROM TicketLot t
+            WHERE t.event.id = :eventId
+            """)
+    Long sumCapacityByEvent(@Param("eventId") UUID eventId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select t from TicketLot t where t.id = :id")
     Optional<TicketLot> findByIdForUpdate(@Param("id") UUID id);
