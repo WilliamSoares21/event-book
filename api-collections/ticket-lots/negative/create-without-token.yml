@@ -1,0 +1,19 @@
+info:
+  name: create-ticket-lot-without-token
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/events/{{eventId}}/ticket-lots"
+  auth: none
+  body:
+    type: json
+    body: |
+      {
+        "name": "Tentativa sem autenticação",
+        "unitPrice": 50.00,
+        "capacity": 100,
+        "salesStart": "2026-10-20T00:00:00Z",
+        "salesEnd": "2026-11-20T18:00:00Z"
+      }
