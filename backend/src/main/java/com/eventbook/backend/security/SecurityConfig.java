@@ -48,6 +48,7 @@ public class SecurityConfig {
                         "/swagger-ui.html",
                         "/swagger-ui/**",
                         "/v3/api-docs",
+                        "/v3/api-docs/",
                         "/v3/api-docs/**"
                 ).permitAll()
 
@@ -100,7 +101,7 @@ public class SecurityConfig {
     public AuthenticationEntryPoint authenticationEntryPoint() {
         return (request, response, exception) -> {
             response.setStatus(401);
-            response.setContentType("application/json");
+            response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write("""
                     {"status":401,"error":"Autenticação necessária","timestamp":"%s"}
                     """.formatted(Instant.now()));
@@ -111,7 +112,7 @@ public class SecurityConfig {
     public AccessDeniedHandler accessDeniedHandler() {
         return (request, response, exception) -> {
             response.setStatus(403);
-            response.setContentType("application/json");
+            response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write("""
                     {"status":403,"error":"Acesso negado","timestamp":"%s"}
                     """.formatted(Instant.now()));
