@@ -11,10 +11,14 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.time.Instant;
 
 @Configuration
 @EnableMethodSecurity
@@ -33,20 +37,30 @@ public class SecurityConfig {
             // CSRF vai ficar desativado porque agora vamos usar tokens
             .csrf(csrf -> csrf.disable())
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(authenticationEntryPoint())
+                .accessDeniedHandler(accessDeniedHandler())
+            )
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/users").permitAll()
-
                 .requestMatchers(
-                        HttpMethod.GET,
-                        "/api/events",
-                        "/api/events/*"
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/v3/api-docs",
+                        "/v3/api-docs/**"
                 ).permitAll()
 
                 .requestMatchers(
                         HttpMethod.GET,
                         "/api/events/*/occupancy"
                 ).authenticated()
+
+                .requestMatchers(
+                        HttpMethod.GET,
+                        "/api/events",
+                        "/api/events/*"
+                ).permitAll()
 
                 .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
 
@@ -80,5 +94,27 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return (request, response, exception) -> {
+            response.setStatus(401);
+            response.setContentType("application/json");
+            response.getWriter().write("""
+                    {"status":401,"error":"Autenticação necessária","timestamp":"%s"}
+                    """.formatted(Instant.now()));
+        };
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, exception) -> {
+            response.setStatus(403);
+            response.setContentType("application/json");
+            response.getWriter().write("""
+                    {"status":403,"error":"Acesso negado","timestamp":"%s"}
+                    """.formatted(Instant.now()));
+        };
     }
 }

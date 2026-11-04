@@ -9,14 +9,17 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import java.util.List;
+import java.net.URI;
 import java.util.UUID;
 
 @RestController
@@ -52,6 +55,7 @@ public class EventController {
     }
 
     @PreAuthorize("hasRole('ORGANIZADOR')")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping
     @Operation(summary = "Cria um evento")
     @ApiResponses({
@@ -70,10 +74,17 @@ public class EventController {
                 authUser.id()
         );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{eventId}")
+                .buildAndExpand(created.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(created);
     }
 
     @PreAuthorize("hasRole('ORGANIZADOR')")
+    @SecurityRequirement(name = "bearerAuth")
     @PatchMapping("/{eventId}")
     @Operation(summary = "Atualiza parcialmente um evento")
     @ApiResponses({
@@ -98,6 +109,7 @@ public class EventController {
     }
 
     @PreAuthorize("hasRole('ORGANIZADOR')")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/{eventId}/publish")
     public ResponseEntity<Void> publishEvent(
             @PathVariable UUID eventId,
@@ -108,6 +120,7 @@ public class EventController {
     }
 
     @GetMapping("/{eventId}/occupancy")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<EventOccupancyDTO> getOccupancy(
             @PathVariable UUID eventId) {
 

@@ -7,6 +7,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
@@ -34,6 +36,26 @@ public class ApiExceptionHandler {
         body.put("timestamp", Instant.now().toString());
 
         return ResponseEntity.badRequest().body(body);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex) {
+
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                "Parâmetro inválido: " + ex.getName()
+        );
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleUnreadableMessage(
+            HttpMessageNotReadableException ex) {
+
+        return buildError(
+                HttpStatus.BAD_REQUEST,
+                "Payload ou formato inválido"
+        );
     }
 
     @ExceptionHandler(DuplicateEmailException.class)
