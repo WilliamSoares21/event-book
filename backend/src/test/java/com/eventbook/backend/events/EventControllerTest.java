@@ -63,6 +63,7 @@ class EventControllerTest {
                 organizerId,
                 "organizer@email.com",
                 "Organizer",
+                null,
                 java.util.List.of(
                         new SimpleGrantedAuthority("ROLE_ORGANIZADOR")
                 )

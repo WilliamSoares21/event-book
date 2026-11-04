@@ -10,6 +10,7 @@ public record AuthenticatedUser(
         UUID id,
         String email,
         String name,
+        String passwordHash,
         Collection<? extends GrantedAuthority> authorities) implements UserDetails {
 
     @Override
@@ -19,7 +20,7 @@ public record AuthenticatedUser(
 
     @Override
     public String getPassword() {
-        return null; // senha não exposta depois da autenticação
+        return passwordHash;
     }
 
     @Override
