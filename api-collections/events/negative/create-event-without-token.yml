@@ -6,6 +6,7 @@ info:
 http:
   method: POST
   url: "{{baseUrl}}/events"
+  auth: none
   body:
     type: json
     body: |
@@ -16,3 +17,11 @@ http:
         "endsAt": "2026-11-20T23:00:00-03:00",
         "location": "São Paulo"
       }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.status !== 401) {
+          throw new Error(`Esperado 401, recebido ${res.status}`);
+        }

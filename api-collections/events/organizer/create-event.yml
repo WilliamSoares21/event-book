@@ -6,6 +6,7 @@ info:
 http:
   method: POST
   url: "{{baseUrl}}/events"
+  auth: inherit
 
   body:
     type: json

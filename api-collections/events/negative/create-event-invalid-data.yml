@@ -1,0 +1,28 @@
+info:
+  name: create-event-invalid-data
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/events"
+  auth:
+    type: bearer
+    token: "{{organizerToken}}"
+  body:
+    type: json
+    body: |
+      {
+        "title": "",
+        "startsAt": "2026-11-20T23:00:00-03:00",
+        "endsAt": "2026-11-20T19:00:00-03:00",
+        "location": ""
+      }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.status !== 400 && res.status !== 422) {
+          throw new Error(`Esperado 400 ou 422, recebido ${res.status}`);
+        }

@@ -5,6 +5,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -13,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -132,6 +135,63 @@ public class EventServiceTest {
     }
 
     @Test
+    void deveListarSomenteEventosPublicados() {
+        Event published = event(EventStatus.PUBLISHED, UUID.randomUUID());
+
+        when(eventRepository.findByStatus(EventStatus.PUBLISHED))
+                .thenReturn(List.of(published));
+
+        List<EventResponseDTO> response = eventService.findAllPublished();
+
+        assertThat(response).hasSize(1);
+        assertThat(response.get(0).getStatus()).isEqualTo(EventStatus.PUBLISHED);
+        verify(eventRepository).findByStatus(EventStatus.PUBLISHED);
+    }
+
+    @Test
+    void devePermitirConsultaDeDraftPeloProprietario() {
+        UUID ownerId = UUID.randomUUID();
+        Event draft = event(EventStatus.DRAFT, ownerId);
+
+        when(eventRepository.findById(draft.getId()))
+                .thenReturn(Optional.of(draft));
+
+        EventResponseDTO response = eventService.getById(draft.getId(), ownerId);
+
+        assertThat(response.getStatus()).isEqualTo(EventStatus.DRAFT);
+        assertThat(response.getOrganizerId()).isEqualTo(ownerId);
+    }
+
+    @Test
+    void deveOcultarDraftDeTerceiros() {
+        UUID ownerId = UUID.randomUUID();
+        Event draft = event(EventStatus.DRAFT, ownerId);
+
+        when(eventRepository.findById(draft.getId()))
+                .thenReturn(Optional.of(draft));
+
+        assertThatThrownBy(() ->
+                eventService.getById(draft.getId(), UUID.randomUUID())
+        )
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void deveRetornar404ParaEventoInexistente() {
+        UUID eventId = UUID.randomUUID();
+
+        when(eventRepository.findById(eventId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> eventService.getById(eventId, null))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
     void devePreservarCamposNaoEnviadosNoPatch() {
         UUID ownerId = UUID.randomUUID();
 
@@ -161,5 +221,63 @@ public class EventServiceTest {
         assertThat(event.getTitle()).isEqualTo("Título novo");
         assertThat(event.getDescription()).isEqualTo("Descrição antiga");
         assertThat(event.getLocation()).isEqualTo("Local antigo");
+    }
+
+    @Test
+    void deveRejeitarAtualizacaoComDatasInvalidas() {
+        UUID ownerId = UUID.randomUUID();
+        Event event = event(EventStatus.DRAFT, ownerId);
+
+        when(eventRepository.findById(event.getId()))
+                .thenReturn(Optional.of(event));
+
+        EventUpdateDTO update = EventUpdateDTO.builder()
+                .endsAt(event.getStartsAt().minusMinutes(1))
+                .build();
+
+        assertThatThrownBy(() ->
+                eventService.update(event.getId(), update, ownerId)
+        )
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @Test
+    void deveConverterConflitoOtimistaPara409() {
+        UUID ownerId = UUID.randomUUID();
+        Event event = event(EventStatus.DRAFT, ownerId);
+
+        when(eventRepository.findById(event.getId()))
+                .thenReturn(Optional.of(event));
+        when(eventRepository.save(any(Event.class)))
+                .thenThrow(new ObjectOptimisticLockingFailureException(
+                        Event.class,
+                        event.getId()
+                ));
+
+        assertThatThrownBy(() ->
+                eventService.update(
+                        event.getId(),
+                        EventUpdateDTO.builder().title("Novo título").build(),
+                        ownerId
+                )
+        )
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    private Event event(EventStatus status, UUID organizerId) {
+        return Event.builder()
+                .id(UUID.randomUUID())
+                .organizer(User.builder().id(organizerId).build())
+                .status(status)
+                .title("Festival")
+                .description("Descrição")
+                .startsAt(OffsetDateTime.now().plusDays(10))
+                .endsAt(OffsetDateTime.now().plusDays(10).plusHours(2))
+                .location("São Paulo")
+                .build();
     }
 }

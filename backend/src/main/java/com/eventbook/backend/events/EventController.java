@@ -40,6 +40,7 @@ public class EventController {
     @Operation(summary = "Consulta um evento")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Evento encontrado"),
+            @ApiResponse(responseCode = "400", description = "UUID inválido"),
             @ApiResponse(responseCode = "404", description = "Evento não encontrado")
     })
     public ResponseEntity<EventResponseDTO> getEvent(
@@ -89,6 +90,8 @@ public class EventController {
     @Operation(summary = "Atualiza parcialmente um evento")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Evento atualizado"),
+        @ApiResponse(responseCode = "400", description = "UUID ou payload inválido"),
+        @ApiResponse(responseCode = "401", description = "JWT ausente ou inválido"),
         @ApiResponse(responseCode = "403", description = "Usuário não é proprietário"),
         @ApiResponse(responseCode = "404", description = "Evento não encontrado"),
         @ApiResponse(responseCode = "409", description = "Conflito de concorrência"),

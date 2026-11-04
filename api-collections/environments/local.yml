@@ -3,11 +3,11 @@ variables:
   - name: baseUrl
     value: http://localhost:8080/api
   - name: eventId
-    value: 014c9988-fc11-4f9e-bfde-1eb055a70125
+    value: 5c3b39b1-c889-4a3b-a91a-0a60952a36b2
   - name: lotId
-    value: ""
+    value: 938f9045-ff96-460d-a316-96b82643825b
   - name: organizerEmail
-    value: larissa@example.com
+    value: leto@example.com
   - name: organizerPassword
     value: "12345678"
   - name: buyerEmail

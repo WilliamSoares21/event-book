@@ -4,6 +4,6 @@ info:
   seq: 1
 
 request:
-  headers:
-    - name: Authorization
-      value: "Bearer {{organizerToken}}"
+  auth:
+    type: bearer
+    token: "{{organizerToken}}"

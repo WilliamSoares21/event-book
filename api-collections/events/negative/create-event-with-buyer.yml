@@ -6,9 +6,9 @@ info:
 http:
   method: POST
   url: "{{baseUrl}}/events"
-  headers:
-    - name: Authorization
-      value: "Bearer {{buyerToken}}"
+  auth:
+    type: bearer
+    token: "{{buyerToken}}"
   body:
     type: json
     body: |
@@ -18,3 +18,11 @@ http:
         "endsAt": "2026-11-20T23:00:00-03:00",
         "location": "São Paulo"
       }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.status !== 403) {
+          throw new Error(`Esperado 403, recebido ${res.status}`);
+        }

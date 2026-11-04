@@ -6,6 +6,7 @@ info:
 http:
   method: POST
   url: "{{baseUrl}}/events/:id/publish"
+  auth: inherit
   params:
     - name: id
       value: "{{eventId}}"

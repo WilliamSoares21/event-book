@@ -197,6 +197,12 @@ class EventControllerTest {
     }
 
     @Test
+    void deveRetornar400QuandoUuidDoEventoForInvalido() throws Exception {
+        mockMvc.perform(get("/api/events/not-a-uuid"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void deveRetornar200AoAtualizarEvento() throws Exception {
         UUID eventId = UUID.randomUUID();
 

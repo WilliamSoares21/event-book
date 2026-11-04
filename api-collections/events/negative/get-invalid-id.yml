@@ -6,3 +6,12 @@ info:
 http:
   method: GET
   url: "{{baseUrl}}/events/not-a-uuid"
+  auth: none
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.status !== 400) {
+          throw new Error(`Esperado 400, recebido ${res.status}`);
+        }
