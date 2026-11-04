@@ -9,14 +9,14 @@
         <h1>Bem-vindo de volta!</h1>
         <p>Entre para criar e gerenciar eventos ou comprar seus ingressos.</p>
       </div>
-      <form>
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
         <div class="mb-3">
           <label for="email" class="form-label">Endereço de e-mail</label>
           <div class="input-group">
             <span class="input-group-text" id="basic-addon1">
               <i class="bi bi-envelope-fill"></i>
             </span>
-            <input type="text" class="form-control" id="email" placeholder="nome@empresa.com" aria-label="Username" aria-describedby="basic-addon1">
+            <input type="text" class="form-control" id="email" formControlName="email" placeholder="nome@empresa.com" aria-label="Username" aria-describedby="basic-addon1">
           </div>
         </div>
         <div class="mb-3">
@@ -29,7 +29,7 @@
             <span class="input-group-text">
               <i class="bi bi-lock-fill"></i>
             </span>
-            <input type="password" class="form-control" id="password" placeholder="••••••••">
+            <input type="password" class="form-control" formControlName="password" id="password" placeholder="••••••••">
           </div>
         </div>
         <button type="submit" class="btn btn-primary">Entrar</button>
@@ -50,5 +50,10 @@
         </p>
       </div>
     </div>
+    @if (mensagem()) {
+      <div role="status" class="mensagem-sucesso alert alert-success">
+        {{ mensagem() }}
+      </div>
+    }
   </div>
 </section>

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
@@ -7,4 +7,6 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   styleUrl: './menu-side-bar.css',
   templateUrl: './menu-side-bar.html',
 })
-export class MenuSideBarComponent {}
+export class MenuSideBarComponent {
+  @Input() roleUser: string | undefined;
+}

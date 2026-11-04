@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { SessionService } from '../../services/session/session';
+import { Component, inject } from '@angular/core';
 import { MenuSideBarComponent } from '../../components/menu-side-bar/menu-side-bar';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
@@ -10,6 +11,8 @@ import { Router } from '@angular/router';
   templateUrl: './events.html',
 })
 export class EventsComponent {
+  readonly session = inject(SessionService);
+  get roleUser() { return this.session.user()?.role; }
   events = [
     {
       name: 'Event 1',
