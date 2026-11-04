@@ -1,0 +1,34 @@
+info:
+  name: create-event
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/events"
+
+  body:
+    type: json
+    body: |
+      {
+        "title": "Festival EventBook",
+        "description": "Evento de demonstração.",
+        "startsAt": "2026-11-20T19:00:00-03:00",
+        "endsAt": "2026-11-20T23:00:00-03:00",
+        "location": "São Paulo"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.status === 201 && typeof res.body?.id === "string") {
+          bru.setEnvVar("eventId", res.body.id);
+        }

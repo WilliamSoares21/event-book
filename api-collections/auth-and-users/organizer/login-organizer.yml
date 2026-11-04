@@ -1,5 +1,5 @@
 info:
-  name: login
+  name: login-organizer
   type: http
   seq: 2
 
@@ -10,10 +10,10 @@ http:
     type: json
     data: |-
       {
-        "email": "fulano@example.com",
-        "password": "12345678"
+        "email": "{{organizerEmail}}",
+        "password": "{{organizerPassword}}"
       }
-  auth: inherit
+  auth: none
 
 runtime:
   scripts:
@@ -24,7 +24,7 @@ runtime:
           typeof res.body?.token === "string" &&
           res.body.token.length > 0
         ) {
-          bru.setEnvVar("token", res.body.token);
+          bru.setEnvVar("organizerToken", res.body.token);
         } else {
           throw new Error(
             "Login falhou ou a resposta não contém um token válido"

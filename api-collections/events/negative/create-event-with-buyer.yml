@@ -1,27 +1,20 @@
 info:
-  name: create-event
+  name: create-event-with-buyer
   type: http
   seq: 2
 
 http:
   method: POST
   url: "{{baseUrl}}/events"
-  auth: inherit
-
+  headers:
+    - name: Authorization
+      value: "Bearer {{buyerToken}}"
   body:
     type: json
     body: |
       {
-        "title": "Festival EventBook",
-        "description": "Evento de demonstração.",
+        "title": "Tentativa do comprador",
         "startsAt": "2026-11-20T19:00:00-03:00",
         "endsAt": "2026-11-20T23:00:00-03:00",
         "location": "São Paulo"
       }
-
-settings:
-  encodeUrl: true
-  timeout: 0
-  followRedirects: true
-  maxRedirects: 5
-  forwardAuthorizationHeader: false

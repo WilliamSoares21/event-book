@@ -1,0 +1,18 @@
+info:
+  name: create-event-without-token
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/events"
+  body:
+    type: json
+    body: |
+      {
+        "title": "Tentativa sem autenticação",
+        "description": "Deve retornar 401.",
+        "startsAt": "2026-11-20T19:00:00-03:00",
+        "endsAt": "2026-11-20T23:00:00-03:00",
+        "location": "São Paulo"
+      }

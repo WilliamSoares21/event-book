@@ -2,5 +2,27 @@ name: local
 variables:
   - name: baseUrl
     value: http://localhost:8080/api
+  - name: eventId
+    value: 014c9988-fc11-4f9e-bfde-1eb055a70125
+  - name: lotId
+    value: ""
+  - name: organizerEmail
+    value: larissa@example.com
+  - name: organizerPassword
+    value: "12345678"
+  - name: buyerEmail
+    value: julia@example.com
+  - name: buyerPassword
+    value: "12345678"
+  - name: staffEmail
+    value: juan@example.com
+  - name: staffPassword
+    value: "12345678"
+  - name: token
+    value: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJmZjkzMTM0NS00NzUyLTRlY2EtYjdkMS0zZmJkOThiOWI0NjIiLCJlbWFpbCI6Imxhcmlzc2FAZXhhbXBsZS5jb20iLCJyb2xlIjoiUk9MRV9PUkdBTklaQURPUiIsIm5hbWUiOiJMYXJpc3NhIE1hbm9lbGEiLCJpYXQiOjE3OTM4MDYwNDksImV4cCI6MTc5MzgzNDg0OX0.3pnhBXlrSEROghZPZbXo9Hofw9Z8yWt4BdWe3BNbTnBmWWf188hUME85o2LVd4O4mLmWXkGZPeZMItgaQUAJEw
   - secret: true
-    name: token
+    name: organizerToken
+  - secret: true
+    name: buyerToken
+  - secret: true
+    name: staffToken

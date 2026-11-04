@@ -1,0 +1,9 @@
+info:
+  name: organizer
+  type: folder
+  seq: 1
+
+request:
+  headers:
+    - name: Authorization
+      value: "Bearer {{organizerToken}}"

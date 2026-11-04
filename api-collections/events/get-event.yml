@@ -8,9 +8,8 @@ http:
   url: "{{baseUrl}}/events/:id"
   params:
     - name: id
-      value: ""
+      value: "{{eventId}}"
       type: path
-  auth: inherit
 
 settings:
   encodeUrl: true
