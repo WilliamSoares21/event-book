@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MenuSideBarComponent } from '../../components/menu-side-bar/menu-side-bar';
 import { CommonModule } from '@angular/common';
+import { SessionService } from '../../services/session/session';
 
 @Component({
   imports: [MenuSideBarComponent, CommonModule],
@@ -9,6 +10,8 @@ import { CommonModule } from '@angular/common';
   templateUrl: './tickets.html',
 })
 export class TicketsComponent {
+  readonly session = inject(SessionService);
+  get roleUser() { return this.session.user()?.role; }
   tickets = [
     {
       name: 'Event 1',
