@@ -1,0 +1,21 @@
+info:
+  name: create-ticket-lot-invalid-data
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/events/{{eventId}}/ticket-lots"
+  auth:
+    type: bearer
+    token: "{{organizerToken}}"
+  body:
+    type: json
+    body: |
+      {
+        "name": "Lote inválido",
+        "unitPrice": -1.00,
+        "capacity": 0,
+        "salesStart": "2026-11-20T18:00:00Z",
+        "salesEnd": "2026-11-20T17:00:00Z"
+      }

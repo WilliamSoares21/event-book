@@ -47,6 +47,7 @@ independentemente do backend:
    POSTGRES_USER=eventbook
    POSTGRES_PASSWORD=devpass
    POSTGRES_PORT=5432
+   CURL_VERSION=8.18.0-1ubuntu2.8
    ```
 
    Caso a porta `5432` esteja ocupada no computador, altere apenas

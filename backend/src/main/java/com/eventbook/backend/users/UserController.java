@@ -2,6 +2,7 @@ package com.eventbook.backend.users;
 
 import com.eventbook.backend.users.dto.RegisterUserRequest;
 import com.eventbook.backend.users.dto.UserResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<UserResponse> me(@AuthenticationPrincipal UserDetails principal) {
         return ResponseEntity.ok(userService.getByEmail(principal.getUsername()));
     }

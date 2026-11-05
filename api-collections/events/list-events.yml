@@ -6,7 +6,7 @@ info:
 http:
   method: GET
   url: "{{baseUrl}}/events"
-  auth: inherit
+  auth: none
 
 settings:
   encodeUrl: true

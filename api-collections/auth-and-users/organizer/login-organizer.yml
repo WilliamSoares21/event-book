@@ -1,0 +1,39 @@
+info:
+  name: login-organizer
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/login"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{organizerEmail}}",
+        "password": "{{organizerPassword}}"
+      }
+  auth: none
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (
+          res.status === 200 &&
+          typeof res.body?.token === "string" &&
+          res.body.token.length > 0
+        ) {
+          bru.setEnvVar("organizerToken", res.body.token);
+        } else {
+          throw new Error(
+            "Login falhou ou a resposta não contém um token válido"
+          );
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

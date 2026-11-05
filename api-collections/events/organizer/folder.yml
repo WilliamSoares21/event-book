@@ -1,0 +1,9 @@
+info:
+  name: organizer
+  type: folder
+  seq: 1
+
+request:
+  auth:
+    type: bearer
+    token: "{{organizerToken}}"

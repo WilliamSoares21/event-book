@@ -1,0 +1,18 @@
+info:
+  name: get-current-user-staff
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/users/me"
+  auth:
+    type: bearer
+    token: "{{staffToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true

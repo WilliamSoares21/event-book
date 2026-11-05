@@ -1,0 +1,30 @@
+info:
+  name: update-event
+  type: http
+  seq: 2
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}/events/:id"
+  auth: inherit
+  params:
+    - name: id
+      value: "{{eventId}}"
+      type: path
+  body:
+    type: json
+    body: |
+      {
+        "title": "Festival EventBook Atualizado",
+        "description": "Descrição atualizada do evento.",
+        "startsAt": "2026-11-20T19:00:00-03:00",
+        "endsAt": "2026-11-20T23:00:00-03:00",
+        "location": "São Paulo"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
