@@ -45,12 +45,12 @@ export class LoginComponent {
     }
 
     const email = this.loginForm.value.email.trim().toLowerCase();
-    const vendedor = email === 'fulano1@gmail.com';
+    const organizador = email === 'fulano1@gmail.com';
     const comprador = email === 'fulano2@gmail.com';
     this.session.login({
       id: 'd41d8cd98f00b204e9800998ecf8427e',
-      role: vendedor ? 'VENDEDOR' : comprador ? 'COMPRADOR' : 'VISITANTE',
-      name: vendedor ? 'Fulano 1' : comprador ? 'Fulano 2' : 'Visitante',
+      role: organizador ? 'ORGANIZADOR' : comprador ? 'COMPRADOR' : 'VISITANTE',
+      name: organizador ? 'Fulano 1' : comprador ? 'Fulano 2' : 'Visitante',
       email,
     });
     this.router.navigate(['/events']);
