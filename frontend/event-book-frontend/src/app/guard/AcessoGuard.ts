@@ -7,7 +7,7 @@ export const AcessoGuard: CanActivateFn = () => {
     const dadosUsuario = inject(SessionService).user();
     const role = dadosUsuario?.role;
 
-    if (role === 'VENDEDOR') {
+    if (role === 'ORGANIZADOR') {
         return true;
     } else if(role === 'COMPRADOR') {
         return true;
