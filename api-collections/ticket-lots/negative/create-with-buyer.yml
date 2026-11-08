@@ -1,0 +1,21 @@
+info:
+  name: create-ticket-lot-with-buyer
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/events/{{eventId}}/ticket-lots"
+  auth:
+    type: bearer
+    token: "{{buyerToken}}"
+  body:
+    type: json
+    body: |
+      {
+        "name": "Tentativa do comprador",
+        "unitPrice": 50.00,
+        "capacity": 100,
+        "salesStart": "2026-10-20T00:00:00Z",
+        "salesEnd": "2026-11-20T18:00:00Z"
+      }

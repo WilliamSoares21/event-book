@@ -8,9 +8,20 @@ http:
   url: "{{baseUrl}}/ticket-lots/:id"
   params:
     - name: id
-      value: ""
+      value: "{{lotId}}"
       type: path
   auth: inherit
+  body:
+    type: json
+    body: |
+      {
+        "name": "Lote Promocional Atualizado",
+        "unitPrice": 55.00,
+        "capacity": 100,
+        "salesStart": "2026-10-20T00:00:00Z",
+        "salesEnd": "2026-11-20T18:00:00Z",
+        "status": "ACTIVE"
+      }
 
 settings:
   encodeUrl: true

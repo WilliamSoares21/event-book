@@ -4,13 +4,23 @@ info:
   seq: 1
 
 http:
-  method: GET
-  url: "{{baseUrl}}/events/:id/lots"
+  method: POST
+  url: "{{baseUrl}}/events/:eventId/ticket-lots"
   params:
-    - name: id
-      value: ""
+    - name: eventId
+      value: "{{eventId}}"
       type: path
   auth: inherit
+  body:
+    type: json
+    body: |
+      {
+        "name": "Lote Promocional",
+        "unitPrice": 50.00,
+        "capacity": 100,
+        "salesStart": "2026-10-20T00:00:00Z",
+        "salesEnd": "2026-11-20T18:00:00Z"
+      }
 
 settings:
   encodeUrl: true
@@ -18,3 +28,11 @@ settings:
   followRedirects: true
   maxRedirects: 5
   forwardAuthorizationHeader: false
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.status === 201 && typeof res.body?.id === "string") {
+          bru.setEnvVar("lotId", res.body.id);
+        }

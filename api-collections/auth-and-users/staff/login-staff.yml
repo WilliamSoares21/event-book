@@ -1,0 +1,32 @@
+info:
+  name: login-staff
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/login"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{staffEmail}}",
+        "password": "{{staffPassword}}"
+      }
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.status === 200 && typeof res.body?.token === "string" && res.body.token.length > 0) {
+          bru.setEnvVar("staffToken", res.body.token);
+        } else {
+          throw new Error("Login do staff falhou ou não retornou token");
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: true
