@@ -1,0 +1,31 @@
+# Dependências
+node_modules
+
+# Artefatos de build
+dist
+.angular
+out-tsc
+coverage
+
+# Controle de versão
+.git
+.gitignore
+
+# IDEs
+.vscode
+.idea
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
