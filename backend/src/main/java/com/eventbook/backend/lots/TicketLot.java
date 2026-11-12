@@ -11,7 +11,6 @@ import java.util.UUID;
 @Entity
 @Table(name = "ticket_lots")
 @Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -20,6 +19,11 @@ public class TicketLot {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    // Package-private setter for test/Hibernate
+    void setId(UUID id) {
+        this.id = id;
+    }
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "event_id", nullable = false)
@@ -72,5 +76,51 @@ public class TicketLot {
     @Transient
     public int availableCapacity() {
         return capacity - sold - reserved;
+    }
+
+    // Package-private setters for fields updated by TicketLotService
+    void setName(String name) {
+        this.name = name;
+    }
+
+    void setUnitPrice(BigDecimal unitPrice) {
+        this.unitPrice = unitPrice;
+    }
+
+    void setCapacity(Integer capacity) {
+        this.capacity = capacity;
+    }
+
+    void setSalesStart(Instant salesStart) {
+        this.salesStart = salesStart;
+    }
+
+    void setSalesEnd(Instant salesEnd) {
+        this.salesEnd = salesEnd;
+    }
+
+    void setStatus(LotStatus status) {
+        this.status = status;
+    }
+
+    // Domain methods for controlled modification of sold/reserved
+    public void incrementReserved(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("A quantidade a reservar deve ser positiva");
+        }
+        if (this.sold + this.reserved + quantity > this.capacity) {
+            throw new IllegalStateException("Capacidade insuficiente no lote");
+        }
+        this.reserved += quantity;
+    }
+
+    public void incrementSold(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("A quantidade a vender deve ser positiva");
+        }
+        if (this.sold + this.reserved + quantity > this.capacity) {
+            throw new IllegalStateException("Capacidade insuficiente no lote");
+        }
+        this.sold += quantity;
     }
 }

@@ -44,7 +44,7 @@ public class OrderService {
             throw new InsufficientCapacityException("Capacidade insuficiente no lote");
         }
 
-        lot.setReserved(lot.getReserved() + quantity);
+        lot.incrementReserved(quantity);
         ticketLotRepository.save(lot);
 
         Order order = Order.builder()
