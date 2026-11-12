@@ -155,6 +155,179 @@ class TicketLotServiceTest {
         assertThat(lot.getReserved()).isEqualTo(2);
     }
 
+    @Test
+    void deveRejeitarPrecoNegativoAoAtualizarLote() {
+        UUID organizerId = UUID.randomUUID();
+        TicketLot lot = lot(organizerId, 10, 0, 0);
+
+        when(ticketLotRepository.findByIdForUpdate(lot.getId()))
+                .thenReturn(Optional.of(lot));
+
+        assertThatThrownBy(() -> ticketLotService.update(
+                lot.getId(),
+                TicketLotUpdateDTO.builder().unitPrice(BigDecimal.valueOf(-1)).build(),
+                organizerId
+        ))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(org.springframework.http.HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @Test
+    void deveRejeitarCapacidadeZeroAoAtualizarLote() {
+        UUID organizerId = UUID.randomUUID();
+        TicketLot lot = lot(organizerId, 10, 0, 0);
+
+        when(ticketLotRepository.findByIdForUpdate(lot.getId()))
+                .thenReturn(Optional.of(lot));
+
+        assertThatThrownBy(() -> ticketLotService.update(
+                lot.getId(),
+                TicketLotUpdateDTO.builder().capacity(0).build(),
+                organizerId
+        ))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(org.springframework.http.HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @Test
+    void deveAtualizarStatusDoLote() {
+        UUID organizerId = UUID.randomUUID();
+        TicketLot lot = lot(organizerId, 10, 0, 0);
+
+        when(ticketLotRepository.findByIdForUpdate(lot.getId()))
+                .thenReturn(Optional.of(lot));
+        when(ticketLotRepository.save(any(TicketLot.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        TicketLotResponseDTO response = ticketLotService.update(
+                lot.getId(),
+                TicketLotUpdateDTO.builder().status(LotStatus.INACTIVE).build(),
+                organizerId
+        );
+
+        assertThat(response.getStatus()).isEqualTo(LotStatus.INACTIVE);
+        assertThat(lot.getStatus()).isEqualTo(LotStatus.INACTIVE);
+    }
+
+    @Test
+    void deveRejeitarCriacaoComPrecoNegativo() {
+        UUID organizerId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        Event event = event(eventId, organizerId);
+
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() -> ticketLotService.create(
+                eventId,
+                TicketLotRequestDTO.builder()
+                        .name("Lote")
+                        .unitPrice(BigDecimal.valueOf(-1))
+                        .capacity(10)
+                        .salesStart(Instant.parse("2026-10-20T00:00:00Z"))
+                        .salesEnd(Instant.parse("2026-11-20T18:00:00Z"))
+                        .build(),
+                organizerId
+        ))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(org.springframework.http.HttpStatus.UNPROCESSABLE_CONTENT);
+
+        verify(ticketLotRepository, org.mockito.Mockito.never()).save(any());
+    }
+
+    @Test
+    void deveRejeitarCriacaoComCapacidadeZero() {
+        UUID organizerId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        Event event = event(eventId, organizerId);
+
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() -> ticketLotService.create(
+                eventId,
+                TicketLotRequestDTO.builder()
+                        .name("Lote")
+                        .unitPrice(BigDecimal.TEN)
+                        .capacity(0)
+                        .salesStart(Instant.parse("2026-10-20T00:00:00Z"))
+                        .salesEnd(Instant.parse("2026-11-20T18:00:00Z"))
+                        .build(),
+                organizerId
+        ))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(org.springframework.http.HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @Test
+    void deveRejeitarJanelaDeVendasInvalida() {
+        UUID organizerId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        Event event = event(eventId, organizerId);
+
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() -> ticketLotService.create(
+                eventId,
+                TicketLotRequestDTO.builder()
+                        .name("Lote")
+                        .unitPrice(BigDecimal.TEN)
+                        .capacity(10)
+                        .salesStart(Instant.parse("2026-11-20T00:00:00Z"))
+                        .salesEnd(Instant.parse("2026-10-20T00:00:00Z"))
+                        .build(),
+                organizerId
+        ))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(org.springframework.http.HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @Test
+    void deveRetornar404QuandoEventoNaoExiste() {
+        UUID organizerId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+
+        when(eventRepository.findById(eventId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> ticketLotService.create(eventId, request(), organizerId))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(org.springframework.http.HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void deveRetornar403QuandoOrganizadorNaoEDonoDoEventoNaCriacao() {
+        UUID ownerId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        Event event = event(eventId, ownerId);
+
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() -> ticketLotService.create(eventId, request(), requesterId))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(org.springframework.http.HttpStatus.FORBIDDEN);
+    }
+
+    private TicketLot lot(UUID organizerId, int capacity, int sold, int reserved) {
+        return TicketLot.builder()
+                .id(UUID.randomUUID())
+                .event(event(UUID.randomUUID(), organizerId))
+                .name("Lote")
+                .unitPrice(BigDecimal.TEN)
+                .capacity(capacity)
+                .sold(sold)
+                .reserved(reserved)
+                .salesStart(Instant.now())
+                .salesEnd(Instant.now().plusSeconds(3600))
+                .status(LotStatus.ACTIVE)
+                .build();
+    }
+
     private TicketLotRequestDTO request() {
         return TicketLotRequestDTO.builder()
                 .name("Lote promocional")

@@ -2,6 +2,9 @@ package com.eventbook.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+
+import java.time.Clock;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,6 +17,11 @@ public class BackendApplication {
 	public static void main(String[] args) {
 		loadDotEnv();
 		SpringApplication.run(BackendApplication.class, args);
+	}
+
+	@Bean
+	Clock clock() {
+		return Clock.systemUTC();
 	}
 
 	private static void loadDotEnv() {
