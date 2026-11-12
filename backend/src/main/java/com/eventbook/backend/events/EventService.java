@@ -12,13 +12,13 @@ import com.eventbook.backend.orders.OrderRepository;
 import com.eventbook.backend.orders.OrderStatus;
 import com.eventbook.backend.tickets.TicketRepository;
 import com.eventbook.backend.users.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -33,6 +33,7 @@ public class EventService {
     private final TicketRepository ticketRepository;
     private final CheckInRepository checkInRepository;
     private final UserRepository userRepository;
+    private final Clock clock;
 
     // Cria um novo evento salvando-o no banco de dados
     @Transactional
@@ -178,8 +179,9 @@ public class EventService {
     @Transactional
     public void publish(UUID eventId, UUID requesterId) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException(
-                        "Evento não encontrado"
+                .orElseThrow(() -> new BusinessException(
+                        "Evento não encontrado",
+                        HttpStatus.NOT_FOUND
                 ));
 
         // Apenas o organizador responsável pelo evento pode publicá-lo.
@@ -191,7 +193,7 @@ public class EventService {
         }
 
         // Impede a publicação de eventos que já começaram ou cuja data de início não é futura.
-        if (!event.getStartsAt().isAfter(OffsetDateTime.now())) {
+        if (!event.getStartsAt().isAfter(OffsetDateTime.now(clock))) {
             throw new BusinessException(
                     "Data de início deve ser futura",
                     HttpStatus.UNPROCESSABLE_CONTENT
