@@ -160,8 +160,9 @@ class OrderServiceTest {
     TicketLot lot = TicketLot.builder()
         .id(ticketLotId)
         .status(LotStatus.ACTIVE)
-        .salesStart(now.minus(1, ChronoUnit.HOURS))
-        .salesEnd(now.plus(2, ChronoUnit.HOURS))
+        .capacity(100)
+        .salesStart(now.plus(1, ChronoUnit.HOURS))
+        .salesEnd(now.plus(3, ChronoUnit.HOURS))
         .build();
 
     when(ticketLotRepository.findByIdForUpdate(ticketLotId))
