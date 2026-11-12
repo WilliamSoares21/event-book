@@ -242,7 +242,8 @@ class OrderServiceTest {
     void devePermitirReservaQuandoCapacidadeForExatamenteAtingida() {
         // Arrange
         UUID ticketLotId = UUID.randomUUID();
-        BigDecimal unitPrice = new BigDecimal("50.00");
+  git push origin feature/funcionalidade-backend
+      BigDecimal unitPrice = new BigDecimal("50.00");
         User buyer = User.builder().id(UUID.randomUUID()).build();
         Instant now = Instant.now();
 

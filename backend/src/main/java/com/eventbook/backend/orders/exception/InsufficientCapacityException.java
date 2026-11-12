@@ -1,7 +1,11 @@
 package com.eventbook.backend.orders.exception;
 
-public class InsufficientCapacityException extends RuntimeException {
+import com.eventbook.backend.common.exception.BusinessException;
+import org.springframework.http.HttpStatus;
+
+public class InsufficientCapacityException extends BusinessException {
+
     public InsufficientCapacityException(String message) {
-        super(message);
+        super(message, HttpStatus.CONFLICT);
     }
 }
