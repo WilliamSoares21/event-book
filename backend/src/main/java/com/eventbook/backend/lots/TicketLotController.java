@@ -38,6 +38,7 @@ public class TicketLotController {
     @Operation(summary = "Cria um lote de ingressos")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Lote criado"),
+            @ApiResponse(responseCode = "401", description = "JWT ausente ou inválido"),
             @ApiResponse(responseCode = "403", description = "Organizador sem propriedade do evento"),
             @ApiResponse(responseCode = "404", description = "Evento não encontrado"),
             @ApiResponse(responseCode = "422", description = "Dados do lote inválidos")
@@ -58,6 +59,7 @@ public class TicketLotController {
     @Operation(summary = "Atualiza parcialmente um lote de ingressos")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lote atualizado"),
+            @ApiResponse(responseCode = "401", description = "JWT ausente ou inválido"),
             @ApiResponse(responseCode = "403", description = "Organizador sem propriedade"),
             @ApiResponse(responseCode = "404", description = "Lote não encontrado"),
             @ApiResponse(responseCode = "409", description = "Conflito de concorrência ou capacidade"),
