@@ -1,17 +1,21 @@
 package com.eventbook.backend.events;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -20,12 +24,12 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-
 import com.eventbook.backend.checkin.CheckInRepository;
 import com.eventbook.backend.common.exception.BusinessException;
 import com.eventbook.backend.events.dto.EventRequestDTO;
 import com.eventbook.backend.events.dto.EventResponseDTO;
 import com.eventbook.backend.events.dto.EventUpdateDTO;
+import com.eventbook.backend.lots.LotStatus;
 import com.eventbook.backend.lots.TicketLotRepository;
 import com.eventbook.backend.orders.OrderRepository;
 import com.eventbook.backend.tickets.TicketRepository;
@@ -34,7 +38,10 @@ import com.eventbook.backend.users.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 public class EventServiceTest {
-    
+
+    private static final Instant NOW = Instant.parse("2026-06-01T12:00:00Z");
+    private static final Clock CLOCK = Clock.fixed(NOW, ZoneOffset.UTC);
+
     @Mock
     private EventRepository eventRepository;
 
@@ -53,8 +60,20 @@ public class EventServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @InjectMocks
     private EventService eventService;
+
+    @BeforeEach
+    void setUp() {
+        eventService = new EventService(
+                eventRepository,
+                ticketLotRepository,
+                orderRepository,
+                ticketRepository,
+                checkInRepository,
+                userRepository,
+                CLOCK
+        );
+    }
 
     @Test
     void deveCriarEventoComoDraft() {
@@ -266,6 +285,91 @@ public class EventServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting("status")
                 .isEqualTo(HttpStatus.CONFLICT);
+    }
+
+    @Test
+    void devePublicarComSucessoQuandoRegrasAtendidas() {
+        UUID organizerId = UUID.randomUUID();
+        Event event = event(EventStatus.DRAFT, organizerId);
+
+        when(eventRepository.findById(event.getId()))
+                .thenReturn(Optional.of(event));
+        when(ticketLotRepository.existsByEventIdAndStatus(event.getId(), LotStatus.ACTIVE))
+                .thenReturn(true);
+
+        eventService.publish(event.getId(), organizerId);
+
+        assertThat(event.getStatus()).isEqualTo(EventStatus.PUBLISHED);
+        verify(eventRepository).save(event);
+    }
+
+    @Test
+    void deveRejeitarPublicacaoDeEventoSemLoteAtivo() {
+        UUID organizerId = UUID.randomUUID();
+        Event event = event(EventStatus.DRAFT, organizerId);
+
+        when(eventRepository.findById(event.getId()))
+                .thenReturn(Optional.of(event));
+        when(ticketLotRepository.existsByEventIdAndStatus(event.getId(), LotStatus.ACTIVE))
+                .thenReturn(false);
+
+        assertThatThrownBy(() -> eventService.publish(event.getId(), organizerId))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+
+        assertThat(event.getStatus()).isEqualTo(EventStatus.DRAFT);
+        verify(eventRepository, never()).save(event);
+    }
+
+    @Test
+    void deveRejeitarPublicacaoDeEventoComDataPassada() {
+        UUID organizerId = UUID.randomUUID();
+        Event event = event(EventStatus.DRAFT, organizerId);
+        event.setStartsAt(OffsetDateTime.now(CLOCK).minusDays(1));
+
+        when(eventRepository.findById(event.getId()))
+                .thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() -> eventService.publish(event.getId(), organizerId))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+
+        assertThat(event.getStatus()).isEqualTo(EventStatus.DRAFT);
+        verify(eventRepository, never()).save(event);
+    }
+
+    @Test
+    void deveRejeitarPublicacaoDeOutroOrganizador() {
+        UUID ownerId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+        Event event = event(EventStatus.DRAFT, ownerId);
+
+        when(eventRepository.findById(event.getId()))
+                .thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() -> eventService.publish(event.getId(), requesterId))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status")
+                .isEqualTo(HttpStatus.FORBIDDEN);
+
+        assertThat(event.getStatus()).isEqualTo(EventStatus.DRAFT);
+        verify(eventRepository, never()).save(event);
+    }
+
+    @Test
+    void deveRetornarNotFoundAoPublicarEventoInexistente() {
+        UUID eventId = UUID.randomUUID();
+        UUID requesterId = UUID.randomUUID();
+
+        when(eventRepository.findById(eventId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> eventService.publish(eventId, requesterId))
+                .isInstanceOf(com.eventbook.backend.common.exception.BusinessException.class)
+                .extracting("status")
+                .isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     private Event event(EventStatus status, UUID organizerId) {

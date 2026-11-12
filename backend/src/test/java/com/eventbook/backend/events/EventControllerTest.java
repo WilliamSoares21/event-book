@@ -1,6 +1,7 @@
 package com.eventbook.backend.events;
 
 import com.eventbook.backend.common.exception.ApiExceptionHandler;
+import com.eventbook.backend.common.exception.BusinessException;
 import com.eventbook.backend.events.dto.EventResponseDTO;
 import com.eventbook.backend.events.dto.EventUpdateDTO;
 import com.eventbook.backend.events.dto.EventRequestDTO;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -25,6 +27,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -239,5 +242,46 @@ class EventControllerTest {
                 any(EventUpdateDTO.class),
                 eq(organizerId)
         );
+    }
+
+    @Test
+    void deveRetornar204AoPublicarEvento() throws Exception {
+        UUID eventId = UUID.randomUUID();
+
+        mockMvc.perform(post("/api/events/{eventId}/publication", eventId))
+                .andExpect(status().isNoContent());
+
+        verify(eventService).publish(eq(eventId), eq(organizerId));
+    }
+
+    @Test
+    void deveRetornar422QuandoPublicarEventoSemLoteAtivo() throws Exception {
+        UUID eventId = UUID.randomUUID();
+
+        doThrow(new BusinessException(
+                "Evento precisa ter ao menos um lote ativo",
+                HttpStatus.UNPROCESSABLE_CONTENT
+        )).when(eventService).publish(eq(eventId), eq(organizerId));
+        mockMvc.perform(post("/api/events/{eventId}/publication", eventId))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("Evento precisa ter ao menos um lote ativo"));
+
+        verify(eventService).publish(eq(eventId), eq(organizerId));
+    }
+
+    @Test
+    void deveRetornar422QuandoPublicarEventoComDataPassada() throws Exception {
+        UUID eventId = UUID.randomUUID();
+
+        doThrow(new BusinessException(
+                "Data de início deve ser futura",
+                HttpStatus.UNPROCESSABLE_CONTENT
+        )).when(eventService).publish(eq(eventId), eq(organizerId));
+
+        mockMvc.perform(post("/api/events/{eventId}/publication", eventId))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("Data de início deve ser futura"));
+
+        verify(eventService).publish(eq(eventId), eq(organizerId));
     }
 }
