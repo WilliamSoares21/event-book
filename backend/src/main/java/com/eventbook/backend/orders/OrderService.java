@@ -50,7 +50,7 @@ public class OrderService {
                 .buyer(buyer)
                 .ticketLot(lot)
                 .quantity(quantity)
-                .unitPriceSnapshot(lot.getUnitPrice()) // RN-10: preço congela aqui
+                .unitPriceSnapshot(lot.getUnitPrice())
                 .status(OrderStatus.PENDING)
                 .expiresAt(now.plus(RESERVATION_MINUTES, ChronoUnit.MINUTES))
                 .build();
