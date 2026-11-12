@@ -2,7 +2,7 @@
     <app-menu-side-bar [roleUser]="roleUser"></app-menu-side-bar>
     <div class="side-page-content">
         <header class="brand-header">
-            @if (roleUser === 'VENDEDOR') {
+            @if (roleUser === 'ORGANIZADOR') {
             <div class="brand-header-content">
                 <h2>Eventos</h2>
                 <p>Gerencie e acompanhe todos os seus eventos ativos e agendados.</p>
@@ -14,7 +14,7 @@
                 <p>Acompanhe todos os eventos disponíveis e compre seus ingressos.</p>
             </div>
             }
-            @if (roleUser === 'VENDEDOR') {
+            @if (roleUser === 'ORGANIZADOR') {
             <div class="brand-header-content">
                 <button class="btn btn-primary" (click)="createEvent()">
                     <i class="bi bi-plus"></i>

@@ -3,7 +3,7 @@ import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 
 export interface MockUser {
   id: string;
-  role: 'VENDEDOR' | 'COMPRADOR' | 'VISITANTE';
+  role: 'ORGANIZADOR' | 'COMPRADOR' | 'VISITANTE';
   name: string;
   email: string;
 }
@@ -27,7 +27,7 @@ export class SessionService {
       const user = JSON.parse(sessionStorage.getItem('event-book-user') ?? 'null');
       return user && typeof user.id === 'string' && typeof user.email === 'string'
         && typeof user.name === 'string'
-        && ['VENDEDOR', 'COMPRADOR', 'VISITANTE'].includes(user.role) ? user : null;
+        && ['ORGANIZADOR', 'COMPRADOR', 'VISITANTE'].includes(user.role) ? user : null;
     } catch {
       return null;
     }
