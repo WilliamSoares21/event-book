@@ -2,8 +2,9 @@ import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 
 export interface MockUser {
+  token?: string;
   id: string;
-  role: 'ORGANIZADOR' | 'COMPRADOR' | 'VISITANTE';
+  role: string;
   name: string;
   email: string;
 }

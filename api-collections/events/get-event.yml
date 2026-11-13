@@ -6,10 +6,9 @@ info:
 http:
   method: GET
   url: "{{baseUrl}}/events/:id"
-  auth: none
   params:
     - name: id
-      value: "{{eventId}}"
+      value: faf03551-85f2-423b-b517-1a2342c28c53
       type: path
 
 settings:
