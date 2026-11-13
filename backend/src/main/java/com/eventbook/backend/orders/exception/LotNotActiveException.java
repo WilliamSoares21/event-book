@@ -1,7 +1,11 @@
 package com.eventbook.backend.orders.exception;
 
-public class LotNotActiveException extends RuntimeException {
+import com.eventbook.backend.common.exception.BusinessException;
+import org.springframework.http.HttpStatus;
+
+public class LotNotActiveException extends BusinessException {
+
     public LotNotActiveException(String message) {
-        super(message);
+        super(message, HttpStatus.UNPROCESSABLE_ENTITY);
     }
 }

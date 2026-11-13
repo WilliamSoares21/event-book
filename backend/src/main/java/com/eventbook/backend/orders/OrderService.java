@@ -7,6 +7,7 @@ import com.eventbook.backend.orders.exception.InsufficientCapacityException;
 import com.eventbook.backend.orders.exception.LotNotActiveException;
 import com.eventbook.backend.orders.exception.OutsideSalesWindowException;
 import com.eventbook.backend.users.User;
+import com.eventbook.backend.users.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,14 +44,14 @@ public class OrderService {
             throw new InsufficientCapacityException("Capacidade insuficiente no lote");
         }
 
-        lot.setReserved(lot.getReserved() + quantity);
+        lot.incrementReserved(quantity);
         ticketLotRepository.save(lot);
 
         Order order = Order.builder()
                 .buyer(buyer)
                 .ticketLot(lot)
                 .quantity(quantity)
-                .unitPriceSnapshot(lot.getUnitPrice()) // RN-10: preço congela aqui
+                .unitPriceSnapshot(lot.getUnitPrice())
                 .status(OrderStatus.PENDING)
                 .expiresAt(now.plus(RESERVATION_MINUTES, ChronoUnit.MINUTES))
                 .build();

@@ -113,7 +113,15 @@ public class EventController {
 
     @PreAuthorize("hasRole('ORGANIZADOR')")
     @SecurityRequirement(name = "bearerAuth")
-    @PostMapping("/{eventId}/publish")
+    @PostMapping("/{eventId}/publication")
+    @Operation(summary = "Publica um evento")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Evento publicado com sucesso"),
+            @ApiResponse(responseCode = "401", description = "JWT ausente ou inválido"),
+            @ApiResponse(responseCode = "403", description = "Somente o organizador proprietário pode publicar"),
+            @ApiResponse(responseCode = "404", description = "Evento não encontrado"),
+            @ApiResponse(responseCode = "422", description = "Data de início não é futura ou evento não possui lote ativo")
+    })
     public ResponseEntity<Void> publishEvent(
             @PathVariable UUID eventId,
             @AuthenticationPrincipal AuthenticatedUser authUser) {

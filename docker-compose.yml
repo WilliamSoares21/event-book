@@ -37,19 +37,12 @@ services:
   frontend:
     build:
       context: ./frontend/event-book-frontend
-      dockerfile: Dockerfile
-      target: development
     restart: unless-stopped
     ports:
       - "4200:4200"
-    volumes:
-      - ./frontend/event-book-frontend/src:/app/src:ro
-      - ./frontend/event-book-frontend/public:/app/public:ro
-      - /app/node_modules
-      - frontend_angular_cache:/app/.angular
-    environment:
-      NG_PERSISTENT_BUILD_CACHE: "1"
+    depends_on:
+      backend:
+        condition: service_healthy
 
 volumes:
   eventbook_data:
-  frontend_angular_cache:

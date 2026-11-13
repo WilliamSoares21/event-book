@@ -11,6 +11,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -40,6 +41,7 @@ public class TicketLotService {
                 ));
 
         verifyOwnership(event, organizerId);
+        validateNumericFields(dto.getUnitPrice(), dto.getCapacity());
         validateSalesWindow(dto.getSalesStart(), dto.getSalesEnd());
 
         // Status e contadores são definidos pelo backend. Assim, o cliente
@@ -87,10 +89,22 @@ public class TicketLotService {
         }
 
         if (dto.getUnitPrice() != null) {
+            if (dto.getUnitPrice().signum() < 0) {
+                throw new BusinessException(
+                        "O preço não pode ser negativo",
+                        HttpStatus.UNPROCESSABLE_CONTENT
+                );
+            }
             lot.setUnitPrice(dto.getUnitPrice());
         }
 
         if (dto.getCapacity() != null) {
+            if (dto.getCapacity() <= 0) {
+                throw new BusinessException(
+                        "A capacidade deve ser maior que zero",
+                        HttpStatus.UNPROCESSABLE_CONTENT
+                );
+            }
             int occupied = lot.getSold() + lot.getReserved();
             if (dto.getCapacity() < occupied) {
                 throw new BusinessException(
@@ -134,6 +148,21 @@ public class TicketLotService {
             throw new BusinessException(
                     "Somente o organizador proprietário pode administrar o lote",
                     HttpStatus.FORBIDDEN
+            );
+        }
+    }
+
+    private void validateNumericFields(BigDecimal unitPrice, Integer capacity) {
+        if (unitPrice.signum() < 0) {
+            throw new BusinessException(
+                    "O preço não pode ser negativo",
+                    HttpStatus.UNPROCESSABLE_CONTENT
+            );
+        }
+        if (capacity <= 0) {
+            throw new BusinessException(
+                    "A capacidade deve ser maior que zero",
+                    HttpStatus.UNPROCESSABLE_CONTENT
             );
         }
     }
