@@ -11,6 +11,7 @@
         <main class="side-page-main">
             @for (lot of lots; track lot.id; let index = $index) {
             <form>
+                <fieldset [disabled]="isLotLocked(lot.id)">
                 <div class="lot-header">
                     <h3>Lote {{ index + 1 }}</h3>
                     <button type="button" class="btn btn-outline-danger remove-lot"
@@ -55,21 +56,25 @@
                         </div>
                     </div>
                 </div>
+                </fieldset>
             </form>
             }
-            <button type="button" class="btn btn-outline-primary add-lot" (click)="addLot()">
+            <button type="button" class="btn btn-outline-primary add-lot" (click)="addLot()" [disabled]="saving() || success()">
                 <span aria-hidden="true">+</span>
                 Adicionar lote
             </button>
+            @if (message()) {
+                <p role="status" [class.text-danger]="!success()" [class.text-success]="success()">{{ message() }}</p>
+            }
             <div class="div-button-cancel-save">
                 <div class="col-12 div-button">
-                    <a routerLink="/events/create" class="btn-cancel">
+                    <a routerLink="/events/create" [state]="{ event: event }" class="btn-cancel">
                         <i class="bi bi-arrow-left" aria-hidden="true"></i>
                         <span>Voltar</span>
                     </a>
-                    <button class="btn btn-primary" (click)="createEvent()">
+                    <button type="button" class="btn btn-primary" (click)="createEvent()" [disabled]="saving() || success()">
                         <i class="bi bi-calendar"></i>
-                        <span>Criar evento</span>
+                        <span>{{ saving() ? 'Salvando...' : 'Criar evento' }}</span>
                     </button>
                 </div>                
             </div>

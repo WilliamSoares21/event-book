@@ -8,7 +8,7 @@
             </div>
         </header>
         <main class="side-page-main col-12">
-            <form>
+            <form [formGroup]="singUpForm">
                 <div>
                     <h2>Informações Básicas</h2>
                     <p>Defina o nome e a descrição principal do seu evento.</p>
@@ -20,7 +20,7 @@
                     </div>
                     <div class="col-12 mt-4 div-label-input">
                         <label for="eventName">Título do evento</label>
-                        <input type="text" class="form-control" id="eventName" placeholder="Ex: Conferência de Tecnologia 2024">
+                        <input type="text" class="form-control" id="eventName" formControlName="eventName" placeholder="Ex: Conferência de Tecnologia 2024">
                     </div>                    
                 </section>
                 <section class="form-group">
@@ -29,10 +29,10 @@
                         <h4>Sobre o Evento</h4>
                     </div>
                     <div class="col-12 mt-4 div-label-input">
-                        <label for="eventName">Descrição do evento</label>
+                        <label for="eventDescription">Descrição do evento</label>
                         <textarea
                             class="form-control"
-                            id="eventDescription"
+                            id="eventDescription" formControlName="eventDescription"
                             placeholder="Descreva o objetivo, público-alvo e o que os participantes podem esperar..."
                         ></textarea>
                         <p class="paragraph-description">Uma boa descrição ajuda a converter mais interessados em participantes.</p>
@@ -51,27 +51,33 @@
                     <div class="col-12 mt-4 div-label-input">
                         <div class="row">
                             <div class="col-6">
-                                <label for="eventName">Data de início do evento</label>
-                                <input type="date" class="form-control" id="eventStartedDate">
+                                <label for="eventStartedDate">Data de início do evento</label>
+                                <input type="date" class="form-control" id="eventStartedDate" formControlName="eventStartedDate">
                             </div>
                             <div class="col-6">
-                                <label for="eventName">Data de fim do evento</label>
-                                <input type="date" class="form-control" id="eventEndDate">
+                                <label for="eventEndDate">Data de fim do evento</label>
+                                <input type="date" class="form-control" id="eventEndDate" formControlName="eventEndDate">
                             </div>
                         </div>
                     </div>       
                     <div class="col-12 mt-4 div-label-input">
                         <div class="row">
                             <div class="col-6">
-                                <label for="eventName">Hora de início</label>
-                                <input type="time" class="form-control" id="eventStartedTime">
+                                <label for="eventStartedTime">Hora de início</label>
+                                <input type="time" class="form-control" id="eventStartedTime" formControlName="eventStartedTime">
                             </div>
                             <div class="col-6">
-                                <label for="eventName">Hora de fim</label>
-                                <input type="time" class="form-control" id="eventEndTime">
+                                <label for="eventEndTime">Hora de fim</label>
+                                <input type="time" class="form-control" id="eventEndTime" formControlName="eventEndTime">
                             </div>
                         </div>
                     </div>              
+                </section>
+                <section class="form-group">
+                    <div class="col-12 mt-4 div-label-input">
+                        <label for="eventLocation">Local do evento</label>
+                        <input type="text" class="form-control" id="eventLocation" formControlName="eventLocation" placeholder="Informe o local do evento">
+                    </div>
                 </section>
             </form>
             <div class="div-button-cancel-save">
@@ -80,7 +86,7 @@
                         <i class="bi bi-arrow-left" aria-hidden="true"></i>
                         <span>Voltar</span>
                     </a>
-                    <button class="btn btn-primary" (click)="createLots()">                        
+                    <button type="button" class="btn btn-primary" (click)="createLots()">
                          Próximo
                     </button>
                 </div>                
