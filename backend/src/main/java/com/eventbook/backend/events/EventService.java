@@ -6,8 +6,10 @@ import com.eventbook.backend.events.dto.EventOccupancyDTO;
 import com.eventbook.backend.events.dto.EventRequestDTO;
 import com.eventbook.backend.events.dto.EventResponseDTO;
 import com.eventbook.backend.events.dto.EventUpdateDTO;
+import com.eventbook.backend.events.dto.OrganizerEventResponseDTO;
 import com.eventbook.backend.lots.LotStatus;
 import com.eventbook.backend.lots.TicketLotRepository;
+import com.eventbook.backend.lots.dto.TicketLotResponseDTO;
 import com.eventbook.backend.orders.OrderRepository;
 import com.eventbook.backend.orders.OrderStatus;
 import com.eventbook.backend.tickets.TicketRepository;
@@ -21,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +38,35 @@ public class EventService {
     private final CheckInRepository checkInRepository;
     private final UserRepository userRepository;
     private final Clock clock;
+
+    /**
+     * Lista todos os eventos do organizador autenticado, em qualquer status,
+     * com seus lotes (ativos e inativos). Duas consultas no total: eventos e lotes.
+     */
+    @Transactional(readOnly = true)
+    public List<OrganizerEventResponseDTO> findByOrganizer(UUID organizerId) {
+        List<Event> events = eventRepository.findByOrganizerIdOrderByStartsAtDesc(organizerId);
+        if (events.isEmpty()) {
+            return List.of();
+        }
+
+        List<UUID> eventIds = events.stream().map(Event::getId).toList();
+
+        Map<UUID, List<TicketLotResponseDTO>> lotsByEvent = ticketLotRepository
+                .findByEventIdInOrderByNameAsc(eventIds)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        lot -> lot.getEvent().getId(),
+                        Collectors.mapping(TicketLotResponseDTO::from, Collectors.toList())
+                ));
+
+        return events.stream()
+                .map(event -> OrganizerEventResponseDTO.from(
+                        event,
+                        lotsByEvent.getOrDefault(event.getId(), List.of())
+                ))
+                .toList();
+    }
 
     // Cria um novo evento salvando-o no banco de dados
     @Transactional
