@@ -9,6 +9,7 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -38,17 +39,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             try {
-                // valida token
-                jwtService.validateToken(token);
-                // recupera UUID
-                UUID userId = jwtService.getUserIdFromToken(token);
-                // carrega usuário já como AuthenticatedUser (evita DB extra)
-                AuthenticatedUser principal = (AuthenticatedUser)
-                        userDetailsService.loadUserByUsername(
-                                // o método loadUserByUsername aceita email, mas aqui já temos UUID.
-                                // Vamos buscar pelo ID rapidamente:
-                                userDetailsService.findEmailById(userId).orElseThrow()
-                        );
+                Claims claims = jwtService.validateToken(token).getPayload();
+                UUID userId = UUID.fromString(claims.getSubject());
+                Integer tokenVersion = claims.get("tokenVersion", Integer.class);
+
+                // Token sem claim de versão (emitido antes da migration) é tratado como inválido:
+                // comportamento seguro por padrão, conforme decisão de projeto.
+                if (tokenVersion == null) {
+                    throw new IllegalArgumentException("Token sem versão");
+                }
+
+                // Uma única consulta ao banco por requisição autenticada.
+                AuthenticatedUser principal = userDetailsService.loadUserById(userId)
+                        .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+
+                // Versão divergente significa que o usuário fez logout depois da emissão deste token.
+                if (!tokenVersion.equals(principal.getTokenVersion())) {
+                    throw new IllegalArgumentException("Token revogado");
+                }
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(

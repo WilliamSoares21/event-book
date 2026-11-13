@@ -14,8 +14,7 @@ import java.util.UUID;
 /**
  * Serviço do Spring Security que busca as informações do usuário no banco de dados.
  * Ele entrega o AuthenticatedUser com o ID (UUID) já preenchido para facilitar o uso do JWT.
- *
-*/
+ */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
@@ -34,7 +33,18 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // Pega a função do usuário (Ex: COMPRADOR) e adiciona o prefixo "ROLE_" exigido pelo Spring
+        return toAuthenticatedUser(user);
+    }
+
+    /**
+     * Busca o usuário pelo UUID presente no JWT. Usado pelo filtro de autenticação
+     * para evitar múltiplas consultas por requisição.
+     */
+    public Optional<AuthenticatedUser> loadUserById(UUID id) {
+        return userRepository.findById(id).map(this::toAuthenticatedUser);
+    }
+
+    private AuthenticatedUser toAuthenticatedUser(User user) {
         List<GrantedAuthority> authorities = List.of(
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
         );
@@ -44,15 +54,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.getEmail(),
                 user.getName(),
                 user.getPasswordHash(),
-                authorities
+                authorities,
+                user.getTokenVersion()
         );
-    }
-
-    /**
-     * Busca apenas o e-mail do usuário usando o ID (UUID) que veio dentro do token JWT.
-     * Ajuda o filtro de segurança a saber quem é o dono do token sem fazer buscas pesadas.
-     */
-    public Optional<String> findEmailById(UUID id) {
-        return userRepository.findById(id).map(user -> user.getEmail());
     }
 }

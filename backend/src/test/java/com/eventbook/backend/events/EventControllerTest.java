@@ -70,7 +70,8 @@ class EventControllerTest {
                 null,
                 java.util.List.of(
                         new SimpleGrantedAuthority("ROLE_ORGANIZADOR")
-                )
+                ),
+                0
         );
 
         SecurityContextHolder.getContext().setAuthentication(

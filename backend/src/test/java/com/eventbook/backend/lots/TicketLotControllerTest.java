@@ -67,7 +67,8 @@ class TicketLotControllerTest {
                 "organizer@example.com",
                 "Organizer",
                 null,
-                List.of()
+                List.of(),
+                0
         );
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities())

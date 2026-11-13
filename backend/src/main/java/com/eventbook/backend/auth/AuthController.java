@@ -2,8 +2,10 @@ package com.eventbook.backend.auth;
 
 import com.eventbook.backend.auth.dto.LoginRequest;
 import com.eventbook.backend.auth.dto.AuthResponse;
+import com.eventbook.backend.security.AuthenticatedUser;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,5 +22,11 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal AuthenticatedUser authUser) {
+        authService.logout(authUser.id());
+        return ResponseEntity.noContent().build();
     }
 }
