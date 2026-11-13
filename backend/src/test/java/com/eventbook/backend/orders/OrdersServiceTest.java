@@ -1,4 +1,3 @@
-
 package com.eventbook.backend.orders;
 
 import com.eventbook.backend.lots.LotStatus;
@@ -247,6 +246,77 @@ class OrderServiceTest {
   @Test
   void deveRejeitarReservaQuandoVendasJaTiveremEncerrado() {
 
+    UUID ticketLotId = UUID.randomUUID();
+
+    User buyer = User.builder()
+        .id(UUID.randomUUID())
+        .build();
+
+    Instant now = Instant.now();
+
+    TicketLot lot = TicketLot.builder()
+        .id(ticketLotId)
+        .status(LotStatus.ACTIVE)
+        .capacity(100)
+        .salesStart(now.minus(3, ChronoUnit.HOURS))
+        .salesEnd(now.minus(1, ChronoUnit.HOURS))
+        .build();
+
+    when(ticketLotRepository.findByIdForUpdate(ticketLotId))
+        .thenReturn(Optional.of(lot));
+
+    assertThatThrownBy(() -> orderService.reserve(buyer, ticketLotId, 2))
+        .isInstanceOf(OutsideSalesWindowException.class);
+
+    verify(ticketLotRepository, never()).save(any());
+    verify(orderRepository, never()).save(any());
   }
 
+  @Test
+  void devePermitirReservaExatamenteNoInicioDaJanela() {
+    UUID ticketLotId = UUID.randomUUID();
+    User buyer = User.builder().id(UUID.randomUUID()).build();
+    Instant now = Instant.now();
+
+    TicketLot lot = TicketLot.builder()
+        .id(ticketLotId)
+        .status(LotStatus.ACTIVE)
+        .capacity(100)
+        .salesStart(now)
+        .salesEnd(now.plus(1, ChronoUnit.HOURS))
+        .unitPrice(new BigDecimal("50.00"))
+        .build();
+
+    when(ticketLotRepository.findByIdForUpdate(ticketLotId)).thenReturn(Optional.of(lot));
+    when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    Order order = orderService.reserve(buyer, ticketLotId, 1);
+
+    assertThat(order).isNotNull();
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+  }
+
+  @Test
+  void devePermitirReservaExatamenteNoFimDaJanela() {
+    UUID ticketLotId = UUID.randomUUID();
+    User buyer = User.builder().id(UUID.randomUUID()).build();
+    Instant now = Instant.now().plusSeconds(2);
+
+    TicketLot lot = TicketLot.builder()
+        .id(ticketLotId)
+        .status(LotStatus.ACTIVE)
+        .capacity(100)
+        .salesStart(now.minus(1, ChronoUnit.HOURS))
+        .salesEnd(now)
+        .unitPrice(new BigDecimal("50.00"))
+        .build();
+
+    when(ticketLotRepository.findByIdForUpdate(ticketLotId)).thenReturn(Optional.of(lot));
+    when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    Order order = orderService.reserve(buyer, ticketLotId, 1);
+
+    assertThat(order).isNotNull();
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+  }
 }

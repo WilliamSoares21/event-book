@@ -7,7 +7,7 @@ import com.eventbook.backend.orders.exception.InsufficientCapacityException;
 import com.eventbook.backend.orders.exception.LotNotActiveException;
 import com.eventbook.backend.orders.exception.OutsideSalesWindowException;
 import com.eventbook.backend.users.User;
-import com.eventbook.backend.users.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +28,7 @@ public class OrderService {
     @Transactional
     public Order reserve(User buyer, UUID ticketLotId, int quantity) {
         TicketLot lot = ticketLotRepository.findByIdForUpdate(ticketLotId)
-                .orElseThrow(() -> new IllegalArgumentException("Lote não encontrado: " + ticketLotId));
+                .orElseThrow(() -> new EntityNotFoundException("Lote não encontrado: " + ticketLotId));
 
         if (lot.getStatus() != LotStatus.ACTIVE) {
             throw new LotNotActiveException("Lote não está ativo para venda");
