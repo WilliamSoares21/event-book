@@ -3,9 +3,9 @@ variables:
   - name: baseUrl
     value: http://localhost:8080/api
   - name: eventId
-    value: 5c3b39b1-c889-4a3b-a91a-0a60952a36b2
+    value: a9b9ecd5-180d-43b8-8233-2f10f6194e27
   - name: lotId
-    value: 938f9045-ff96-460d-a316-96b82643825b
+    value: 8987add8-74fa-4720-bd44-2f6425275ee4
   - name: organizerEmail
     value: leto@example.com
   - name: organizerPassword
