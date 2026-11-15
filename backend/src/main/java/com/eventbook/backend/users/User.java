@@ -35,10 +35,21 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    /**
+     * Versão do token atual. Incrementada no logout para invalidar tokens anteriores.
+     * Tokens emitidos com versão diferente da persistida são rejeitados pelo filtro JWT.
+     */
+    @Builder.Default
+    @Column(name = "token_version", nullable = false)
+    private Integer tokenVersion = 0;
+
     @PrePersist
     void onCreate() {
         if (createdAt == null) {
             createdAt = Instant.now();
+        }
+        if (tokenVersion == null) {
+            tokenVersion = 0;
         }
     }
 }

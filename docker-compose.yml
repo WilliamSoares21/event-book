@@ -39,10 +39,7 @@ services:
       context: ./frontend/event-book-frontend
     restart: unless-stopped
     ports:
-      - "4200:4200"
-    depends_on:
-      backend:
-        condition: service_healthy
+      - "4200:8080"
 
 volumes:
   eventbook_data:

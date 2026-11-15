@@ -11,7 +11,8 @@ public record AuthenticatedUser(
         String email,
         String name,
         String passwordHash,
-        Collection<? extends GrantedAuthority> authorities) implements UserDetails {
+        Collection<? extends GrantedAuthority> authorities,
+        Integer tokenVersion) implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -26,6 +27,10 @@ public record AuthenticatedUser(
     @Override
     public String getUsername() {
         return email;
+    }
+
+    public Integer getTokenVersion() {
+        return tokenVersion != null ? tokenVersion : 0;
     }
 
     @Override

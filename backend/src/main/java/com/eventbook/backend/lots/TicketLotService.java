@@ -177,18 +177,6 @@ public class TicketLotService {
     }
 
     private TicketLotResponseDTO toResponse(TicketLot lot) {
-        return TicketLotResponseDTO.builder()
-                .id(lot.getId())
-                .eventId(lot.getEvent().getId())
-                .name(lot.getName())
-                .unitPrice(lot.getUnitPrice())
-                .capacity(lot.getCapacity())
-                .sold(lot.getSold())
-                .reserved(lot.getReserved())
-                .salesStart(lot.getSalesStart())
-                .salesEnd(lot.getSalesEnd())
-                .status(lot.getStatus())
-                .version(lot.getVersion())
-                .build();
+        return TicketLotResponseDTO.from(lot);
     }
 }
