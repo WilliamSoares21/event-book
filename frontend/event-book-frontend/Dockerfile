@@ -1,6 +1,6 @@
 # Estágio 1: Dependências
 
-FROM node:22-bookworm-slim AS deps
+FROM node:24.18.0-bookworm-slim AS deps
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 # Estágio 2: Desenvolvimento
 
-FROM node:22-bookworm-slim AS development
+FROM node:24.18.0-bookworm-slim AS development
 
 WORKDIR /app
 
@@ -33,7 +33,7 @@ CMD ["npm", "start", "--", "--host", "0.0.0.0", "--port", "4200", "--poll", "200
 
 # Estágio 3: Build de produção
 
-FROM node:22-bookworm-slim AS builder
+FROM node:24.18.0-bookworm-slim AS builder
 
 WORKDIR /app
 
