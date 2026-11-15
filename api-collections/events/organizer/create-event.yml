@@ -6,25 +6,17 @@ info:
 http:
   method: POST
   url: "{{baseUrl}}/events"
-  auth: inherit
-
   body:
     type: json
-    body: |
+    data: |-
       {
         "title": "Festival EventBook",
-        "description": "Evento de demonstração.",
+        "description": "Evento com música ao vivo, gastronomia e apresentações culturais.",
         "startsAt": "2026-11-20T19:00:00-03:00",
         "endsAt": "2026-11-20T23:00:00-03:00",
-        "location": "São Paulo"
+        "location": "Fortaleza - CE"
       }
-
-settings:
-  encodeUrl: true
-  timeout: 0
-  followRedirects: true
-  maxRedirects: 5
-  forwardAuthorizationHeader: false
+  auth: inherit
 
 runtime:
   scripts:
@@ -33,3 +25,10 @@ runtime:
         if (res.status === 201 && typeof res.body?.id === "string") {
           bru.setEnvVar("eventId", res.body.id);
         }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

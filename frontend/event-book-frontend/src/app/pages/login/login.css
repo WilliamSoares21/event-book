@@ -18,6 +18,7 @@
 .brand-header {
   display: flex;
   align-items: center;
+  justify-content: normal;
   gap: 12px;
 }
 

@@ -1,0 +1,41 @@
+.ticket-details {
+  padding: 2rem 1rem;
+}
+
+.ticket-card {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  max-width: 900px;
+  margin-inline: auto;
+  overflow: hidden;
+}
+
+.ticket-image {
+  width: 40%;
+  object-fit: cover;
+}
+
+.ticket-card .card-body {
+  flex: 1;
+  min-width: 0;
+  padding: 2rem;
+  align-self: center;
+  overflow-wrap: anywhere;
+}
+
+p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+@media (max-width: 600px) {
+  .ticket-details {
+    padding: 1rem 0;
+  }
+
+  .ticket-card .card-body {
+    padding: 1rem;
+  }
+}
