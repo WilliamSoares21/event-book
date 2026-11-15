@@ -38,8 +38,9 @@ services:
     build:
       context: ./frontend/event-book-frontend
     restart: unless-stopped
+    target: development
     ports:
-      - "4200:8080"
+      - "4200:4200"
 
 volumes:
   eventbook_data:
