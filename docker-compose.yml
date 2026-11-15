@@ -37,6 +37,7 @@ services:
   frontend:
     build:
       context: ./frontend/event-book-frontend
+      target: development
     restart: unless-stopped
     target: development
     ports:
