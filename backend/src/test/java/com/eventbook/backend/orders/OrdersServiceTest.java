@@ -5,6 +5,7 @@ import com.eventbook.backend.lots.TicketLot;
 import com.eventbook.backend.lots.TicketLotRepository;
 import com.eventbook.backend.orders.exception.InsufficientCapacityException;
 import com.eventbook.backend.orders.exception.LotNotActiveException;
+import com.eventbook.backend.orders.exception.LotNotFoundException;
 import com.eventbook.backend.orders.exception.OutsideSalesWindowException;
 import com.eventbook.backend.users.User;
 
@@ -110,7 +111,7 @@ class OrderServiceTest {
         .thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> orderService.reserve(buyer, ticketLotId, 2))
-        .isInstanceOf(IllegalArgumentException.class)
+        .isInstanceOf(LotNotFoundException.class)
         .hasMessageContaining("Lote não encontrado");
 
     verify(ticketLotRepository).findByIdForUpdate(ticketLotId);
