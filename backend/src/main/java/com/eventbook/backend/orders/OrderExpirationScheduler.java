@@ -56,29 +56,31 @@ public class OrderExpirationScheduler {
 
     @Transactional
     public void processSingleExpiredOrder(Order order) {
-        if (order.getStatus() != OrderStatus.PENDING) {
+        // Lock the Order first to ensure atomicity
+        Order lockedOrder = orderRepository.findByIdForUpdate(order.getId())
+                .orElseThrow(() -> new IllegalStateException("Pedido não encontrado: " + order.getId()));
+
+        UUID lotId = lockedOrder.getTicketLot().getId();
+        int quantity = lockedOrder.getQuantity();
+
+        // Re-validate within the lock
+        if (lockedOrder.getStatus() != OrderStatus.PENDING) {
             return;
         }
 
-        if (order.getExpiresAt() == null || order.getExpiresAt().isAfter(Instant.now())) {
+        if (lockedOrder.getExpiresAt() == null || lockedOrder.getExpiresAt().isAfter(Instant.now())) {
             return;
         }
 
-        UUID lotId = order.getTicketLot().getId();
-        int quantity = order.getQuantity();
-
+        // Now lock the TicketLot
         TicketLot lot = ticketLotRepository.findByIdForUpdate(lotId)
-                .orElse(null);
+                .orElseThrow(() -> new IllegalStateException("Lote não encontrado: " + lotId));
 
-        if (lot == null) {
-            log.warn("Lote {} não encontrado para pedido expirado {}", lotId, order.getId());
-            return;
-        }
-
-        order.setStatus(OrderStatus.EXPIRED);
+        // Both validations passed, process the expiration
+        lockedOrder.setStatus(OrderStatus.EXPIRED);
         lot.decrementReserved(quantity);
 
-        orderRepository.save(order);
+        orderRepository.save(lockedOrder);
         ticketLotRepository.save(lot);
 
         log.debug("Pedido {} expirado, {} unidades liberadas do lote {}", order.getId(), quantity, lotId);
