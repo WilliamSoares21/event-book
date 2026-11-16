@@ -1,5 +1,9 @@
 package com.eventbook.backend.common.exception;
 
+import com.eventbook.backend.orders.exception.OrderAccessDeniedException;
+import com.eventbook.backend.orders.exception.OrderExpiredException;
+import com.eventbook.backend.orders.exception.OrderInvalidStatusException;
+import com.eventbook.backend.orders.exception.OrderNotFoundException;
 import com.eventbook.backend.users.exception.DuplicateEmailException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -77,6 +81,34 @@ public class ApiExceptionHandler {
             EntityNotFoundException ex) {
 
         return buildError(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleOrderNotFound(
+            OrderNotFoundException ex) {
+
+        return buildError(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(OrderAccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleOrderAccessDenied(
+            OrderAccessDeniedException ex) {
+
+        return buildError(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
+    @ExceptionHandler(OrderInvalidStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleOrderInvalidStatus(
+            OrderInvalidStatusException ex) {
+
+        return buildError(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(OrderExpiredException.class)
+    public ResponseEntity<Map<String, Object>> handleOrderExpired(
+            OrderExpiredException ex) {
+
+        return buildError(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 
     // esse handler é uma proteção adicional caso alguma atualização futura não seja tratada dentro do service.
