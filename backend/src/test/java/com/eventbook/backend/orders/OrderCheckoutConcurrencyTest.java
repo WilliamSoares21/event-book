@@ -15,9 +15,13 @@ import com.eventbook.backend.users.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -26,6 +30,8 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -35,9 +41,13 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -83,10 +93,130 @@ class OrderCheckoutConcurrencyTest {
     @Autowired
     private OrderExpirationScheduler expirationScheduler;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private LockProbe lockProbe;
+
+    @TestConfiguration
+    static class LockProbeConfig {
+        @Bean
+        static LockProbe lockProbe() {
+            return new LockProbe();
+        }
+
+        @Bean
+        static BeanPostProcessor orderRepositoryLockProbe(LockProbe lockProbe) {
+            return new BeanPostProcessor() {
+                @Override
+                public Object postProcessAfterInitialization(Object bean, String beanName) {
+                    if (bean instanceof OrderRepository repository && !(repository instanceof LockProbeRepository)) {
+                        return wrapWithLockProbe(repository, lockProbe);
+                    }
+                    return bean;
+                }
+            };
+        }
+    }
+
+    static final class LockProbe {
+        private final AtomicBoolean armed = new AtomicBoolean(false);
+        private volatile CountDownLatch locked = new CountDownLatch(1);
+        private volatile CountDownLatch release = new CountDownLatch(1);
+
+        void reset() {
+            armed.set(false);
+            locked = new CountDownLatch(1);
+            release = new CountDownLatch(1);
+        }
+
+        void arm() {
+            armed.set(true);
+        }
+
+        boolean takeArmed() {
+            return armed.getAndSet(false);
+        }
+
+        void signalLocked() {
+            locked.countDown();
+        }
+
+        boolean awaitLocked(long seconds) throws InterruptedException {
+            return locked.await(seconds, TimeUnit.SECONDS);
+        }
+
+        void awaitRelease() {
+            try {
+                if (!release.await(10, TimeUnit.SECONDS)) {
+                    throw new IllegalStateException("Timeout esperando liberação do LockProbe");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(e);
+            }
+        }
+
+        void release() {
+            release.countDown();
+        }
+    }
+
+    interface LockProbeRepository extends OrderRepository {
+    }
+
+    @SuppressWarnings("unchecked")
+    private static OrderRepository wrapWithLockProbe(OrderRepository delegate, LockProbe probe) {
+        return (OrderRepository) Proxy.newProxyInstance(
+                OrderRepository.class.getClassLoader(),
+                new Class<?>[]{LockProbeRepository.class},
+                (proxy, method, args) -> {
+                    try {
+                        if ("findByIdForUpdate".equals(method.getName()) && probe.takeArmed()) {
+                            Object result = method.invoke(delegate, args);
+                            probe.signalLocked();
+                            probe.awaitRelease();
+                            return result;
+                        }
+                        return method.invoke(delegate, args);
+                    } catch (InvocationTargetException e) {
+                        throw e.getCause();
+                    }
+                });
+    }
+
+    private void awaitLockWaiter() throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (System.nanoTime() < deadline) {
+            Integer waiters = jdbcTemplate.queryForObject("""
+                    SELECT count(*) FROM pg_stat_activity
+                    WHERE wait_event_type = 'Lock'
+                      AND datname = current_database()
+                      AND pid <> pg_backend_pid()
+                      AND query ILIKE '%for update%'
+                    """, Integer.class);
+            if (waiters != null && waiters > 0) {
+                return;
+            }
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(25));
+        }
+        fail("A segunda transação não ficou aguardando o lock da Order (timeout)");
+    }
+
+    private int performCheckoutStatus(String token, UUID orderId) throws Exception {
+        return mockMvc.perform(post("/api/orders/{orderId}/checkout", orderId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .content("{}"))
+                .andReturn().getResponse().getStatus();
+    }
+
     private String commonPassword = "password123";
 
     @BeforeEach
     void setup() {
+        lockProbe.reset();
         ticketRepository.deleteAll();
         orderRepository.deleteAll();
         ticketLotRepository.deleteAll();
@@ -247,7 +377,7 @@ class OrderCheckoutConcurrencyTest {
     }
 
     @Test
-    void checkoutVenceDisputaQuandoPedidoAindaValido() throws Exception {
+    void checkoutAdquireLockPrimeiroEImpedeExpiracao() throws Exception {
         User organizer = createOrganizer();
         TicketLot lot = createActiveLot(organizer, 5, new BigDecimal("50.00"));
 
@@ -255,45 +385,52 @@ class OrderCheckoutConcurrencyTest {
         String token = obtainToken(buyer.getEmail());
         UUID orderId = createOrderAndGetId(token, lot.getId(), 2);
 
-        // Pedido PENDING e ainda válido: o scheduler NÃO deve expirá-lo em nenhum interleaving.
+        // Pedido PENDING e ainda válido; o scheduler não deve expirá-lo.
         Order staleOrder = orderRepository.findById(orderId).orElseThrow();
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
-        CountDownLatch startLatch = new CountDownLatch(1);
-        CountDownLatch endLatch = new CountDownLatch(2);
+        CountDownLatch checkoutDone = new CountDownLatch(1);
+        CountDownLatch schedulerDone = new CountDownLatch(1);
         AtomicInteger checkoutStatus = new AtomicInteger(-1);
+        try {
+            // 1. Checkout é liberado e o probe o pausa EXATAMENTE após o lock real da Order.
+            lockProbe.arm();
+            executor.submit(() -> {
+                try {
+                    checkoutStatus.set(performCheckoutStatus(token, orderId));
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                } finally {
+                    checkoutDone.countDown();
+                }
+            });
 
-        executor.submit(() -> {
-            try {
-                startLatch.await();
-                int status = mockMvc.perform(post("/api/orders/{orderId}/checkout", orderId)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
-                                .content("{}"))
-                        .andReturn().getResponse().getStatus();
-                checkoutStatus.set(status);
-            } catch (Exception e) {
-                // status permanece -1, falha a asserção
-            } finally {
-                endLatch.countDown();
-            }
-        });
+            // 2. Evento real confirmado: o Checkout já detém o lock.
+            assertThat(lockProbe.awaitLocked(10))
+                    .as("checkout deve adquirir o lock da Order primeiro")
+                    .isTrue();
 
-        executor.submit(() -> {
-            try {
-                startLatch.await();
-                expirationScheduler.processSingleExpiredOrder(staleOrder);
-            } catch (Exception ignored) {
-            } finally {
-                endLatch.countDown();
-            }
-        });
+            // 3. Scheduler disputa o mesmo lock.
+            executor.submit(() -> {
+                try {
+                    expirationScheduler.processSingleExpiredOrder(staleOrder);
+                } finally {
+                    schedulerDone.countDown();
+                }
+            });
 
-        startLatch.countDown();
-        endLatch.await();
-        executor.shutdown();
+            // 4. Observação no PostgreSQL: o scheduler está bloqueado aguardando o lock.
+            awaitLockWaiter();
 
-        // Determinístico: pedido válido nunca é expirado, então o checkout sempre conclui.
+            // 5. Checkout conclui (PAID, tickets emitidos) e libera o lock no commit.
+            lockProbe.release();
+            assertThat(checkoutDone.await(10, TimeUnit.SECONDS)).isTrue();
+            assertThat(schedulerDone.await(10, TimeUnit.SECONDS)).isTrue();
+        } finally {
+            executor.shutdown();
+            executor.awaitTermination(10, TimeUnit.SECONDS);
+        }
+
         assertThat(checkoutStatus.get()).isEqualTo(200);
 
         Order finalOrder = orderRepository.findById(orderId).orElseThrow();
@@ -307,7 +444,7 @@ class OrderCheckoutConcurrencyTest {
     }
 
     @Test
-    void schedulerVenceDisputaQuandoPedidoJaExpirou() throws Exception {
+    void schedulerAdquireLockPrimeiroEExpiraAntesDoCheckout() throws Exception {
         User organizer = createOrganizer();
         TicketLot lot = createActiveLot(organizer, 5, new BigDecimal("50.00"));
 
@@ -321,42 +458,47 @@ class OrderCheckoutConcurrencyTest {
         orderRepository.save(staleOrder);
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
-        CountDownLatch startLatch = new CountDownLatch(1);
-        CountDownLatch endLatch = new CountDownLatch(2);
+        CountDownLatch schedulerDone = new CountDownLatch(1);
         AtomicInteger checkoutStatus = new AtomicInteger(-1);
+        try {
+            // 1. Scheduler é liberado e o probe o pausa EXATAMENTE após o lock real da Order.
+            lockProbe.arm();
+            executor.submit(() -> {
+                try {
+                    expirationScheduler.processSingleExpiredOrder(staleOrder);
+                } finally {
+                    schedulerDone.countDown();
+                }
+            });
 
-        executor.submit(() -> {
-            try {
-                startLatch.await();
-                int status = mockMvc.perform(post("/api/orders/{orderId}/checkout", orderId)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
-                                .content("{}"))
-                        .andReturn().getResponse().getStatus();
-                checkoutStatus.set(status);
-            } catch (Exception e) {
-                // status permanece -1, falha a asserção
-            } finally {
-                endLatch.countDown();
-            }
-        });
+            // 2. Evento real confirmado: o Scheduler já detém o lock.
+            assertThat(lockProbe.awaitLocked(10))
+                    .as("scheduler deve adquirir o lock da Order primeiro")
+                    .isTrue();
 
-        executor.submit(() -> {
-            try {
-                startLatch.await();
-                expirationScheduler.processSingleExpiredOrder(staleOrder);
-            } catch (Exception ignored) {
-            } finally {
-                endLatch.countDown();
-            }
-        });
+            // 3. Checkout disputa o mesmo lock.
+            executor.submit(() -> {
+                try {
+                    checkoutStatus.set(performCheckoutStatus(token, orderId));
+                } catch (Exception e) {
+                    throw new IllegalStateException(e);
+                }
+            });
 
-        startLatch.countDown();
-        endLatch.await();
-        executor.shutdown();
+            // 4. Observação no PostgreSQL: o checkout está bloqueado aguardando o lock.
+            awaitLockWaiter();
 
-        // Determinístico: checkout após expiração retorna 422, independentemente de quem pegou o lock.
-        assertThat(checkoutStatus.get()).isEqualTo(422);
+            // 5. Scheduler expira, libera a reserva e comita.
+            lockProbe.release();
+            assertThat(schedulerDone.await(10, TimeUnit.SECONDS)).isTrue();
+        } finally {
+            executor.shutdown();
+            executor.awaitTermination(10, TimeUnit.SECONDS);
+        }
+
+        assertThat(checkoutStatus.get())
+                .as("checkout só prossegue após o commit do scheduler e observa EXPIRED")
+                .isEqualTo(422);
 
         Order finalOrder = orderRepository.findById(orderId).orElseThrow();
         assertThat(finalOrder.getStatus()).isEqualTo(OrderStatus.EXPIRED);
