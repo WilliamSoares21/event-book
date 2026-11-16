@@ -12,6 +12,8 @@ public interface TicketRepository extends JpaRepository <Ticket, UUID> {
 
     Optional<Ticket> findByUniqueCode(String uniqueCode);
 
+    boolean existsByUniqueCode(String uniqueCode);
+
     @Query("""
             SELECT COUNT(t)
             FROM Ticket t
