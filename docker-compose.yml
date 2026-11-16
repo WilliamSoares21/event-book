@@ -39,7 +39,6 @@ services:
       context: ./frontend/event-book-frontend
       target: development
     restart: unless-stopped
-    target: development
     ports:
       - "4200:4200"
 
