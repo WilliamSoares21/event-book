@@ -81,15 +81,15 @@ public class OrderService {
       throw new OrderAccessDeniedException("Acesso negado: pedido não pertence ao comprador");
     }
 
-    // 3. Validate expiration FIRST (returns 422 for expired orders)
+    // 3. Validate status FIRST: PAID -> 409, CANCELLED/EXPIRED -> 422 (decided by currentStatus in the handler)
+    if (order.getStatus() != OrderStatus.PENDING) {
+      throw new OrderInvalidStatusException("Pedido não está pendente para checkout", order.getStatus());
+    }
+
+    // 4. Validate expiration (only reachable for PENDING orders)
     Instant now = Instant.now();
     if (order.getExpiresAt() == null || order.getExpiresAt().isBefore(now)) {
       throw new OrderExpiredException("Pedido expirado: não é possível realizar checkout");
-    }
-
-    // 4. Validate status == PENDING (returns 409 for other invalid statuses like PAID, CANCELLED)
-    if (order.getStatus() != OrderStatus.PENDING) {
-      throw new OrderInvalidStatusException("Pedido não está pendente para checkout", order.getStatus());
     }
 
     // 5. Lock the TicketLot (PESSIMISTIC_WRITE) - Order → TicketLot order to prevent deadlock

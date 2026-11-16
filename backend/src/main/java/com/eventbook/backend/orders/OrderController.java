@@ -82,8 +82,8 @@ public class OrderController {
             @ApiResponse(responseCode = "401", description = "Não autenticado"),
             @ApiResponse(responseCode = "403", description = "Usuário não é comprador ou pedido não pertence ao usuário"),
             @ApiResponse(responseCode = "404", description = "Pedido não encontrado"),
-            @ApiResponse(responseCode = "409", description = "Pedido já processado (pago, cancelado ou conflito de concorrência)"),
-            @ApiResponse(responseCode = "422", description = "Pedido expirado ou status incompatível")
+            @ApiResponse(responseCode = "409", description = "Pedido já pago ou conflito de concorrência"),
+            @ApiResponse(responseCode = "422", description = "Pedido expirado ou status incompatível (ex.: cancelado)")
     })
     public ResponseEntity<CheckoutResponseDTO> checkout(
             @PathVariable UUID orderId,

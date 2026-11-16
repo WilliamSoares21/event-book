@@ -350,14 +350,12 @@ class OrderServiceTest {
   }
 
   private TicketLot createTicketLot(UUID lotId, int capacity, int sold, int reserved) {
-    TicketLot lot = TicketLot.builder()
+    return TicketLot.builder()
         .id(lotId)
         .capacity(capacity)
         .sold(sold)
         .reserved(reserved)
         .build();
-    // Use reflection to set package-private fields
-    return lot;
   }
 
   // ===== Checkout Tests =====
@@ -634,5 +632,48 @@ class OrderServiceTest {
 
     assertThat(response.paidAt()).isNotNull();
     assertThat(response.paidAt()).isAfterOrEqualTo(now);
+  }
+
+  @Test
+  void naoDeveClassificarPedidoPagoComoExpiradoMesmoComPrazoJaPassado() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    UUID lotId = UUID.randomUUID();
+    Instant now = Instant.now();
+
+    // Pedido pago cujo prazo já passou: status deve prevalecer sobre expiração (409, não 422)
+    Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.minus(10, ChronoUnit.MINUTES));
+    order.setStatus(OrderStatus.PAID);
+
+    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+        .isInstanceOf(OrderInvalidStatusException.class)
+        .hasMessageContaining("não está pendente")
+        .satisfies(ex -> assertThat(((OrderInvalidStatusException) ex).getCurrentStatus())
+            .isEqualTo(OrderStatus.PAID));
+
+    verify(ticketLotRepository, never()).findByIdForUpdate(any());
+    verify(ticketRepository, never()).saveAll(anyList());
+  }
+
+  @Test
+  void deveExporStatusCanceladoNaExcecaoParaMapeamento422() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    UUID lotId = UUID.randomUUID();
+    Instant now = Instant.now();
+
+    Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
+    order.setStatus(OrderStatus.CANCELLED);
+
+    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+        .isInstanceOf(OrderInvalidStatusException.class)
+        .satisfies(ex -> assertThat(((OrderInvalidStatusException) ex).getCurrentStatus())
+            .isEqualTo(OrderStatus.CANCELLED));
+
+    verify(ticketLotRepository, never()).findByIdForUpdate(any());
   }
 }

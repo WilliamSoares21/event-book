@@ -4,6 +4,7 @@ import com.eventbook.backend.orders.exception.OrderAccessDeniedException;
 import com.eventbook.backend.orders.exception.OrderExpiredException;
 import com.eventbook.backend.orders.exception.OrderInvalidStatusException;
 import com.eventbook.backend.orders.exception.OrderNotFoundException;
+import com.eventbook.backend.orders.OrderStatus;
 import com.eventbook.backend.users.exception.DuplicateEmailException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -101,7 +102,12 @@ public class ApiExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleOrderInvalidStatus(
             OrderInvalidStatusException ex) {
 
-        return buildError(HttpStatus.CONFLICT, ex.getMessage());
+        // PAID = já processado (409); CANCELLED/EXPIRED = estado incompatível (422)
+        HttpStatus status = ex.getCurrentStatus() == OrderStatus.PAID
+                ? HttpStatus.CONFLICT
+                : HttpStatus.UNPROCESSABLE_ENTITY;
+
+        return buildError(status, ex.getMessage());
     }
 
     @ExceptionHandler(OrderExpiredException.class)
