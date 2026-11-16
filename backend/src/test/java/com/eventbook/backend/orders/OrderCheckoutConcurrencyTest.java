@@ -247,60 +247,43 @@ class OrderCheckoutConcurrencyTest {
     }
 
     @Test
-    void checkoutDeveVencerExpiracaoQuandoGanhaLockPrimeiro() throws Exception {
+    void checkoutVenceDisputaQuandoPedidoAindaValido() throws Exception {
         User organizer = createOrganizer();
         TicketLot lot = createActiveLot(organizer, 5, new BigDecimal("50.00"));
 
         User buyer = createBuyer("buyer@test.com");
         String token = obtainToken(buyer.getEmail());
+        UUID orderId = createOrderAndGetId(token, lot.getId(), 2);
 
-        UUID orderId = createOrderAndGetId(token, lot.getId(), 1);
-
-        // Set order to expire very soon
-        Order order = orderRepository.findById(orderId).orElseThrow();
-        order.setExpiresAt(Instant.now().minusSeconds(1)); // Already expired
-        orderRepository.save(order);
+        // Pedido PENDING e ainda válido: o scheduler NÃO deve expirá-lo em nenhum interleaving.
+        Order staleOrder = orderRepository.findById(orderId).orElseThrow();
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch endLatch = new CountDownLatch(2);
-        AtomicInteger checkoutSuccess = new AtomicInteger(0);
-        AtomicInteger checkoutError = new AtomicInteger(0);
-        AtomicInteger expirationSuccess = new AtomicInteger(0);
-        AtomicInteger expirationError = new AtomicInteger(0);
+        AtomicInteger checkoutStatus = new AtomicInteger(-1);
 
-        // Thread 1: Checkout
         executor.submit(() -> {
             try {
                 startLatch.await();
-                var request = post("/api/orders/{orderId}/checkout", orderId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "Bearer " + token)
-                        .content("{}");
-
-                var result = mockMvc.perform(request);
-                int status = result.andReturn().getResponse().getStatus();
-
-                if (status == 200) {
-                    checkoutSuccess.incrementAndGet();
-                } else {
-                    checkoutError.incrementAndGet();
-                }
+                int status = mockMvc.perform(post("/api/orders/{orderId}/checkout", orderId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
+                                .content("{}"))
+                        .andReturn().getResponse().getStatus();
+                checkoutStatus.set(status);
             } catch (Exception e) {
-                checkoutError.incrementAndGet();
+                // status permanece -1, falha a asserção
             } finally {
                 endLatch.countDown();
             }
         });
 
-        // Thread 2: Expiration
         executor.submit(() -> {
             try {
                 startLatch.await();
-                expirationScheduler.processSingleExpiredOrder(order);
-                expirationSuccess.incrementAndGet();
-            } catch (Exception e) {
-                expirationError.incrementAndGet();
+                expirationScheduler.processSingleExpiredOrder(staleOrder);
+            } catch (Exception ignored) {
             } finally {
                 endLatch.countDown();
             }
@@ -310,29 +293,79 @@ class OrderCheckoutConcurrencyTest {
         endLatch.await();
         executor.shutdown();
 
-        // One of them should succeed, the other should fail gracefully
-        // Since order is already expired, checkout should return 422
-        // But if checkout gets the lock first, it might succeed before expiration runs
-        int totalSuccess = checkoutSuccess.get() + expirationSuccess.get();
-        int totalError = checkoutError.get() + expirationError.get();
-
-        assertThat(totalSuccess).isEqualTo(1);
-        assertThat(totalError).isEqualTo(1);
+        // Determinístico: pedido válido nunca é expirado, então o checkout sempre conclui.
+        assertThat(checkoutStatus.get()).isEqualTo(200);
 
         Order finalOrder = orderRepository.findById(orderId).orElseThrow();
-        // Final state should be either PAID (checkout won) or EXPIRED (expiration won)
-        assertThat(finalOrder.getStatus()).isIn(OrderStatus.PAID, OrderStatus.EXPIRED);
+        assertThat(finalOrder.getStatus()).isEqualTo(OrderStatus.PAID);
+        assertThat(finalOrder.getPaidAt()).isNotNull();
 
         TicketLot finalLot = ticketLotRepository.findById(lot.getId()).orElseThrow();
-        if (finalOrder.getStatus() == OrderStatus.PAID) {
-            assertThat(finalLot.getReserved()).isEqualTo(0);
-            assertThat(finalLot.getSold()).isEqualTo(1);
-            assertThat(ticketRepository.findByOrderId(orderId)).hasSize(1);
-        } else {
-            assertThat(finalLot.getReserved()).isEqualTo(0);
-            assertThat(finalLot.getSold()).isEqualTo(0);
-            assertThat(ticketRepository.findByOrderId(orderId)).isEmpty();
-        }
+        assertThat(finalLot.getReserved()).isZero();
+        assertThat(finalLot.getSold()).isEqualTo(2);
+        assertThat(ticketRepository.findByOrderId(orderId)).hasSize(2);
+    }
+
+    @Test
+    void schedulerVenceDisputaQuandoPedidoJaExpirou() throws Exception {
+        User organizer = createOrganizer();
+        TicketLot lot = createActiveLot(organizer, 5, new BigDecimal("50.00"));
+
+        User buyer = createBuyer("buyer@test.com");
+        String token = obtainToken(buyer.getEmail());
+        UUID orderId = createOrderAndGetId(token, lot.getId(), 2);
+
+        // Pedido PENDING porém já expirado: elegível à expiração.
+        Order staleOrder = orderRepository.findById(orderId).orElseThrow();
+        staleOrder.setExpiresAt(Instant.now().minusSeconds(60));
+        orderRepository.save(staleOrder);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch endLatch = new CountDownLatch(2);
+        AtomicInteger checkoutStatus = new AtomicInteger(-1);
+
+        executor.submit(() -> {
+            try {
+                startLatch.await();
+                int status = mockMvc.perform(post("/api/orders/{orderId}/checkout", orderId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
+                                .content("{}"))
+                        .andReturn().getResponse().getStatus();
+                checkoutStatus.set(status);
+            } catch (Exception e) {
+                // status permanece -1, falha a asserção
+            } finally {
+                endLatch.countDown();
+            }
+        });
+
+        executor.submit(() -> {
+            try {
+                startLatch.await();
+                expirationScheduler.processSingleExpiredOrder(staleOrder);
+            } catch (Exception ignored) {
+            } finally {
+                endLatch.countDown();
+            }
+        });
+
+        startLatch.countDown();
+        endLatch.await();
+        executor.shutdown();
+
+        // Determinístico: checkout após expiração retorna 422, independentemente de quem pegou o lock.
+        assertThat(checkoutStatus.get()).isEqualTo(422);
+
+        Order finalOrder = orderRepository.findById(orderId).orElseThrow();
+        assertThat(finalOrder.getStatus()).isEqualTo(OrderStatus.EXPIRED);
+        assertThat(finalOrder.getPaidAt()).isNull();
+
+        TicketLot finalLot = ticketLotRepository.findById(lot.getId()).orElseThrow();
+        assertThat(finalLot.getReserved()).isZero();
+        assertThat(finalLot.getSold()).isZero();
+        assertThat(ticketRepository.findByOrderId(orderId)).isEmpty();
     }
 
     @Test
@@ -468,5 +501,40 @@ class OrderCheckoutConcurrencyTest {
         assertThat(finalLot.getSold()).isEqualTo(0);
 
         assertThat(ticketRepository.findByOrderId(orderId)).isEmpty();
+    }
+
+    @Test
+    void schedulerNaoDeveExpirarPedidoJaPago() throws Exception {
+        User organizer = createOrganizer();
+        TicketLot lot = createActiveLot(organizer, 5, new BigDecimal("50.00"));
+
+        User buyer = createBuyer("buyer@test.com");
+        String token = obtainToken(buyer.getEmail());
+
+        UUID orderId = createOrderAndGetId(token, lot.getId(), 2);
+
+        // Checkout conclui primeiro: pedido vira PAID.
+        mockMvc.perform(post("/api/orders/{orderId}/checkout", orderId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + token)
+                        .content("{}"))
+                .andExpect(status().isOk());
+
+        Order paidOrder = orderRepository.findById(orderId).orElseThrow();
+        assertThat(paidOrder.getStatus()).isEqualTo(OrderStatus.PAID);
+
+        // Mesmo com prazo já vencido, o scheduler deve sair no ramo status != PENDING (determinístico).
+        paidOrder.setExpiresAt(Instant.now().minusSeconds(60));
+        orderRepository.save(paidOrder);
+        expirationScheduler.processSingleExpiredOrder(paidOrder);
+
+        Order finalOrder = orderRepository.findById(orderId).orElseThrow();
+        assertThat(finalOrder.getStatus()).isEqualTo(OrderStatus.PAID);
+        assertThat(finalOrder.getPaidAt()).isNotNull();
+
+        TicketLot finalLot = ticketLotRepository.findById(lot.getId()).orElseThrow();
+        assertThat(finalLot.getReserved()).isZero();
+        assertThat(finalLot.getSold()).isEqualTo(2);
+        assertThat(ticketRepository.findByOrderId(orderId)).hasSize(2);
     }
 }
