@@ -3,10 +3,18 @@ package com.eventbook.backend.orders;
 import com.eventbook.backend.lots.LotStatus;
 import com.eventbook.backend.lots.TicketLot;
 import com.eventbook.backend.lots.TicketLotRepository;
+import com.eventbook.backend.orders.dto.CheckoutResponseDTO;
 import com.eventbook.backend.orders.exception.InsufficientCapacityException;
 import com.eventbook.backend.orders.exception.LotNotActiveException;
 import com.eventbook.backend.orders.exception.LotNotFoundException;
 import com.eventbook.backend.orders.exception.OutsideSalesWindowException;
+import com.eventbook.backend.orders.exception.OrderAccessDeniedException;
+import com.eventbook.backend.orders.exception.OrderExpiredException;
+import com.eventbook.backend.orders.exception.OrderInvalidStatusException;
+import com.eventbook.backend.orders.exception.OrderNotFoundException;
+import com.eventbook.backend.tickets.Ticket;
+import com.eventbook.backend.tickets.TicketRepository;
+import com.eventbook.backend.tickets.TicketStatus;
 import com.eventbook.backend.users.User;
 
 import org.junit.jupiter.api.Test;
@@ -19,13 +27,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hibernate.validator.internal.util.Contracts.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -37,6 +44,9 @@ class OrderServiceTest {
 
   @Mock
   private TicketLotRepository ticketLotRepository;
+
+  @Mock
+  private TicketRepository ticketRepository;
 
   @InjectMocks
   private OrderService orderService;
@@ -319,5 +329,310 @@ class OrderServiceTest {
 
     assertThat(order).isNotNull();
     assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+  }
+
+  private Order createPendingOrder(UUID orderId, UUID buyerId, UUID lotId, int quantity, BigDecimal unitPrice, Instant expiresAt) {
+    User buyer = User.builder().id(buyerId).build();
+    TicketLot lot = TicketLot.builder()
+        .id(lotId)
+        .capacity(100)
+        .unitPrice(unitPrice)
+        .build();
+    return Order.builder()
+        .id(orderId)
+        .buyer(buyer)
+        .ticketLot(lot)
+        .quantity(quantity)
+        .unitPriceSnapshot(unitPrice)
+        .status(OrderStatus.PENDING)
+        .expiresAt(expiresAt)
+        .build();
+  }
+
+  private TicketLot createTicketLot(UUID lotId, int capacity, int sold, int reserved) {
+    TicketLot lot = TicketLot.builder()
+        .id(lotId)
+        .capacity(capacity)
+        .sold(sold)
+        .reserved(reserved)
+        .build();
+    // Use reflection to set package-private fields
+    return lot;
+  }
+
+  // ===== Checkout Tests =====
+
+  @Test
+  void deveRealizarCheckoutComSucesso() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    UUID lotId = UUID.randomUUID();
+    Instant now = Instant.now();
+
+    Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
+    TicketLot lot = createTicketLot(lotId, 100, 10, 5);
+
+    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(ticketLotRepository.findByIdForUpdate(lotId)).thenReturn(Optional.of(lot));
+    when(ticketRepository.existsByUniqueCode(anyString())).thenReturn(false);
+    when(ticketRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+    when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(ticketLotRepository.save(any(TicketLot.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId);
+
+    assertThat(response).isNotNull();
+    assertThat(response.orderId()).isEqualTo(orderId);
+    assertThat(response.status()).isEqualTo(OrderStatus.PAID);
+    assertThat(response.paidAt()).isNotNull();
+    assertThat(response.tickets()).hasSize(2);
+    assertThat(response.tickets().get(0).status()).isEqualTo(TicketStatus.VALID);
+    assertThat(response.tickets().get(0).uniqueCode()).isNotNull();
+    assertThat(response.unitPriceSnapshot()).isEqualByComparingTo("50.00");
+    assertThat(response.totalPrice()).isEqualByComparingTo("100.00");
+
+    assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
+    assertThat(order.getPaidAt()).isNotNull();
+    assertThat(lot.getReserved()).isEqualTo(3); // 5 - 2
+    assertThat(lot.getSold()).isEqualTo(12); // 10 + 2
+
+    verify(orderRepository).findByIdForUpdate(orderId);
+    verify(ticketLotRepository).findByIdForUpdate(lotId);
+    verify(ticketRepository).saveAll(anyList());
+  }
+
+  @Test
+  void deveRejeitarCheckoutQuandoPedidoNaoExistir() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+
+    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+        .isInstanceOf(OrderNotFoundException.class)
+        .hasMessageContaining("Pedido não encontrado");
+
+    verify(orderRepository).findByIdForUpdate(orderId);
+    verify(ticketLotRepository, never()).findByIdForUpdate(any());
+    verify(ticketRepository, never()).saveAll(anyList());
+  }
+
+  @Test
+  void deveRejeitarCheckoutQuandoPedidoNaoPertenceAoComprador() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    UUID otherBuyerId = UUID.randomUUID();
+    UUID lotId = UUID.randomUUID();
+    Instant now = Instant.now();
+
+    Order order = createPendingOrder(orderId, otherBuyerId, lotId, 2, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
+
+    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+        .isInstanceOf(OrderAccessDeniedException.class)
+        .hasMessageContaining("Acesso negado");
+
+    verify(orderRepository).findByIdForUpdate(orderId);
+    verify(ticketLotRepository, never()).findByIdForUpdate(any());
+  }
+
+  @Test
+  void deveRejeitarCheckoutQuandoPedidoJaPago() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    UUID lotId = UUID.randomUUID();
+    Instant now = Instant.now();
+
+    Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
+    order.setStatus(OrderStatus.PAID);
+
+    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+        .isInstanceOf(OrderInvalidStatusException.class)
+        .hasMessageContaining("não está pendente");
+
+    verify(orderRepository).findByIdForUpdate(orderId);
+    verify(ticketLotRepository, never()).findByIdForUpdate(any());
+  }
+
+  @Test
+  void deveRejeitarCheckoutQuandoPedidoExpirado() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    UUID lotId = UUID.randomUUID();
+    Instant now = Instant.now();
+
+    Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.minus(10, ChronoUnit.MINUTES));
+
+    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+        .isInstanceOf(OrderExpiredException.class)
+        .hasMessageContaining("expirado");
+
+    verify(orderRepository).findByIdForUpdate(orderId);
+    verify(ticketLotRepository, never()).findByIdForUpdate(any());
+  }
+
+  @Test
+  void deveRejeitarCheckoutQuandoPedidoCancelado() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    UUID lotId = UUID.randomUUID();
+    Instant now = Instant.now();
+
+    Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
+    order.setStatus(OrderStatus.CANCELLED);
+
+    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+        .isInstanceOf(OrderInvalidStatusException.class)
+        .hasMessageContaining("não está pendente");
+
+    verify(orderRepository).findByIdForUpdate(orderId);
+  }
+
+  @Test
+  void deveGerarQuantidadeCorretaDeTickets() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    UUID lotId = UUID.randomUUID();
+    Instant now = Instant.now();
+
+    Order order = createPendingOrder(orderId, buyerId, lotId, 5, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
+    TicketLot lot = createTicketLot(lotId, 100, 10, 5);
+
+    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(ticketLotRepository.findByIdForUpdate(lotId)).thenReturn(Optional.of(lot));
+    when(ticketRepository.existsByUniqueCode(anyString())).thenReturn(false);
+    when(ticketRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+    when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(ticketLotRepository.save(any(TicketLot.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId);
+
+    assertThat(response.tickets()).hasSize(5);
+    response.tickets().forEach(ticket -> {
+      assertThat(ticket.status()).isEqualTo(TicketStatus.VALID);
+      assertThat(ticket.uniqueCode()).isNotNull();
+    });
+  }
+
+  @Test
+  void devePreservarUnitPriceSnapshot() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    UUID lotId = UUID.randomUUID();
+    BigDecimal unitPriceSnapshot = new BigDecimal("75.50");
+    BigDecimal lotCurrentPrice = new BigDecimal("99.99");
+    Instant now = Instant.now();
+
+    Order order = createPendingOrder(orderId, buyerId, lotId, 2, unitPriceSnapshot, now.plus(10, ChronoUnit.MINUTES));
+    TicketLot lot = TicketLot.builder()
+        .id(lotId)
+        .capacity(100)
+        .sold(10)
+        .reserved(5)
+        .unitPrice(lotCurrentPrice)
+        .build();
+
+    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(ticketLotRepository.findByIdForUpdate(lotId)).thenReturn(Optional.of(lot));
+    when(ticketRepository.existsByUniqueCode(anyString())).thenReturn(false);
+    when(ticketRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+    when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(ticketLotRepository.save(any(TicketLot.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId);
+
+    assertThat(response.unitPriceSnapshot()).isEqualByComparingTo("75.50");
+    assertThat(response.totalPrice()).isEqualByComparingTo("151.00");
+  }
+
+  @Test
+  void deveConverterReservaEmVendaCorretamente() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    UUID lotId = UUID.randomUUID();
+    Instant now = Instant.now();
+
+    Order order = createPendingOrder(orderId, buyerId, lotId, 3, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
+    TicketLot lot = createTicketLot(lotId, 100, 20, 10);
+
+    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(ticketLotRepository.findByIdForUpdate(lotId)).thenReturn(Optional.of(lot));
+    when(ticketRepository.existsByUniqueCode(anyString())).thenReturn(false);
+    when(ticketRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+    when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(ticketLotRepository.save(any(TicketLot.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    orderService.checkout(orderId, buyerId);
+
+    assertThat(lot.getReserved()).isEqualTo(7); // 10 - 3
+    assertThat(lot.getSold()).isEqualTo(23); // 20 + 3
+  }
+
+  @Test
+  void deveGerarTicketsComUUIDsEcodigosUnicos() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    UUID lotId = UUID.randomUUID();
+    Instant now = Instant.now();
+
+    Order order = createPendingOrder(orderId, buyerId, lotId, 3, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
+    TicketLot lot = createTicketLot(lotId, 100, 10, 5);
+
+    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(ticketLotRepository.findByIdForUpdate(lotId)).thenReturn(Optional.of(lot));
+    when(ticketRepository.existsByUniqueCode(anyString())).thenReturn(false);
+    // Mock saveAll to return tickets with generated IDs and uniqueCodes
+    when(ticketRepository.saveAll(anyList())).thenAnswer(inv -> {
+        List<Ticket> tickets = inv.getArgument(0);
+        return tickets.stream().map(t -> Ticket.builder()
+                .id(UUID.randomUUID())
+                .order(t.getOrder())
+                .uniqueCode(t.getUniqueCode())
+                .status(t.getStatus())
+                .build()).toList();
+    });
+    when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(ticketLotRepository.save(any(TicketLot.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId);
+
+    assertThat(response.tickets()).hasSize(3);
+    var uniqueCodes = response.tickets().stream().map(t -> t.uniqueCode()).toList();
+    var ids = response.tickets().stream().map(t -> t.id()).toList();
+
+    // All unique codes should be distinct
+    assertThat(uniqueCodes).hasSize(3).doesNotHaveDuplicates();
+    // All IDs should be distinct
+    assertThat(ids).hasSize(3).doesNotHaveDuplicates();
+  }
+
+  @Test
+  void devePreencherPaidAtNoCheckout() {
+    UUID orderId = UUID.randomUUID();
+    UUID buyerId = UUID.randomUUID();
+    UUID lotId = UUID.randomUUID();
+    Instant now = Instant.now();
+
+    Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
+    TicketLot lot = createTicketLot(lotId, 100, 10, 5);
+
+    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(ticketLotRepository.findByIdForUpdate(lotId)).thenReturn(Optional.of(lot));
+    when(ticketRepository.existsByUniqueCode(anyString())).thenReturn(false);
+    when(ticketRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+    when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(ticketLotRepository.save(any(TicketLot.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId);
+
+    assertThat(response.paidAt()).isNotNull();
+    assertThat(response.paidAt()).isAfterOrEqualTo(now);
   }
 }
