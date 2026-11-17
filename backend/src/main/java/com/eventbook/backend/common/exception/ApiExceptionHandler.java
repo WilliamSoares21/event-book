@@ -4,6 +4,7 @@ import com.eventbook.backend.orders.exception.OrderAccessDeniedException;
 import com.eventbook.backend.orders.exception.OrderExpiredException;
 import com.eventbook.backend.orders.exception.OrderInvalidStatusException;
 import com.eventbook.backend.orders.exception.OrderNotFoundException;
+import com.eventbook.backend.orders.exception.OrderAlreadyCancelledException;
 import com.eventbook.backend.orders.OrderStatus;
 import com.eventbook.backend.users.exception.DuplicateEmailException;
 import org.springframework.http.HttpStatus;
@@ -138,5 +139,12 @@ public class ApiExceptionHandler {
         body.put("timestamp", Instant.now().toString());
 
         return ResponseEntity.status(status).body(body);
+    }
+
+    @ExceptionHandler(OrderAlreadyCancelledException.class)
+    public ResponseEntity<Map<String, Object>> handleOrderAlreadyCancelled(
+            OrderAlreadyCancelledException ex) {
+
+        return buildError(HttpStatus.CONFLICT, ex.getMessage());
     }
 }

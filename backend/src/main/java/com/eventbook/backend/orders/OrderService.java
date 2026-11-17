@@ -4,14 +4,7 @@ import com.eventbook.backend.lots.LotStatus;
 import com.eventbook.backend.lots.TicketLot;
 import com.eventbook.backend.lots.TicketLotRepository;
 import com.eventbook.backend.orders.dto.CheckoutResponseDTO;
-import com.eventbook.backend.orders.exception.InsufficientCapacityException;
-import com.eventbook.backend.orders.exception.LotNotActiveException;
-import com.eventbook.backend.orders.exception.LotNotFoundException;
-import com.eventbook.backend.orders.exception.OutsideSalesWindowException;
-import com.eventbook.backend.orders.exception.OrderAccessDeniedException;
-import com.eventbook.backend.orders.exception.OrderExpiredException;
-import com.eventbook.backend.orders.exception.OrderInvalidStatusException;
-import com.eventbook.backend.orders.exception.OrderNotFoundException;
+import com.eventbook.backend.orders.exception.*;
 import com.eventbook.backend.tickets.Ticket;
 import com.eventbook.backend.tickets.TicketRepository;
 import com.eventbook.backend.tickets.TicketStatus;
@@ -124,6 +117,124 @@ public class OrderService {
     orderRepository.save(order);
 
     return CheckoutResponseDTO.from(order, savedTickets);
+  }
+
+  @Transactional
+  public void cancel(UUID orderId, UUID userId) {
+
+    // 1. Bloqueia o pedido para evitar cancelamentos simultâneos
+    Order order = orderRepository.findByIdForUpdate(orderId)
+            .orElseThrow(() -> new OrderNotFoundException(
+                    "Pedido não encontrado: " + orderId
+            ));
+
+    // 2. Verifica se o usuário é o comprador ou o organizador do evento
+    boolean isBuyer = order.getBuyer().getId().equals(userId);
+
+    boolean isOrganizer = order.getTicketLot()
+            .getEvent()
+            .getOrganizer()
+            .getId()
+            .equals(userId);
+
+    if (!isBuyer && !isOrganizer) {
+      throw new OrderAccessDeniedException(
+              "Você não tem permissão para cancelar este pedido"
+      );
+    }
+
+    // 3. Verifica o estado atual do pedido
+    if (order.getStatus() == OrderStatus.CANCELLED) {
+      throw new OrderAlreadyCancelledException(
+              "Este pedido já foi cancelado"
+      );
+    }
+
+    if (order.getStatus() == OrderStatus.EXPIRED) {
+      throw new OrderExpiredException(
+              "Pedidos expirados não podem ser cancelados"
+      );
+    }
+
+    if (order.getStatus() != OrderStatus.PENDING
+            && order.getStatus() != OrderStatus.PAID) {
+
+      throw new OrderInvalidStatusException(
+              "Estado do pedido não permite cancelamento",
+              order.getStatus()
+      );
+    }
+
+
+    // 4. O comprador só pode cancelar até 12 horas antes do evento.
+    // O organizador proprietário pode cancelar independentemente do prazo.
+    Instant now = Instant.now();
+
+    if (isBuyer && !isOrganizer) {
+
+      Instant cancellationDeadline = order.getTicketLot()
+              .getEvent()
+              .getStartsAt()
+              .toInstant()
+              .minus(12, ChronoUnit.HOURS);
+
+      if (now.isAfter(cancellationDeadline)) {
+        throw new OrderAccessDeniedException(
+                "O prazo para cancelamento pelo comprador foi encerrado"
+        );
+      }
+    }
+
+    // 5. Bloqueia o lote, mantendo a mesma ordem de locks do checkout
+    TicketLot lot = ticketLotRepository.findByIdForUpdate(
+            order.getTicketLot().getId()
+    ).orElseThrow(() -> new LotNotFoundException(
+            "Lote não encontrado: " + order.getTicketLot().getId()
+    ));
+
+    // 6. Devolve a quantidade ao estoque conforme o estado do pedido
+    if (order.getStatus() == OrderStatus.PENDING) {
+
+      lot.decrementReserved(order.getQuantity());
+
+
+    } else if (order.getStatus() == OrderStatus.PAID) {
+
+      // 1. Busca os ingressos vinculados ao pedido
+      List<Ticket> tickets = ticketRepository.findByOrderId(orderId);
+
+      // 2. Verifica se algum ingresso já foi utilizado
+      boolean hasCheckedInTicket = tickets.stream()
+              .anyMatch(ticket ->
+                      ticket.getStatus() == TicketStatus.CHECKED_IN
+              );
+
+      // 3. Impede o cancelamento se houver ingresso utilizado
+      if (hasCheckedInTicket) {
+        throw new OrderHasCheckedInTicketException(
+                "Não é possível cancelar um pedido que possui ingresso já utilizado"
+        );
+      }
+
+      // 4. Devolve a quantidade ao estoque
+      lot.decrementSold(order.getQuantity());
+
+      // 5. Cancela os ingressos
+      for (Ticket ticket : tickets) {
+        ticket.setStatus(TicketStatus.CANCELLED);
+      }
+
+      ticketRepository.saveAll(tickets);
+    }
+
+
+    // 7. Atualiza o lote e o pedido
+    ticketLotRepository.save(lot);
+
+    order.setStatus(OrderStatus.CANCELLED);
+    order.setCancelledAt(now);
+
+    orderRepository.save(order);
   }
 
   private String generateUniqueCode() {

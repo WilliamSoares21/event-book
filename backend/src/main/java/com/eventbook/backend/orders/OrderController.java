@@ -1,7 +1,6 @@
 
 package com.eventbook.backend.orders;
 
-import com.eventbook.backend.common.exception.BusinessException;
 import com.eventbook.backend.orders.dto.CheckoutResponseDTO;
 import com.eventbook.backend.orders.dto.OrderRequestDTO;
 import com.eventbook.backend.orders.dto.OrderResponseDTO;
@@ -97,5 +96,27 @@ public class OrderController {
         CheckoutResponseDTO response = orderService.checkout(orderId, buyer.getId());
 
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{orderId}")
+    @PreAuthorize("hasAnyRole('COMPRADOR', 'ORGANIZADOR')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Cancela um pedido")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Pedido cancelado"),
+            @ApiResponse(responseCode = "400", description = "UUID inválido"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sem permissão ou prazo encerrado"),
+            @ApiResponse(responseCode = "404", description = "Pedido não encontrado"),
+            @ApiResponse(responseCode = "409", description = "Pedido já cancelado ou conflito"),
+            @ApiResponse(responseCode = "422", description = "Pedido expirado")
+    })
+    public ResponseEntity<Void> cancel(
+            @PathVariable UUID orderId,
+            @AuthenticationPrincipal AuthenticatedUser authUser) {
+
+        orderService.cancel(orderId, authUser.id());
+
+        return ResponseEntity.noContent().build();
     }
 }
