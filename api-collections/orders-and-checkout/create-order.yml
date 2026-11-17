@@ -5,18 +5,18 @@ info:
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/orders"
-  auth: inherit
+  url: "{{baseUrl}}/orders"
   headers:
     - name: Content-Type
       value: application/json
   body:
     type: json
-    content: |
+    data: |-
       {
-        "ticketLotId": "{{ticketLotId}}",
-        "quantity": 2
+        "ticketLotId": "03dee13b-701f-4b3d-b3f6-4e7ea03541b5",
+        "quantity": "2"
       }
+  auth: inherit
 
 settings:
   encodeUrl: true
