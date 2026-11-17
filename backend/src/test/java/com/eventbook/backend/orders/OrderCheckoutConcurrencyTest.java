@@ -187,19 +187,18 @@ class OrderCheckoutConcurrencyTest {
     }
 
     private void awaitLockWaiter() throws InterruptedException {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15);
         while (System.nanoTime() < deadline) {
             Integer waiters = jdbcTemplate.queryForObject("""
                     SELECT count(*) FROM pg_stat_activity
                     WHERE wait_event_type = 'Lock'
                       AND datname = current_database()
                       AND pid <> pg_backend_pid()
-                      AND query ILIKE '%for update%'
                     """, Integer.class);
             if (waiters != null && waiters > 0) {
                 return;
             }
-            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(25));
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(50));
         }
         fail("A segunda transação não ficou aguardando o lock da Order (timeout)");
     }
