@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import type { Event } from '../../model/event.model';
+import type { Event, EventListItem } from '../../model/event.model';
 import type { TicketLotRequest, TicketLotResponse } from '../../model/ticket-lot.model';
 import { SessionService } from '../session/session';
 
@@ -10,6 +10,14 @@ export class EventsService {
   private readonly http = inject(HttpClient);
   private readonly session = inject(SessionService);
   private readonly apiUrl = `${environment.apiUrl.replace(/\/$/, '').replace(/\/api$/, '')}/api`;
+
+  listPublishedEvents() {
+    return this.http.get<EventListItem[]>(`${this.apiUrl}/events`);
+  }
+
+  listOwnEvents() {
+    return this.http.get<EventListItem[]>(`${this.apiUrl}/organizer/events`, this.authOptions());
+  }
 
   createEvent(event: Event) {
     return this.http.post<Event & { id: string }>(`${this.apiUrl}/events`, event, this.authOptions());

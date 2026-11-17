@@ -1,0 +1,28 @@
+.notification-toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1100;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  width: max-content;
+  max-width: min(420px, calc(100vw - 2rem));
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  color: white;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 20%);
+}
+
+.notification-success { background: #198754; }
+.notification-error { background: #b02a37; }
+
+.notification-toast button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}

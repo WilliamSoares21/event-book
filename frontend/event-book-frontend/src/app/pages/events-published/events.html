@@ -24,12 +24,15 @@
             }
         </header>
         <main class="side-page-main col-12">
-            <section *ngFor="let event of events" class="card" style="max-width: 220px">
+            @if (loadError()) {
+            <p role="alert">{{ loadError() }}</p>
+            }
+            <section *ngFor="let event of events()" class="card" style="max-width: 220px">
                 <img src="assets/events/default-event.png" class="card-img-top" alt="...">
                 <div class="card-body">
-                    <h4 class="card-title">{{ event.name }}</h4>
-                    <p class="card-text">{{ event.day }}</p>
-                    <p class="card-text">{{ event.time }}</p>
+                    <h4 class="card-title">{{ event.title }}</h4>
+                    <p class="card-text">{{ event.startsAt | date:'dd/MM/yyyy' }}</p>
+                    <p class="card-text">{{ event.startsAt | date:'HH:mm' }}</p>
                     <p class="card-text">{{ event.location }}</p>
                     <a href="#" class="btn-solid theme-primary">Mais Informações</a>
                 </div>

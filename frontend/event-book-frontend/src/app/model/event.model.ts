@@ -5,3 +5,5 @@ export interface Event {
   endsAt: string;
   location: string;
 }
+
+export type EventListItem = Pick<Event, 'title' | 'startsAt' | 'location'>;

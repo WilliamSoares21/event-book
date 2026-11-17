@@ -2,7 +2,8 @@ import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+import { ToastService } from '../../../services/toast/toast';
 import { CreateLotsComponents } from './create-lots';
 import { SessionService } from '../../../services/session/session';
 import { environment } from '../../../../environments/environment';
@@ -26,6 +27,7 @@ describe('CreateLotsComponents requests', () => {
       id: 'organizer', role: 'ORGANIZADOR', name: 'Organizador', email: 'test@example.com', token: 'test-token',
     });
     http = TestBed.inject(HttpTestingController);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     component = TestBed.createComponent(CreateLotsComponents).componentInstance;
     Object.assign(component.lots[0], {
       name: 'Primeiro lote', price: 50, quantity: 100, salesStart: '2026-12-01', salesEnd: '2026-12-09',
@@ -59,6 +61,10 @@ describe('CreateLotsComponents requests', () => {
     second.flush({ id: 'lot-2' });
     expect(component.success()).toBe(true);
     expect(component.saving()).toBe(false);
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/events']);
+    expect(TestBed.inject(ToastService).notification()).toEqual({
+      message: 'Evento e lotes criados com sucesso!', success: true,
+    });
   });
 
   it('does not create lots when the event request fails', () => {
@@ -68,6 +74,8 @@ describe('CreateLotsComponents requests', () => {
     expect(component.success()).toBe(false);
     expect(component.saving()).toBe(false);
     expect(component.message()).toContain('Não foi possível criar o evento');
+    expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
+    expect(TestBed.inject(ToastService).notification()?.success).toBe(false);
   });
 
   it('retries only pending lots after a partial failure', () => {
@@ -77,6 +85,8 @@ describe('CreateLotsComponents requests', () => {
     http.expectOne(`${base}/events/event-id/ticket-lots`).flush({}, { status: 500, statusText: 'Error' });
     expect(component.success()).toBe(false);
     expect(component.saving()).toBe(false);
+    expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
+    expect(TestBed.inject(ToastService).notification()?.success).toBe(false);
     component.createEvent();
     http.expectNone(`${base}/events`);
     const retry = http.expectOne(`${base}/events/event-id/ticket-lots`);
