@@ -2,6 +2,7 @@
 package com.eventbook.backend.orders;
 
 import com.eventbook.backend.common.exception.BusinessException;
+import com.eventbook.backend.orders.dto.CheckoutResponseDTO;
 import com.eventbook.backend.orders.dto.OrderRequestDTO;
 import com.eventbook.backend.orders.dto.OrderResponseDTO;
 import com.eventbook.backend.security.AuthenticatedUser;
@@ -24,6 +25,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import java.net.URI;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -68,5 +70,32 @@ public class OrderController {
         return ResponseEntity
                 .created(location)
                 .body(response);
+    }
+
+    @PostMapping("/{orderId}/checkout")
+    @PreAuthorize("hasRole('COMPRADOR')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Realiza o checkout simulado de um pedido pendente")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Checkout aprovado, tickets emitidos"),
+            @ApiResponse(responseCode = "400", description = "UUID inválido"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuário não é comprador ou pedido não pertence ao usuário"),
+            @ApiResponse(responseCode = "404", description = "Pedido não encontrado"),
+            @ApiResponse(responseCode = "409", description = "Pedido já pago ou conflito de concorrência"),
+            @ApiResponse(responseCode = "422", description = "Pedido expirado ou status incompatível (ex.: cancelado)")
+    })
+    public ResponseEntity<CheckoutResponseDTO> checkout(
+            @PathVariable UUID orderId,
+            @AuthenticationPrincipal AuthenticatedUser authUser) {
+
+        User buyer = userRepository.findById(authUser.id())
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Comprador não encontrado"
+                ));
+
+        CheckoutResponseDTO response = orderService.checkout(orderId, buyer.getId());
+
+        return ResponseEntity.ok(response);
     }
 }
