@@ -1,11 +1,13 @@
 package com.eventbook.backend.orders;
 
+import com.eventbook.backend.cards.SimulatedCardRepository;
 import com.eventbook.backend.events.Event;
 import com.eventbook.backend.events.EventRepository;
 import com.eventbook.backend.events.EventStatus;
 import com.eventbook.backend.lots.LotStatus;
 import com.eventbook.backend.lots.TicketLot;
 import com.eventbook.backend.lots.TicketLotRepository;
+import com.eventbook.backend.payments.PaymentTransactionRepository;
 import com.eventbook.backend.tickets.Ticket;
 import com.eventbook.backend.tickets.TicketRepository;
 import com.eventbook.backend.tickets.TicketStatus;
@@ -89,6 +91,12 @@ class OrderCheckoutConcurrencyTest {
 
     @Autowired
     private TicketRepository ticketRepository;
+
+    @Autowired
+    private SimulatedCardRepository simulatedCardRepository;
+
+    @Autowired
+    private PaymentTransactionRepository paymentTransactionRepository;
 
     @Autowired
     private OrderExpirationScheduler expirationScheduler;
@@ -203,11 +211,11 @@ class OrderCheckoutConcurrencyTest {
         fail("A segunda transação não ficou aguardando o lock da Order (timeout)");
     }
 
-    private int performCheckoutStatus(String token, UUID orderId) throws Exception {
+    private int performCheckoutStatus(String token, UUID orderId, UUID cardId) throws Exception {
         return mockMvc.perform(post("/api/orders/{orderId}/checkout", orderId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
-                        .content("{}"))
+                        .content(checkoutBody(cardId)))
                 .andReturn().getResponse().getStatus();
     }
 
@@ -216,8 +224,10 @@ class OrderCheckoutConcurrencyTest {
     @BeforeEach
     void setup() {
         lockProbe.reset();
+        paymentTransactionRepository.deleteAll();
         ticketRepository.deleteAll();
         orderRepository.deleteAll();
+        simulatedCardRepository.deleteAll();
         ticketLotRepository.deleteAll();
         eventRepository.deleteAll();
         userRepository.deleteAll();
@@ -291,6 +301,18 @@ class OrderCheckoutConcurrencyTest {
         return body.contains("token") ? body.split("\"token\":\"")[1].split("\"")[0] : "";
     }
 
+    private UUID createCard(String token) throws Exception {
+        String body = mockMvc.perform(post("/api/cards")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return UUID.fromString(body.split("\"id\":\"")[1].split("\"")[0]);
+    }
+
+    private String checkoutBody(UUID cardId) {
+        return "{\"cardId\":\"" + cardId + "\"}";
+    }
+
     private UUID createOrderAndGetId(String token, UUID lotId, int quantity) throws Exception {
         String response = mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -313,6 +335,7 @@ class OrderCheckoutConcurrencyTest {
         User buyer = createBuyer("buyer@test.com");
         String token = obtainToken(buyer.getEmail());
 
+        UUID cardId = createCard(token);
         UUID orderId = createOrderAndGetId(token, lot.getId(), 2);
 
         int threadCount = 10;
@@ -331,7 +354,7 @@ class OrderCheckoutConcurrencyTest {
                     var request = post("/api/orders/{orderId}/checkout", orderId)
                             .contentType(MediaType.APPLICATION_JSON)
                             .header("Authorization", "Bearer " + token)
-                            .content("{}");
+                            .content(checkoutBody(cardId));
 
                     var result = mockMvc.perform(request);
                     int status = result.andReturn().getResponse().getStatus();
@@ -382,6 +405,7 @@ class OrderCheckoutConcurrencyTest {
 
         User buyer = createBuyer("buyer@test.com");
         String token = obtainToken(buyer.getEmail());
+        UUID cardId = createCard(token);
         UUID orderId = createOrderAndGetId(token, lot.getId(), 2);
 
         // Pedido PENDING e ainda válido; o scheduler não deve expirá-lo.
@@ -396,7 +420,7 @@ class OrderCheckoutConcurrencyTest {
             lockProbe.arm();
             executor.submit(() -> {
                 try {
-                    checkoutStatus.set(performCheckoutStatus(token, orderId));
+                    checkoutStatus.set(performCheckoutStatus(token, orderId, cardId));
                 } catch (Exception e) {
                     throw new IllegalStateException(e);
                 } finally {
@@ -449,6 +473,7 @@ class OrderCheckoutConcurrencyTest {
 
         User buyer = createBuyer("buyer@test.com");
         String token = obtainToken(buyer.getEmail());
+        UUID cardId = createCard(token);
         UUID orderId = createOrderAndGetId(token, lot.getId(), 2);
 
         // Pedido PENDING porém já expirado: elegível à expiração.
@@ -478,7 +503,7 @@ class OrderCheckoutConcurrencyTest {
             // 3. Checkout disputa o mesmo lock.
             executor.submit(() -> {
                 try {
-                    checkoutStatus.set(performCheckoutStatus(token, orderId));
+                    checkoutStatus.set(performCheckoutStatus(token, orderId, cardId));
                 } catch (Exception e) {
                     throw new IllegalStateException(e);
                 }
@@ -517,10 +542,12 @@ class OrderCheckoutConcurrencyTest {
         // Create two orders for different buyers
         User buyer1 = createBuyer("buyer1@test.com");
         String token1 = obtainToken(buyer1.getEmail());
+        UUID cardId1 = createCard(token1);
         UUID orderId1 = createOrderAndGetId(token1, lot.getId(), 3);
 
         User buyer2 = createBuyer("buyer2@test.com");
         String token2 = obtainToken(buyer2.getEmail());
+        UUID cardId2 = createCard(token2);
         UUID orderId2 = createOrderAndGetId(token2, lot.getId(), 4);
 
         int threadCount = 2;
@@ -537,7 +564,7 @@ class OrderCheckoutConcurrencyTest {
                 var request = post("/api/orders/{orderId}/checkout", orderId1)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token1)
-                        .content("{}");
+                        .content(checkoutBody(cardId1));
 
                 var result = mockMvc.perform(request);
                 int status = result.andReturn().getResponse().getStatus();
@@ -561,7 +588,7 @@ class OrderCheckoutConcurrencyTest {
                 var request = post("/api/orders/{orderId}/checkout", orderId2)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token2)
-                        .content("{}");
+                        .content(checkoutBody(cardId2));
 
                 var result = mockMvc.perform(request);
                 int status = result.andReturn().getResponse().getStatus();
@@ -610,6 +637,7 @@ class OrderCheckoutConcurrencyTest {
         User buyer = createBuyer("buyer@test.com");
         String token = obtainToken(buyer.getEmail());
 
+        UUID cardId = createCard(token);
         UUID orderId = createOrderAndGetId(token, lot.getId(), 2);
 
         // Expire the order first
@@ -627,7 +655,7 @@ class OrderCheckoutConcurrencyTest {
         var request = post("/api/orders/{orderId}/checkout", orderId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token)
-                .content("{}");
+                .content(checkoutBody(cardId));
 
         mockMvc.perform(request)
                 .andExpect(status().isUnprocessableEntity());
@@ -652,13 +680,14 @@ class OrderCheckoutConcurrencyTest {
         User buyer = createBuyer("buyer@test.com");
         String token = obtainToken(buyer.getEmail());
 
+        UUID cardId = createCard(token);
         UUID orderId = createOrderAndGetId(token, lot.getId(), 2);
 
         // Checkout conclui primeiro: pedido vira PAID.
         mockMvc.perform(post("/api/orders/{orderId}/checkout", orderId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + token)
-                        .content("{}"))
+                        .content(checkoutBody(cardId)))
                 .andExpect(status().isOk());
 
         Order paidOrder = orderRepository.findById(orderId).orElseThrow();
