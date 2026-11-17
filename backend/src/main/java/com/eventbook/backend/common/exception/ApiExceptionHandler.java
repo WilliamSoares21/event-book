@@ -1,11 +1,15 @@
 package com.eventbook.backend.common.exception;
 
+import com.eventbook.backend.cards.exception.CardAccessDeniedException;
+import com.eventbook.backend.cards.exception.CardNotFoundException;
 import com.eventbook.backend.orders.exception.OrderAccessDeniedException;
 import com.eventbook.backend.orders.exception.OrderExpiredException;
 import com.eventbook.backend.orders.exception.OrderInvalidStatusException;
 import com.eventbook.backend.orders.exception.OrderNotFoundException;
 import com.eventbook.backend.orders.OrderStatus;
+import com.eventbook.backend.payments.exception.PaymentDeclinedException;
 import com.eventbook.backend.users.exception.DuplicateEmailException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -63,6 +67,13 @@ public class ApiExceptionHandler {
         );
     }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrity(
+            DataIntegrityViolationException ex) {
+
+        return buildError(HttpStatus.CONFLICT, "Operação conflita com registros existentes");
+    }
+
     @ExceptionHandler(DuplicateEmailException.class)
     public ResponseEntity<Map<String, Object>> handleDuplicateEmail(
             DuplicateEmailException ex) {
@@ -115,6 +126,33 @@ public class ApiExceptionHandler {
             OrderExpiredException ex) {
 
         return buildError(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
+    @ExceptionHandler(CardNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleCardNotFound(
+            CardNotFoundException ex) {
+
+        return buildError(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(CardAccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleCardAccessDenied(
+            CardAccessDeniedException ex) {
+
+        return buildError(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
+    @ExceptionHandler(PaymentDeclinedException.class)
+    public ResponseEntity<Map<String, Object>> handlePaymentDeclined(
+            PaymentDeclinedException ex) {
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
+        body.put("code", ex.getCode());
+        body.put("error", ex.getMessage());
+        body.put("timestamp", Instant.now().toString());
+
+        return ResponseEntity.unprocessableEntity().body(body);
     }
 
     // esse handler é uma proteção adicional caso alguma atualização futura não seja tratada dentro do service.
