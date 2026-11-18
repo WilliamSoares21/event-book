@@ -1,0 +1,23 @@
+info:
+  name: get-occupancy-not-found
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/events/{{nonExistentEventId}}/occupancy"
+  headers:
+    - name: Authorization
+      value: "Bearer {{organizerToken}}"
+  params:
+    - name: nonExistentEventId
+      value: "00000000-0000-0000-0000-000000000000"
+      type: path
+  auth: inherit
+
+scripts:
+  pre-request: ""
+  post-response: |
+    bru.assert.status.is(404)
+    bru.assert.header.has("Content-Type")
+    bru.assert.jsonpath("$.status", 404)
