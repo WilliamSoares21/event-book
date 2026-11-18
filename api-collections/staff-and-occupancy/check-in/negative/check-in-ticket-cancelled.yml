@@ -1,0 +1,29 @@
+info:
+  name: check-in-ticket-cancelled
+  type: http
+  seq: 7
+
+http:
+  method: POST
+  url: "{{baseUrl}}/tickets/{{ticketCode}}/check-in"
+  params:
+    - name: ticketCode
+      value: "{{cancelledTicketCode}}"
+      type: path
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: "Bearer {{staffToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 422 - Ticket cancelado
+    script: |
+      test.status(422)
+      test.jsonPath("$.error").equals("Ticket não está em status válido para check-in")

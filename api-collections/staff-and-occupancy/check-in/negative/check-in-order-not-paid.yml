@@ -1,0 +1,29 @@
+info:
+  name: check-in-order-not-paid
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/tickets/{{ticketCode}}/check-in"
+  params:
+    - name: ticketCode
+      value: "{{pendingTicketCode}}"
+      type: path
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: "Bearer {{staffToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 422 - Pedido não pago
+    script: |
+      test.status(422)
+      test.jsonPath("$.error").equals("Pedido não está pago")

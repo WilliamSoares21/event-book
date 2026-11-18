@@ -1,0 +1,26 @@
+info:
+  name: add-staff-without-token
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/events/{{eventId}}/staff"
+  auth: none
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    raw: '{"userId": "{{staffUserId}}"}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 401 - Sem autenticação
+    script: test.status(401)

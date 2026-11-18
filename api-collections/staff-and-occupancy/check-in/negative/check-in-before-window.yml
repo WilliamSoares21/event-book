@@ -1,0 +1,29 @@
+info:
+  name: check-in-before-window
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{baseUrl}}/tickets/{{ticketCode}}/check-in"
+  params:
+    - name: ticketCode
+      value: "{{futureEventTicketCode}}"
+      type: path
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: "Bearer {{staffToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 422 - Antes da janela de check-in
+    script: |
+      test.status(422)
+      test.jsonPath("$.error").equals("Evento fora da janela de check-in")

@@ -1,0 +1,10 @@
+info:
+  name: check-in
+  type: folder
+  seq: 1
+
+request:
+  auth: inherit
+
+folders:
+  - negative
