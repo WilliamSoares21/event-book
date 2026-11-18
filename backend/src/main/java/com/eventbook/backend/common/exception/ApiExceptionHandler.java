@@ -2,6 +2,13 @@ package com.eventbook.backend.common.exception;
 
 import com.eventbook.backend.cards.exception.CardAccessDeniedException;
 import com.eventbook.backend.cards.exception.CardNotFoundException;
+import com.eventbook.backend.checkin.exception.EventOutsideCheckinWindowException;
+import com.eventbook.backend.checkin.exception.InvalidTicketCodeException;
+import com.eventbook.backend.checkin.exception.OrderNotPaidException;
+import com.eventbook.backend.checkin.exception.StaffNotAuthorizedException;
+import com.eventbook.backend.checkin.exception.TicketAlreadyCheckedInException;
+import com.eventbook.backend.checkin.exception.TicketInvalidStatusException;
+import com.eventbook.backend.checkin.exception.TicketNotFoundException;
 import com.eventbook.backend.orders.exception.OrderAccessDeniedException;
 import com.eventbook.backend.orders.exception.OrderAlreadyCancelledException;
 import com.eventbook.backend.orders.exception.OrderExpiredException;
@@ -180,6 +187,57 @@ public class ApiExceptionHandler {
                 HttpStatus.CONFLICT,
                 "O recurso foi alterado por outro usuário"
         );
+    }
+
+    @ExceptionHandler(TicketNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleTicketNotFound(
+            TicketNotFoundException ex) {
+
+        return buildError(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(TicketAlreadyCheckedInException.class)
+    public ResponseEntity<Map<String, Object>> handleTicketAlreadyCheckedIn(
+            TicketAlreadyCheckedInException ex) {
+
+        // This exception is handled at controller level to return the conflict DTO
+        // but we keep a fallback here for safety
+        return buildError(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(OrderNotPaidException.class)
+    public ResponseEntity<Map<String, Object>> handleOrderNotPaid(
+            OrderNotPaidException ex) {
+
+        return buildError(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
+    @ExceptionHandler(TicketInvalidStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleTicketInvalidStatus(
+            TicketInvalidStatusException ex) {
+
+        return buildError(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
+    @ExceptionHandler(EventOutsideCheckinWindowException.class)
+    public ResponseEntity<Map<String, Object>> handleEventOutsideWindow(
+            EventOutsideCheckinWindowException ex) {
+
+        return buildError(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
+    @ExceptionHandler(StaffNotAuthorizedException.class)
+    public ResponseEntity<Map<String, Object>> handleStaffNotAuthorized(
+            StaffNotAuthorizedException ex) {
+
+        return buildError(HttpStatus.FORBIDDEN, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidTicketCodeException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidTicketCode(
+            InvalidTicketCodeException ex) {
+
+        return buildError(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     private ResponseEntity<Map<String, Object>> buildError(
