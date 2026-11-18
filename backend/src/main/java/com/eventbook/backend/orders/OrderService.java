@@ -16,7 +16,9 @@ import com.eventbook.backend.orders.exception.LotNotActiveException;
 import com.eventbook.backend.orders.exception.LotNotFoundException;
 import com.eventbook.backend.orders.exception.OutsideSalesWindowException;
 import com.eventbook.backend.orders.exception.OrderAccessDeniedException;
+import com.eventbook.backend.orders.exception.OrderAlreadyCancelledException;
 import com.eventbook.backend.orders.exception.OrderExpiredException;
+import com.eventbook.backend.orders.exception.OrderHasCheckedInTicketException;
 import com.eventbook.backend.orders.exception.OrderInvalidStatusException;
 import com.eventbook.backend.orders.exception.OrderNotFoundException;
 import com.eventbook.backend.payments.PaymentStatus;
@@ -211,5 +213,135 @@ public class OrderService {
 
   private String generateUniqueCode() {
     return UUID.randomUUID().toString().replace("-", "").toUpperCase();
+  }
+
+  @Transactional
+  public void cancel(UUID orderId, UUID userId) {
+    // 1. Lock the Order (PESSIMISTIC_WRITE)
+    Order order = orderRepository.findByIdForUpdate(orderId)
+        .orElseThrow(() -> new OrderNotFoundException("Pedido não encontrado: " + orderId));
+
+    // 2. Validate authorization: buyer or event organizer
+    boolean isBuyer = order.getBuyer().getId().equals(userId);
+    boolean isOrganizer = order.getTicketLot()
+        .getEvent()
+        .getOrganizer()
+        .getId()
+        .equals(userId);
+
+    if (!isBuyer && !isOrganizer) {
+      throw new OrderAccessDeniedException("Você não tem permissão para cancelar este pedido");
+    }
+
+    // 3. Validate order status
+    if (order.getStatus() == OrderStatus.CANCELLED) {
+      throw new OrderAlreadyCancelledException("Este pedido já foi cancelado");
+    }
+
+    if (order.getStatus() == OrderStatus.EXPIRED) {
+      throw new OrderExpiredException("Pedidos expirados não podem ser cancelados");
+    }
+
+    if (order.getStatus() != OrderStatus.PENDING && order.getStatus() != OrderStatus.PAID) {
+      throw new OrderInvalidStatusException("Estado do pedido não permite cancelamento", order.getStatus());
+    }
+
+    // 4. Validate cancellation deadline for buyer (not organizer)
+    // isAfter() retorna false no instante exato do deadline -> cancelamento permitido no limite de 12h
+    Instant now = Instant.now();
+    if (isBuyer && !isOrganizer) {
+      Instant cancellationDeadline = order.getTicketLot()
+          .getEvent()
+          .getStartsAt()
+          .toInstant()
+          .minus(12, ChronoUnit.HOURS);
+
+      if (now.isAfter(cancellationDeadline)) {
+        throw new OrderAccessDeniedException("O prazo para cancelamento pelo comprador foi encerrado");
+      }
+    }
+
+    // 5. Lock the TicketLot (PESSIMISTIC_WRITE) - Order → TicketLot lock order
+    TicketLot lot = ticketLotRepository.findByIdForUpdate(order.getTicketLot().getId())
+        .orElseThrow(() -> new LotNotFoundException("Lote não encontrado: " + order.getTicketLot().getId()));
+
+    // 6. Re-validate status after acquiring locks
+    if (order.getStatus() == OrderStatus.CANCELLED) {
+      throw new OrderAlreadyCancelledException("Este pedido já foi cancelado");
+    }
+
+    if (order.getStatus() == OrderStatus.EXPIRED) {
+      throw new OrderExpiredException("Pedidos expirados não podem ser cancelados");
+    }
+
+    // Re-validate expiration for PENDING orders (authoritative check inside transaction)
+    if (order.getStatus() == OrderStatus.PENDING
+            && order.getExpiresAt() != null
+            && order.getExpiresAt().isBefore(Instant.now())) {
+      throw new OrderExpiredException("Pedido expirado: não é possível cancelar");
+    }
+
+    // 7. Process based on order status
+    if (order.getStatus() == OrderStatus.PENDING) {
+      processPendingCancellation(order, lot);
+    } else if (order.getStatus() == OrderStatus.PAID) {
+      processPaidCancellation(order, lot, now);
+    }
+
+    // 8. Update order to CANCELLED
+    order.setStatus(OrderStatus.CANCELLED);
+    order.setCancelledAt(now);
+    orderRepository.save(order);
+  }
+
+  private void processPendingCancellation(Order order, TicketLot lot) {
+    // Release reserved capacity
+    lot.decrementReserved(order.getQuantity());
+    ticketLotRepository.save(lot);
+    // No financial transaction for PENDING orders
+    // Tickets are not created for PENDING orders (created only at checkout)
+  }
+
+  private void processPaidCancellation(Order order, TicketLot lot, Instant now) {
+    // 1. Find the original APPROVED payment transaction
+    PaymentTransaction approvedTransaction = paymentTransactionRepository
+        .findByOrderIdAndStatus(order.getId(), PaymentStatus.APPROVED)
+        .orElseThrow(() -> new IllegalStateException("Transação aprovada não encontrada para o pedido: " + order.getId()));
+
+    // 2. Check for existing REFUNDED transaction (idempotency protection)
+    if (paymentTransactionRepository.countByOrderIdAndStatus(order.getId(), PaymentStatus.REFUNDED) > 0) {
+      throw new IllegalStateException("Estorno já processado para este pedido: " + order.getId());
+    }
+
+    // 3. Lock the SimulatedCard (PESSIMISTIC_WRITE) - Order → TicketLot → SimulatedCard
+    SimulatedCard card = simulatedCardRepository.findByIdForUpdate(approvedTransaction.getCard().getId())
+        .orElseThrow(() -> new IllegalStateException("Cartão não encontrado: " + approvedTransaction.getCard().getId()));
+
+    // 4. Restore available limit
+    BigDecimal refundAmount = approvedTransaction.getAmount();
+    card.setAvailableLimit(card.getAvailableLimit().add(refundAmount));
+    simulatedCardRepository.save(card);
+
+    // 5. Create REFUNDED payment transaction (append-only history)
+    paymentTransactionRepository.save(PaymentTransaction.builder()
+        .order(order)
+        .card(card)
+        .amount(refundAmount)
+        .status(PaymentStatus.REFUNDED)
+        .build());
+
+    // 6. Release sold capacity
+    lot.decrementSold(order.getQuantity());
+    ticketLotRepository.save(lot);
+
+    // 7. Cancel tickets
+    List<Ticket> tickets = ticketRepository.findByOrderId(order.getId());
+    for (Ticket ticket : tickets) {
+      if (ticket.getStatus() == TicketStatus.CHECKED_IN) {
+        throw new OrderHasCheckedInTicketException("Não é possível cancelar um pedido que possui ingresso já utilizado");
+      }
+      ticket.setStatus(TicketStatus.CANCELLED);
+    }
+    ticketRepository.saveAll(tickets);
   }
 }

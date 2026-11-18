@@ -133,4 +133,14 @@ public class TicketLot {
         }
         this.reserved -= quantity;
     }
+
+    public void decrementSold(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("A quantidade a liberar deve ser positiva");
+        }
+        if (this.sold < quantity) {
+            throw new IllegalStateException("Quantidade vendida insuficiente para liberar");
+        }
+        this.sold -= quantity;
+    }
 }

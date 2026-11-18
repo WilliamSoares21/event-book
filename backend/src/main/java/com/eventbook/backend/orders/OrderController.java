@@ -6,6 +6,7 @@ import com.eventbook.backend.orders.dto.CheckoutRequestDTO;
 import com.eventbook.backend.orders.dto.CheckoutResponseDTO;
 import com.eventbook.backend.orders.dto.OrderRequestDTO;
 import com.eventbook.backend.orders.dto.OrderResponseDTO;
+import com.eventbook.backend.orders.exception.OrderHasCheckedInTicketException;
 import com.eventbook.backend.payments.exception.PaymentDeclinedException;
 import com.eventbook.backend.security.AuthenticatedUser;
 import com.eventbook.backend.users.User;
@@ -107,5 +108,30 @@ public class OrderController {
         }
 
         return ResponseEntity.ok(result.response());
+    }
+
+    @DeleteMapping("/{orderId}")
+    @PreAuthorize("hasRole('COMPRADOR') or hasRole('ORGANIZADOR')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Cancela um pedido (comprador ou organizador do evento)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Pedido cancelado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "UUID inválido"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuário não autorizado a cancelar este pedido"),
+            @ApiResponse(responseCode = "404", description = "Pedido não encontrado"),
+            @ApiResponse(responseCode = "409", description = "Pedido já cancelado"),
+            @ApiResponse(responseCode = "422", description = "Pedido expirado, fora do prazo, ou possui ingresso com check-in")
+    })
+    public ResponseEntity<Void> cancelOrder(
+            @PathVariable UUID orderId,
+            @AuthenticationPrincipal AuthenticatedUser authUser) {
+
+        User user = userRepository.findById(authUser.id())
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+
+        orderService.cancel(orderId, user.getId());
+
+        return ResponseEntity.noContent().build();
     }
 }

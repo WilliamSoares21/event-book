@@ -3,7 +3,9 @@ package com.eventbook.backend.common.exception;
 import com.eventbook.backend.cards.exception.CardAccessDeniedException;
 import com.eventbook.backend.cards.exception.CardNotFoundException;
 import com.eventbook.backend.orders.exception.OrderAccessDeniedException;
+import com.eventbook.backend.orders.exception.OrderAlreadyCancelledException;
 import com.eventbook.backend.orders.exception.OrderExpiredException;
+import com.eventbook.backend.orders.exception.OrderHasCheckedInTicketException;
 import com.eventbook.backend.orders.exception.OrderInvalidStatusException;
 import com.eventbook.backend.orders.exception.OrderNotFoundException;
 import com.eventbook.backend.orders.OrderStatus;
@@ -124,6 +126,20 @@ public class ApiExceptionHandler {
     @ExceptionHandler(OrderExpiredException.class)
     public ResponseEntity<Map<String, Object>> handleOrderExpired(
             OrderExpiredException ex) {
+
+        return buildError(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
+    @ExceptionHandler(OrderAlreadyCancelledException.class)
+    public ResponseEntity<Map<String, Object>> handleOrderAlreadyCancelled(
+            OrderAlreadyCancelledException ex) {
+
+        return buildError(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(OrderHasCheckedInTicketException.class)
+    public ResponseEntity<Map<String, Object>> handleOrderHasCheckedInTicket(
+            OrderHasCheckedInTicketException ex) {
 
         return buildError(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
