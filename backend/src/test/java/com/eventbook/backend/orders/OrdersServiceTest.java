@@ -1,5 +1,10 @@
 package com.eventbook.backend.orders;
 
+import com.eventbook.backend.cards.CardStatus;
+import com.eventbook.backend.events.Event;
+import com.eventbook.backend.events.EventStatus;
+import com.eventbook.backend.cards.SimulatedCard;
+import com.eventbook.backend.cards.SimulatedCardRepository;
 import com.eventbook.backend.lots.LotStatus;
 import com.eventbook.backend.lots.TicketLot;
 import com.eventbook.backend.lots.TicketLotRepository;
@@ -12,6 +17,7 @@ import com.eventbook.backend.orders.exception.OrderAccessDeniedException;
 import com.eventbook.backend.orders.exception.OrderExpiredException;
 import com.eventbook.backend.orders.exception.OrderInvalidStatusException;
 import com.eventbook.backend.orders.exception.OrderNotFoundException;
+import com.eventbook.backend.payments.PaymentTransactionRepository;
 import com.eventbook.backend.tickets.Ticket;
 import com.eventbook.backend.tickets.TicketRepository;
 import com.eventbook.backend.tickets.TicketStatus;
@@ -48,8 +54,37 @@ class OrderServiceTest {
   @Mock
   private TicketRepository ticketRepository;
 
+  @Mock
+  private SimulatedCardRepository simulatedCardRepository;
+
+  @Mock
+  private PaymentTransactionRepository paymentTransactionRepository;
+
   @InjectMocks
   private OrderService orderService;
+
+  private final UUID cardId = UUID.randomUUID();
+
+  private static final Event PUBLISHED_EVENT = Event.builder()
+      .status(EventStatus.PUBLISHED)
+      .build();
+
+  // Cartão ativo com limite suficiente para os cenários de aprovação.
+  private void stubActiveCard(UUID buyerId) {
+    SimulatedCard card = SimulatedCard.builder()
+        .id(cardId)
+        .user(User.builder().id(buyerId).build())
+        .brand("VISA")
+        .lastFourDigits("1234")
+        .expiryMonth(12)
+        .expiryYear(2999)
+        .totalLimit(new BigDecimal("1000.00"))
+        .availableLimit(new BigDecimal("1000.00"))
+        .status(CardStatus.ACTIVE)
+        .build();
+
+    when(simulatedCardRepository.findByIdForUpdate(cardId)).thenReturn(Optional.of(card));
+  }
 
   @Test
   void deveReservarIngressosComSucesso() {
@@ -63,6 +98,7 @@ class OrderServiceTest {
     Instant now = Instant.now();
 
     TicketLot lot = TicketLot.builder()
+        .event(PUBLISHED_EVENT)
         .id(ticketLotId)
         .status(LotStatus.ACTIVE)
         .salesStart(now.minus(1, ChronoUnit.HOURS))
@@ -141,6 +177,7 @@ class OrderServiceTest {
         .build();
 
     TicketLot lot = TicketLot.builder()
+        .event(PUBLISHED_EVENT)
         .id(ticketLotId)
         .status(LotStatus.INACTIVE)
         .build();
@@ -168,6 +205,7 @@ class OrderServiceTest {
     Instant now = Instant.now();
 
     TicketLot lot = TicketLot.builder()
+        .event(PUBLISHED_EVENT)
         .id(ticketLotId)
         .status(LotStatus.ACTIVE)
         .capacity(100)
@@ -197,6 +235,7 @@ class OrderServiceTest {
     Instant now = Instant.now();
 
     TicketLot lot = TicketLot.builder()
+        .event(PUBLISHED_EVENT)
         .id(ticketLotId)
         .status(LotStatus.ACTIVE)
         .salesStart(now.minus(1, ChronoUnit.HOURS))
@@ -225,6 +264,7 @@ class OrderServiceTest {
     Instant now = Instant.now();
 
     TicketLot lot = TicketLot.builder()
+        .event(PUBLISHED_EVENT)
         .id(ticketLotId)
         .status(LotStatus.ACTIVE)
         .salesStart(now.minus(1, ChronoUnit.HOURS))
@@ -266,6 +306,7 @@ class OrderServiceTest {
     Instant now = Instant.now();
 
     TicketLot lot = TicketLot.builder()
+        .event(PUBLISHED_EVENT)
         .id(ticketLotId)
         .status(LotStatus.ACTIVE)
         .capacity(100)
@@ -290,6 +331,7 @@ class OrderServiceTest {
     Instant now = Instant.now();
 
     TicketLot lot = TicketLot.builder()
+        .event(PUBLISHED_EVENT)
         .id(ticketLotId)
         .status(LotStatus.ACTIVE)
         .capacity(100)
@@ -314,6 +356,7 @@ class OrderServiceTest {
     Instant now = Instant.now().plusSeconds(2);
 
     TicketLot lot = TicketLot.builder()
+        .event(PUBLISHED_EVENT)
         .id(ticketLotId)
         .status(LotStatus.ACTIVE)
         .capacity(100)
@@ -334,6 +377,7 @@ class OrderServiceTest {
   private Order createPendingOrder(UUID orderId, UUID buyerId, UUID lotId, int quantity, BigDecimal unitPrice, Instant expiresAt) {
     User buyer = User.builder().id(buyerId).build();
     TicketLot lot = TicketLot.builder()
+        .event(PUBLISHED_EVENT)
         .id(lotId)
         .capacity(100)
         .unitPrice(unitPrice)
@@ -351,6 +395,8 @@ class OrderServiceTest {
 
   private TicketLot createTicketLot(UUID lotId, int capacity, int sold, int reserved) {
     return TicketLot.builder()
+        .event(PUBLISHED_EVENT)
+        .status(LotStatus.ACTIVE)
         .id(lotId)
         .capacity(capacity)
         .sold(sold)
@@ -377,7 +423,9 @@ class OrderServiceTest {
     when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
     when(ticketLotRepository.save(any(TicketLot.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId);
+    stubActiveCard(buyerId);
+
+    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId, cardId).response();
 
     assertThat(response).isNotNull();
     assertThat(response.orderId()).isEqualTo(orderId);
@@ -406,7 +454,7 @@ class OrderServiceTest {
 
     when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderNotFoundException.class)
         .hasMessageContaining("Pedido não encontrado");
 
@@ -427,7 +475,7 @@ class OrderServiceTest {
 
     when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
 
-    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderAccessDeniedException.class)
         .hasMessageContaining("Acesso negado");
 
@@ -447,7 +495,7 @@ class OrderServiceTest {
 
     when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
 
-    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderInvalidStatusException.class)
         .hasMessageContaining("não está pendente");
 
@@ -466,7 +514,7 @@ class OrderServiceTest {
 
     when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
 
-    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderExpiredException.class)
         .hasMessageContaining("expirado");
 
@@ -486,7 +534,7 @@ class OrderServiceTest {
 
     when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
 
-    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderInvalidStatusException.class)
         .hasMessageContaining("não está pendente");
 
@@ -510,7 +558,9 @@ class OrderServiceTest {
     when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
     when(ticketLotRepository.save(any(TicketLot.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId);
+    stubActiveCard(buyerId);
+
+    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId, cardId).response();
 
     assertThat(response.tickets()).hasSize(5);
     response.tickets().forEach(ticket -> {
@@ -530,6 +580,8 @@ class OrderServiceTest {
 
     Order order = createPendingOrder(orderId, buyerId, lotId, 2, unitPriceSnapshot, now.plus(10, ChronoUnit.MINUTES));
     TicketLot lot = TicketLot.builder()
+        .event(PUBLISHED_EVENT)
+        .status(LotStatus.ACTIVE)
         .id(lotId)
         .capacity(100)
         .sold(10)
@@ -544,7 +596,9 @@ class OrderServiceTest {
     when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
     when(ticketLotRepository.save(any(TicketLot.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId);
+    stubActiveCard(buyerId);
+
+    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId, cardId).response();
 
     assertThat(response.unitPriceSnapshot()).isEqualByComparingTo("75.50");
     assertThat(response.totalPrice()).isEqualByComparingTo("151.00");
@@ -567,7 +621,9 @@ class OrderServiceTest {
     when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
     when(ticketLotRepository.save(any(TicketLot.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    orderService.checkout(orderId, buyerId);
+    stubActiveCard(buyerId);
+
+    orderService.checkout(orderId, buyerId, cardId);
 
     assertThat(lot.getReserved()).isEqualTo(7); // 10 - 3
     assertThat(lot.getSold()).isEqualTo(23); // 20 + 3
@@ -599,7 +655,9 @@ class OrderServiceTest {
     when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
     when(ticketLotRepository.save(any(TicketLot.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId);
+    stubActiveCard(buyerId);
+
+    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId, cardId).response();
 
     assertThat(response.tickets()).hasSize(3);
     var uniqueCodes = response.tickets().stream().map(t -> t.uniqueCode()).toList();
@@ -628,7 +686,9 @@ class OrderServiceTest {
     when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
     when(ticketLotRepository.save(any(TicketLot.class))).thenAnswer(inv -> inv.getArgument(0));
 
-    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId);
+    stubActiveCard(buyerId);
+
+    CheckoutResponseDTO response = orderService.checkout(orderId, buyerId, cardId).response();
 
     assertThat(response.paidAt()).isNotNull();
     assertThat(response.paidAt()).isAfterOrEqualTo(now);
@@ -647,7 +707,7 @@ class OrderServiceTest {
 
     when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
 
-    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderInvalidStatusException.class)
         .hasMessageContaining("não está pendente")
         .satisfies(ex -> assertThat(((OrderInvalidStatusException) ex).getCurrentStatus())
@@ -669,7 +729,7 @@ class OrderServiceTest {
 
     when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
 
-    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId))
+    assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderInvalidStatusException.class)
         .satisfies(ex -> assertThat(((OrderInvalidStatusException) ex).getCurrentStatus())
             .isEqualTo(OrderStatus.CANCELLED));

@@ -167,11 +167,19 @@ class OrderCheckoutIntegrationTest {
         return UUID.fromString(body.split("\"id\":\"")[1].split("\"")[0]);
     }
 
-    private ResultActions performCheckout(String token, UUID orderId) throws Exception {
+    private ResultActions performCheckout(String token, UUID orderId, UUID cardId) throws Exception {
         return mockMvc.perform(post("/api/orders/{orderId}/checkout", orderId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token)
-                .content("{}"));
+                .content("{\"cardId\":\"" + cardId + "\"}"));
+    }
+
+    private UUID createCard(String token) throws Exception {
+        String body = mockMvc.perform(post("/api/cards")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return UUID.fromString(body.split("\"id\":\"")[1].split("\"")[0]);
     }
 
     // ===== Sucesso =====
@@ -184,11 +192,12 @@ class OrderCheckoutIntegrationTest {
         String token = obtainToken(buyer.getEmail());
 
         UUID orderId = createOrder(token, lot.getId(), 2);
+        UUID cardId = createCard(token);
 
         // Altera o preço atual do lote: o checkout deve ignorá-lo e usar o snapshot da reserva.
         jdbcTemplate.update("UPDATE ticket_lots SET unit_price = 999.99 WHERE id = ?", lot.getId());
 
-        var result = performCheckout(token, orderId)
+        var result = performCheckout(token, orderId, cardId)
                 .andExpect(status().isOk())
                 .andReturn();
         String body = result.getResponse().getContentAsString();
@@ -227,7 +236,7 @@ class OrderCheckoutIntegrationTest {
         UUID orderId = createOrder(obtainToken(owner.getEmail()), lot.getId(), 2);
         String otherToken = obtainToken(other.getEmail());
 
-        performCheckout(otherToken, orderId).andExpect(status().isForbidden());
+        performCheckout(otherToken, orderId, UUID.randomUUID()).andExpect(status().isForbidden());
 
         // Estado intacto
         assertThat(orderRepository.findById(orderId).orElseThrow().getStatus()).isEqualTo(OrderStatus.PENDING);
@@ -242,7 +251,7 @@ class OrderCheckoutIntegrationTest {
         User buyer = createBuyer("buyer@test.com");
         String token = obtainToken(buyer.getEmail());
 
-        performCheckout(token, UUID.randomUUID()).andExpect(status().isNotFound());
+        performCheckout(token, UUID.randomUUID(), UUID.randomUUID()).andExpect(status().isNotFound());
     }
 
     // ===== Contrato HTTP (Correção A) =====
@@ -260,7 +269,7 @@ class OrderCheckoutIntegrationTest {
         order.setExpiresAt(Instant.now().minusSeconds(60));
         orderRepository.save(order);
 
-        performCheckout(token, orderId).andExpect(status().isConflict());
+        performCheckout(token, orderId, UUID.randomUUID()).andExpect(status().isConflict());
 
         // PAID não vira PAID de novo; nenhum ticket novo
         assertThat(ticketRepository.findByOrderId(orderId)).isEmpty();
@@ -278,7 +287,7 @@ class OrderCheckoutIntegrationTest {
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
 
-        performCheckout(token, orderId).andExpect(status().isUnprocessableEntity());
+        performCheckout(token, orderId, UUID.randomUUID()).andExpect(status().isUnprocessableEntity());
         assertThat(ticketRepository.findByOrderId(orderId)).isEmpty();
     }
 
@@ -294,7 +303,7 @@ class OrderCheckoutIntegrationTest {
         order.setExpiresAt(Instant.now().minusSeconds(60));
         orderRepository.save(order);
 
-        performCheckout(token, orderId).andExpect(status().isUnprocessableEntity());
+        performCheckout(token, orderId, UUID.randomUUID()).andExpect(status().isUnprocessableEntity());
 
         // Estado inalterado
         assertThat(orderRepository.findById(orderId).orElseThrow().getStatus()).isEqualTo(OrderStatus.PENDING);

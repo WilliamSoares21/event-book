@@ -2,9 +2,12 @@
 package com.eventbook.backend.orders;
 
 import com.eventbook.backend.common.exception.BusinessException;
+import com.eventbook.backend.orders.dto.CheckoutRequestDTO;
 import com.eventbook.backend.orders.dto.CheckoutResponseDTO;
 import com.eventbook.backend.orders.dto.OrderRequestDTO;
 import com.eventbook.backend.orders.dto.OrderResponseDTO;
+import com.eventbook.backend.orders.exception.OrderHasCheckedInTicketException;
+import com.eventbook.backend.payments.exception.PaymentDeclinedException;
 import com.eventbook.backend.security.AuthenticatedUser;
 import com.eventbook.backend.users.User;
 import com.eventbook.backend.users.UserRepository;
@@ -75,18 +78,19 @@ public class OrderController {
     @PostMapping("/{orderId}/checkout")
     @PreAuthorize("hasRole('COMPRADOR')")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Realiza o checkout simulado de um pedido pendente")
+    @Operation(summary = "Realiza o checkout simulado de um pedido pendente com cartão fictício")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Checkout aprovado, tickets emitidos"),
             @ApiResponse(responseCode = "400", description = "UUID inválido"),
             @ApiResponse(responseCode = "401", description = "Não autenticado"),
-            @ApiResponse(responseCode = "403", description = "Usuário não é comprador ou pedido não pertence ao usuário"),
-            @ApiResponse(responseCode = "404", description = "Pedido não encontrado"),
+            @ApiResponse(responseCode = "403", description = "Pedido ou cartão de outro usuário"),
+            @ApiResponse(responseCode = "404", description = "Pedido ou cartão não encontrado"),
             @ApiResponse(responseCode = "409", description = "Pedido já pago ou conflito de concorrência"),
-            @ApiResponse(responseCode = "422", description = "Pedido expirado ou status incompatível (ex.: cancelado)")
+            @ApiResponse(responseCode = "422", description = "Pedido expirado/cancelado, cartão inativo ou vencido, limite insuficiente (INSUFFICIENT_CARD_LIMIT)")
     })
     public ResponseEntity<CheckoutResponseDTO> checkout(
             @PathVariable UUID orderId,
+            @Valid @RequestBody CheckoutRequestDTO dto,
             @AuthenticationPrincipal AuthenticatedUser authUser) {
 
         User buyer = userRepository.findById(authUser.id())
@@ -94,8 +98,40 @@ public class OrderController {
                         "Comprador não encontrado"
                 ));
 
-        CheckoutResponseDTO response = orderService.checkout(orderId, buyer.getId());
+        CheckoutResult result = orderService.checkout(orderId, buyer.getId(), dto.cardId());
 
-        return ResponseEntity.ok(response);
+        // Recusa comercial: lançada após o commit da transação, para preservar o registro DECLINED.
+        if (result.isDeclined()) {
+            throw new PaymentDeclinedException(
+                    result.declineCode(),
+                    "Pagamento não aprovado por limite insuficiente. O pedido continua pendente.");
+        }
+
+        return ResponseEntity.ok(result.response());
+    }
+
+    @DeleteMapping("/{orderId}")
+    @PreAuthorize("hasRole('COMPRADOR') or hasRole('ORGANIZADOR')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Cancela um pedido (comprador ou organizador do evento)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Pedido cancelado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "UUID inválido"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuário não autorizado a cancelar este pedido"),
+            @ApiResponse(responseCode = "404", description = "Pedido não encontrado"),
+            @ApiResponse(responseCode = "409", description = "Pedido já cancelado"),
+            @ApiResponse(responseCode = "422", description = "Pedido expirado, fora do prazo, ou possui ingresso com check-in")
+    })
+    public ResponseEntity<Void> cancelOrder(
+            @PathVariable UUID orderId,
+            @AuthenticationPrincipal AuthenticatedUser authUser) {
+
+        User user = userRepository.findById(authUser.id())
+                .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+
+        orderService.cancel(orderId, user.getId());
+
+        return ResponseEntity.noContent().build();
     }
 }

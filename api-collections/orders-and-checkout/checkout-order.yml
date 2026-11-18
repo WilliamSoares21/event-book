@@ -5,11 +5,22 @@ info:
 
 http:
   method: POST
-  url: "{{baseUrl}}/api/orders/{{orderId}}/checkout"
-  auth: inherit
+  url: "{{baseUrl}}/orders/{{orderId}}/checkout"
   headers:
     - name: Content-Type
       value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "cardId": "{{cardId}}"
+      }
+  auth: inherit
+
+runtime:
+  variables:
+    - name: orderId
+      value: 547e9ac1-801b-4d7b-94e1-059f3df44b85
 
 settings:
   encodeUrl: true

@@ -1,11 +1,15 @@
 package com.eventbook.backend.orders;
 
+import com.eventbook.backend.cards.CardStatus;
+import com.eventbook.backend.cards.SimulatedCard;
+import com.eventbook.backend.cards.SimulatedCardRepository;
 import com.eventbook.backend.events.Event;
 import com.eventbook.backend.events.EventRepository;
 import com.eventbook.backend.events.EventStatus;
 import com.eventbook.backend.lots.LotStatus;
 import com.eventbook.backend.lots.TicketLot;
 import com.eventbook.backend.lots.TicketLotRepository;
+import com.eventbook.backend.payments.PaymentTransactionRepository;
 import com.eventbook.backend.users.Role;
 import com.eventbook.backend.users.User;
 import com.eventbook.backend.users.UserRepository;
@@ -72,6 +76,12 @@ class OrderCheckoutRollbackTest {
     private UserRepository userRepository;
 
     @Autowired
+    private SimulatedCardRepository simulatedCardRepository;
+
+    @Autowired
+    private PaymentTransactionRepository paymentTransactionRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -81,8 +91,10 @@ class OrderCheckoutRollbackTest {
 
     @BeforeEach
     void setup() {
+        jdbcTemplate.update("DELETE FROM payment_transactions");
         jdbcTemplate.update("DELETE FROM tickets");
         orderRepository.deleteAll();
+        simulatedCardRepository.deleteAll();
         ticketLotRepository.deleteAll();
         eventRepository.deleteAll();
         userRepository.deleteAll();
@@ -125,12 +137,19 @@ class OrderCheckoutRollbackTest {
                 .expiresAt(Instant.now().plus(10, ChronoUnit.MINUTES))
                 .build());
 
+        SimulatedCard card = simulatedCardRepository.save(SimulatedCard.builder()
+                .user(buyer).lastFourDigits("1234").brand("VISA")
+                .expiryMonth(12).expiryYear(2999)
+                .totalLimit(new BigDecimal("1000.00"))
+                .availableLimit(new BigDecimal("1000.00"))
+                .status(CardStatus.ACTIVE).build());
+
         // Falha real no Postgres: impede persistir o pedido como PAID.
         // Ocorre no UPDATE final, depois da conversão do lote e da inserção dos tickets.
         jdbcTemplate.execute(
                 "ALTER TABLE orders ADD CONSTRAINT " + CONSTRAINT + " CHECK (status <> 'PAID')");
 
-        assertThatThrownBy(() -> orderService.checkout(order.getId(), buyer.getId()))
+        assertThatThrownBy(() -> orderService.checkout(order.getId(), buyer.getId(), card.getId()))
                 .isInstanceOf(DataIntegrityViolationException.class);
 
         // Rollback integral comprovado no banco real.
@@ -145,5 +164,10 @@ class OrderCheckoutRollbackTest {
         Integer ticketCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM tickets WHERE order_id = ?", Integer.class, order.getId());
         assertThat(ticketCount).isZero();
+
+        // O débito do cartão e a transação APPROVED também foram revertidos.
+        assertThat(simulatedCardRepository.findById(card.getId()).orElseThrow().getAvailableLimit())
+                .isEqualByComparingTo("1000.00");
+        assertThat(paymentTransactionRepository.count()).isZero();
     }
 }
