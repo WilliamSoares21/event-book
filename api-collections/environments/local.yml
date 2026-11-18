@@ -7,7 +7,7 @@ variables:
   - name: lotId
     value: 8987add8-74fa-4720-bd44-2f6425275ee4
   - name: organizerEmail
-    value: leto@example.com
+    value: juan@example.com
   - name: organizerPassword
     value: "12345678"
   - name: buyerEmail
