@@ -134,13 +134,22 @@ public class EventController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{eventId}/occupancy")
+    @PreAuthorize("hasRole('ORGANIZADOR')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Consulta ocupação do evento (apenas organizador proprietário)")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Ocupação retornada"),
+        @ApiResponse(responseCode = "401", description = "JWT ausente ou inválido"),
+        @ApiResponse(responseCode = "403", description = "Usuário não é organizador"),
+        @ApiResponse(responseCode = "404", description = "Evento não encontrado")
+    })
+    @GetMapping("/{eventId}/occupancy")
     public ResponseEntity<EventOccupancyDTO> getOccupancy(
-            @PathVariable UUID eventId) {
+            @PathVariable UUID eventId,
+            @AuthenticationPrincipal AuthenticatedUser authUser) {
 
         return ResponseEntity.ok(
-                eventService.getOccupancy(eventId)
+                eventService.getOccupancy(eventId, authUser.id())
         );
     }
 

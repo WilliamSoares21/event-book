@@ -1,0 +1,23 @@
+info:
+  name: get-occupancy-forbidden
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/events/{{eventId}}/occupancy"
+  headers:
+    - name: Authorization
+      value: "Bearer {{buyerToken}}"
+  params:
+    - name: eventId
+      value: ""
+      type: path
+  auth: inherit
+
+scripts:
+  pre-request: ""
+  post-response: |
+    bru.assert.status.is(403)
+    bru.assert.header.has("Content-Type")
+    bru.assert.jsonpath("$.status", 403)

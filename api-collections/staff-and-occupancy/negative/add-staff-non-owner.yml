@@ -1,0 +1,26 @@
+info:
+  name: add-staff-non-owner
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/events/{{eventId}}/staff"
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    raw: '{"userId": "{{staffUserId}}"}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 403 - Organizador não proprietário não pode associar staff
+    script: test.status(403)

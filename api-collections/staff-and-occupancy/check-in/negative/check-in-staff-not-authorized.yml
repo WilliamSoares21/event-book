@@ -1,0 +1,29 @@
+info:
+  name: check-in-staff-not-authorized
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{baseUrl}}/tickets/{{ticketCode}}/check-in"
+  params:
+    - name: ticketCode
+      value: "VALID_TICKET_123"
+      type: path
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: "Bearer {{otherStaffToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 403 - Staff não associado ao evento
+    script: |
+      test.status(403)
+      test.jsonPath("$.error").equals("Staff não autorizado para este evento")

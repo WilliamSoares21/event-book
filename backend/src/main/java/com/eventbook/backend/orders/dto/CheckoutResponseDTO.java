@@ -5,6 +5,7 @@ import com.eventbook.backend.orders.OrderStatus;
 import com.eventbook.backend.tickets.Ticket;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +22,8 @@ public record CheckoutResponseDTO(
 ) {
     public static CheckoutResponseDTO from(Order order, List<Ticket> tickets) {
         BigDecimal totalPrice = order.getUnitPriceSnapshot()
-                .multiply(BigDecimal.valueOf(order.getQuantity()));
+                .multiply(BigDecimal.valueOf(order.getQuantity()))
+                .setScale(2, RoundingMode.HALF_UP);
 
         List<TicketSummaryDTO> ticketSummaries = tickets.stream()
                 .map(TicketSummaryDTO::from)

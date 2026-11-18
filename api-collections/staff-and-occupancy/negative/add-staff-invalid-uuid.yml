@@ -1,0 +1,26 @@
+info:
+  name: add-staff-invalid-uuid
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/events/not-a-uuid/staff"
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    raw: '{"userId": "550e8400-e29b-41d4-a716-446655440000"}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 400 - UUID inválido
+    script: test.status(400)

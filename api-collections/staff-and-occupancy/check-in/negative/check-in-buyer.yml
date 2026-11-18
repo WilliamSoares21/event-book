@@ -1,0 +1,27 @@
+info:
+  name: check-in-buyer
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/tickets/{{ticketCode}}/check-in"
+  params:
+    - name: ticketCode
+      value: "VALID_TICKET_123"
+      type: path
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: "Bearer {{buyerToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 403 - Comprador não pode fazer check-in
+    script: test.status(403)

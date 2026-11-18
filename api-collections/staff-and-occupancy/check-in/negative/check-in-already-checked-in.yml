@@ -1,0 +1,33 @@
+info:
+  name: check-in-already-checked-in
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{baseUrl}}/tickets/{{ticketCode}}/check-in"
+  params:
+    - name: ticketCode
+      value: "VALID_TICKET_123"
+      type: path
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: "Bearer {{staffToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: First request - Status 200
+    script: test.status(200)
+  - name: Second request - Status 409
+    script: |
+      test.status(409)
+      test.jsonPath("$.ticketCode").equals("VALID_TICKET_123")
+      test.jsonPath("$.staffId").exists()
+      test.jsonPath("$.checkedInAt").exists()
