@@ -22,6 +22,13 @@ export class SessionService {
     }
   }
 
+  clear() {
+    this.user.set(null);
+    if (this.browser) {
+      try { sessionStorage.removeItem('event-book-user'); } catch {}
+    }
+  }
+
   private restore(): MockUser | null {
     if (!this.browser) return null;
     try {

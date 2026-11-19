@@ -1,4 +1,5 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { ToastService } from './services/toast/toast';
 import { RouterOutlet } from '@angular/router';
 
 @Component({
@@ -8,5 +9,6 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.css'
 })
 export class App {
+  readonly toast = inject(ToastService);
   protected readonly title = signal('event-book-frontend');
 }

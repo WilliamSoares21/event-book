@@ -1,0 +1,24 @@
+info:
+  name: check-in-without-token
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/tickets/{{ticketCode}}/check-in"
+  params:
+    - name: ticketCode
+      value: "VALID_TICKET_123"
+      type: path
+  auth: none
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 401 - Sem autenticação
+    script: test.status(401)

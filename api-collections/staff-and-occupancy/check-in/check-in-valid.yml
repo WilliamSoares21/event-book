@@ -1,0 +1,28 @@
+info:
+  name: check-in-valid
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/tickets/{{ticketCode}}/check-in"
+  headers:
+    - name: Authorization
+      value: Bearer {{staffToken}}
+  params:
+    - name: ticketCode
+      value: BA3EADCD350D415194A4CA4778317944
+      type: path
+  auth: inherit
+
+runtime:
+  variables:
+    - name: ticketCode
+      value: BA3EADCD350D415194A4CA4778317944
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

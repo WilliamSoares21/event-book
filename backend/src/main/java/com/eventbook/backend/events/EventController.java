@@ -5,6 +5,9 @@ import com.eventbook.backend.events.dto.EventRequestDTO;
 import com.eventbook.backend.events.dto.EventResponseDTO;
 import com.eventbook.backend.events.dto.EventUpdateDTO;
 import com.eventbook.backend.security.AuthenticatedUser;
+import com.eventbook.backend.staff.StaffService;
+import com.eventbook.backend.staff.dto.AddEventStaffRequest;
+import com.eventbook.backend.staff.dto.EventStaffResponseDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,6 +31,7 @@ import java.util.UUID;
 public class EventController {
 
     private final EventService eventService;
+    private final StaffService staffService;
 
     @GetMapping
     @Operation(summary = "Lista eventos publicados")
@@ -130,13 +134,51 @@ public class EventController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{eventId}/occupancy")
+    @PreAuthorize("hasRole('ORGANIZADOR')")
     @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Consulta ocupação do evento (apenas organizador proprietário)")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Ocupação retornada"),
+        @ApiResponse(responseCode = "401", description = "JWT ausente ou inválido"),
+        @ApiResponse(responseCode = "403", description = "Usuário não é organizador"),
+        @ApiResponse(responseCode = "404", description = "Evento não encontrado")
+    })
+    @GetMapping("/{eventId}/occupancy")
     public ResponseEntity<EventOccupancyDTO> getOccupancy(
-            @PathVariable UUID eventId) {
+            @PathVariable UUID eventId,
+            @AuthenticationPrincipal AuthenticatedUser authUser) {
 
         return ResponseEntity.ok(
-                eventService.getOccupancy(eventId)
+                eventService.getOccupancy(eventId, authUser.id())
         );
+    }
+
+    @PreAuthorize("hasRole('ORGANIZADOR')")
+    @SecurityRequirement(name = "bearerAuth")
+    @PostMapping("/{eventId}/staff")
+    @Operation(summary = "Associa um usuário STAFF ao evento")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Associação criada"),
+            @ApiResponse(responseCode = "400", description = "UUID inválido ou payload inválido"),
+            @ApiResponse(responseCode = "401", description = "JWT ausente ou inválido"),
+            @ApiResponse(responseCode = "403", description = "Usuário sem role ORGANIZADOR ou sem propriedade sobre o evento"),
+            @ApiResponse(responseCode = "404", description = "Evento ou usuário inexistente"),
+            @ApiResponse(responseCode = "409", description = "Usuário já associado ao evento"),
+            @ApiResponse(responseCode = "422", description = "Usuário existente sem role STAFF")
+    })
+    public ResponseEntity<EventStaffResponseDTO> addEventStaff(
+            @PathVariable UUID eventId,
+            @Valid @RequestBody AddEventStaffRequest request,
+            @AuthenticationPrincipal AuthenticatedUser authUser) {
+
+        EventStaffResponseDTO created = staffService.addStaffToEvent(eventId, request, authUser.id());
+
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{staffId}")
+                .buildAndExpand(created.getId())
+                .toUri();
+
+        return ResponseEntity.created(location).body(created);
     }
 }

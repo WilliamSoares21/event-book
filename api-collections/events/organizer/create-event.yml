@@ -10,10 +10,10 @@ http:
     type: json
     data: |-
       {
-        "title": "Festival EventBook",
-        "description": "Evento com música ao vivo, gastronomia e apresentações culturais.",
-        "startsAt": "2026-11-20T19:00:00-03:00",
-        "endsAt": "2026-11-20T23:00:00-03:00",
+        "title": "Festival Tech ",
+        "description": "Evento de tecnologia.",
+        "startsAt": "2026-12-20T19:00:00-03:00",
+        "endsAt": "2026-12-20T23:00:00-03:00",
         "location": "Fortaleza - CE"
       }
   auth: inherit

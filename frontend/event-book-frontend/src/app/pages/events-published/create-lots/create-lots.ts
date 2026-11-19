@@ -7,6 +7,7 @@ import { MenuSideBarComponent } from '../../../components/menu-side-bar/menu-sid
 import { concatMap, from, tap, toArray } from 'rxjs';
 import { EventsService } from '../../../services/events/events';
 import type { TicketLotRequest } from '../../../model/ticket-lot.model';
+import { ToastService } from '../../../services/toast/toast';
 
 interface EventLot {
   id: number;
@@ -25,6 +26,8 @@ interface EventLot {
 })
 export class CreateLotsComponents {
   private readonly eventsService = inject(EventsService);
+  private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
   readonly saving = signal(false);
   readonly message = signal('');
   readonly success = signal(false);
@@ -65,12 +68,13 @@ export class CreateLotsComponents {
   createEvent() {
     if (this.saving() || this.success()) return;
     this.message.set('');
+    this.toast.dismiss();
     if (!this.event) {
-      this.message.set('Volte e preencha os dados do evento.');
+      this.showError('Volte e preencha os dados do evento.');
       return;
     }
     if (!this.lots.length) {
-      this.message.set('Adicione pelo menos um lote.');
+      this.showError('Adicione pelo menos um lote.');
       return;
     }
 
@@ -82,7 +86,7 @@ export class CreateLotsComponents {
       if (!lot.name.trim() || lot.price === null || !Number.isFinite(lot.price) || lot.price < 0 ||
           lot.quantity === null || !Number.isInteger(lot.quantity) || lot.quantity <= 0 ||
           !Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start) {
-        this.message.set('Preencha os lotes com nome, preço válido, quantidade positiva e data final posterior à inicial.');
+        this.showError('Preencha os lotes com nome, preço válido, quantidade positiva e data final posterior à inicial.');
         return;
       }
       pending.push({
@@ -109,10 +113,12 @@ export class CreateLotsComponents {
           this.saving.set(false);
           this.success.set(true);
           this.message.set('Evento e lotes criados com sucesso!');
+          this.toast.show(this.message(), true);
+          void this.router.navigate(['/events']);
         },
         error: () => {
           this.saving.set(false);
-          this.message.set('O evento foi criado, mas houve erro ao criar um lote. Tente novamente para enviar os lotes pendentes.');
+          this.showError('O evento foi criado, mas houve erro ao criar um lote. Tente novamente para enviar os lotes pendentes.');
         },
       });
     };
@@ -128,8 +134,13 @@ export class CreateLotsComponents {
       },
       error: () => {
         this.saving.set(false);
-        this.message.set('Não foi possível criar o evento. Verifique os dados e sua sessão e tente novamente.');
+        this.showError('Não foi possível criar o evento. Verifique os dados e sua sessão e tente novamente.');
       },
     });
+  }
+
+  private showError(message: string) {
+    this.message.set(message);
+    this.toast.show(message);
   }
 }

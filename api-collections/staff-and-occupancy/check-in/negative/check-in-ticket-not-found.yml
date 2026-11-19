@@ -1,0 +1,29 @@
+info:
+  name: check-in-ticket-not-found
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{baseUrl}}/tickets/{{ticketCode}}/check-in"
+  params:
+    - name: ticketCode
+      value: "NONEXISTENT_TICKET"
+      type: path
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: "Bearer {{staffToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 404 - Ticket inexistente
+    script: |
+      test.status(404)
+      test.jsonPath("$.error").equals("Ticket não encontrado")

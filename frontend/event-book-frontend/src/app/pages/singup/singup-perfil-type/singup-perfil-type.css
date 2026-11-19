@@ -12,6 +12,15 @@
   width: 60%;
 }
 
+.brand-header {
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+.brand-header h2 {
+  margin: 0;
+}
+
 .login-page .login-banner {
   flex: 0 0 40%;
   width: 40%;

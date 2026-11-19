@@ -18,4 +18,12 @@ export class LoginService {
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/login`, credentials);
   }
+
+  logout(token: string): Observable<void> {
+    const apiUrl = `${environment.apiUrl.replace(/\/$/, '').replace(/\/api$/, '')}/api`;
+    return this.http.post<void>(`${apiUrl}/auth/logout`, null, {
+      headers: { Authorization: `Bearer ${token}` },
+      timeout: 5000,
+    });
+  }
 }

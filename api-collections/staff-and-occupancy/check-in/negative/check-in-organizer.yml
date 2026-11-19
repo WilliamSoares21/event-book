@@ -1,0 +1,27 @@
+info:
+  name: check-in-organizer
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}/tickets/{{ticketCode}}/check-in"
+  params:
+    - name: ticketCode
+      value: "VALID_TICKET_123"
+      type: path
+  auth: inherit
+  headers:
+    - name: Authorization
+      value: "Bearer {{organizerToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 403 - Organizador não pode fazer check-in
+    script: test.status(403)

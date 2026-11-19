@@ -3,11 +3,15 @@ package com.eventbook.backend.events;
 import com.eventbook.backend.checkin.CheckInRepository;
 import com.eventbook.backend.common.exception.BusinessException;
 import com.eventbook.backend.events.dto.EventOccupancyDTO;
+import com.eventbook.backend.events.dto.TicketLotOccupancyDTO;
+import com.eventbook.backend.events.projection.EventOccupancySummaryProjection;
+import com.eventbook.backend.events.projection.TicketLotOccupancyProjection;
 import com.eventbook.backend.events.dto.EventRequestDTO;
 import com.eventbook.backend.events.dto.EventResponseDTO;
 import com.eventbook.backend.events.dto.EventUpdateDTO;
 import com.eventbook.backend.events.dto.OrganizerEventResponseDTO;
 import com.eventbook.backend.lots.LotStatus;
+import com.eventbook.backend.lots.TicketLot;
 import com.eventbook.backend.lots.TicketLotRepository;
 import com.eventbook.backend.lots.dto.TicketLotResponseDTO;
 import com.eventbook.backend.orders.OrderRepository;
@@ -20,8 +24,12 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -108,7 +116,23 @@ public class EventService {
           HttpStatus.NOT_FOUND);
     }
 
-    return toResponseDTO(event);
+    EventResponseDTO response = toResponseDTO(event);
+    response.setAvailableTicketLots(event.getStatus() == EventStatus.PUBLISHED
+        ? findAvailableTicketLots(eventId)
+        : List.of());
+    return response;
+  }
+
+  private List<EventResponseDTO.AvailableTicketLot> findAvailableTicketLots(UUID eventId) {
+    Instant now = clock.instant();
+    return ticketLotRepository.findByEventId(eventId).stream()
+        .filter(lot -> lot.getStatus() == LotStatus.ACTIVE
+            && !now.isBefore(lot.getSalesStart()) && !now.isAfter(lot.getSalesEnd())
+            && lot.availableCapacity() > 0)
+        .sorted(Comparator.comparing(TicketLot::getSalesStart).thenComparing(TicketLot::getId))
+        .map(lot -> new EventResponseDTO.AvailableTicketLot(
+            lot.getId(), lot.getName(), lot.getUnitPrice(), lot.availableCapacity()))
+        .toList();
   }
 
   // Lista todos os eventos cadastrados
@@ -240,40 +264,94 @@ public class EventService {
   }
 
   @Transactional(readOnly = true)
-  public EventOccupancyDTO getOccupancy(UUID eventId) {
-    // Verifica a existência do evento antes de consultar seus indicadores.
-    eventRepository.findById(eventId)
+  public EventOccupancyDTO getOccupancy(UUID eventId, UUID requesterId) {
+    // Verifica a existência do evento e valida propriedade do organizador.
+    Event event = eventRepository.findById(eventId)
         .orElseThrow(() -> new BusinessException(
             "Evento não encontrado",
             HttpStatus.NOT_FOUND));
 
-    // Capacidade total disponibilizada pelos lotes do evento.
-    Long capacity = ticketLotRepository.sumCapacityByEvent(eventId);
+    // Regra de segurança: 404 para não proprietário (não vazia existência)
+    if (!event.getOrganizer().getId().equals(requesterId)) {
+      throw new BusinessException(
+          "Evento não encontrado",
+          HttpStatus.NOT_FOUND);
+    }
 
-    // Pedidos pendentes representam ingressos temporariamente reservados,
-    // mas que ainda não foram efetivamente vendidos.
-    Long reserved = orderRepository.countByEventIdAndStatus(
-        eventId,
-        OrderStatus.PENDING);
+    // NOTA: Transação readOnly=true em READ COMMITTED (padrão PostgreSQL).
+    // As 3 consultas abaixo NÃO compartilham snapshot consistente.
+    // Em alta concorrência, valores podem refletir estados ligeiramente diferentes.
+    // Para RN-10 (relatórios gerenciais), essa variação é aceitável.
 
-    // Quantidade de ingressos já emitidos/vendidos.
-    Long sold = ticketRepository.countByEventId(eventId);
+    // 1. Resumo consolidado do evento (query agregada)
+    EventOccupancySummaryProjection summary = ticketLotRepository
+        .findOccupancySummaryByEventId(eventId)
+        .orElse(new EventOccupancySummaryProjection(eventId, event.getTitle(), 0L, 0L, 0L, 0L));
 
-    // Quantidade de participantes que já realizaram o check-in.
-    Long checkedIn = checkInRepository.countByEventId(eventId);
+    Long capacity = summary.capacity();
+    Long sold = summary.sold();
+    Long reserved = summary.reserved();
+    Long checkedIn = summary.checkedIn();
+    Long available = capacity - sold - reserved;
 
-    // Calcula a capacidade restante descontando reservas e ingressos vendidos.
-    // O Math.max impede que a disponibilidade seja apresentada como negativa.
-    Long available = capacity - reserved - sold;
+    // 2. Breakdown por lote (query agregada por lote)
+    List<TicketLotOccupancyProjection> lotProjections =
+        ticketLotRepository.findOccupancyByEventId(eventId);
+
+    // Buscar check-ins por lote separadamente
+    Map<UUID, Long> checkedInByLot = checkInRepository.countCheckInsByEventIdGroupedByLot(eventId);
+
+    List<TicketLotOccupancyDTO> ticketLots = lotProjections.stream()
+        .map(p -> buildLotDTO(p, checkedInByLot.getOrDefault(p.ticketLotId(), 0L)))
+        .toList();
+
+    // 3. Cálculo das taxas do evento
+    BigDecimal commercialRate = calculateRate(sold, capacity);
+    BigDecimal committedRate = calculateRate(sold + reserved, capacity);
+    BigDecimal physicalRate = calculateRate(checkedIn, capacity);
 
     return EventOccupancyDTO.builder()
         .eventId(eventId)
+        .eventName(summary.eventName())
         .capacity(capacity)
-        .reserved(reserved)
         .sold(sold)
+        .reserved(reserved)
+        .available(available)
         .checkedIn(checkedIn)
-        .available(Math.max(available, 0L))
+        .commercialOccupancyRate(commercialRate)
+        .committedOccupancyRate(committedRate)
+        .physicalOccupancyRate(physicalRate)
+        .ticketLots(ticketLots)
         .build();
+  }
+
+  private TicketLotOccupancyDTO buildLotDTO(TicketLotOccupancyProjection p, Long checkedIn) {
+    Long available = p.capacity() - p.sold() - p.reserved();
+    BigDecimal commercialRate = calculateRate(p.sold(), p.capacity());
+    BigDecimal committedRate = calculateRate(p.sold() + p.reserved(), p.capacity());
+    BigDecimal physicalRate = calculateRate(checkedIn, p.capacity());
+
+    return TicketLotOccupancyDTO.builder()
+        .ticketLotId(p.ticketLotId())
+        .name(p.name())
+        .capacity(p.capacity())
+        .sold(p.sold())
+        .reserved(p.reserved())
+        .available(available)
+        .checkedIn(checkedIn)
+        .commercialOccupancyRate(commercialRate)
+        .committedOccupancyRate(committedRate)
+        .physicalOccupancyRate(physicalRate)
+        .build();
+  }
+
+  private BigDecimal calculateRate(Long numerator, Long denominator) {
+    if (denominator == null || denominator == 0) {
+      return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+    }
+    return BigDecimal.valueOf(numerator)
+        .multiply(BigDecimal.valueOf(100))
+        .divide(BigDecimal.valueOf(denominator), 2, RoundingMode.HALF_UP);
   }
 
   private void validateDateRange(

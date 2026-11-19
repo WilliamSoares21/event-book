@@ -63,11 +63,6 @@ public class SecurityConfig {
 
                 .requestMatchers(
                     HttpMethod.GET,
-                    "/api/events/*/occupancy"
-                ).authenticated()
-
-                .requestMatchers(
-                    HttpMethod.GET,
                     "/api/events",
                     "/api/events/*"
                 ).permitAll()

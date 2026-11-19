@@ -63,9 +63,6 @@
                 <span aria-hidden="true">+</span>
                 Adicionar lote
             </button>
-            @if (message()) {
-                <p role="status" [class.text-danger]="!success()" [class.text-success]="success()">{{ message() }}</p>
-            }
             <div class="div-button-cancel-save">
                 <div class="col-12 div-button">
                     <a routerLink="/events/create" [state]="{ event: event }" class="btn-cancel">

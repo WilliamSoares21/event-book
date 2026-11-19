@@ -63,15 +63,7 @@ export class LoginComponent {
             name: response.user.name,
             email: response.user.email,
           });
-          this.router.navigate(['/events'], { state: { 
-            token: response.token,
-            user: {
-              "id": response.user.id,
-              "name": response.user.name,
-              "email": response.user.email,
-              "role": response.user.role,
-              "createdAt": response.user.createdAt
-          } } });
+          this.router.navigate(['/events']);
         },
         error: (error) => {
           const body = error.error;

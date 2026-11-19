@@ -1,1 +1,9 @@
 <router-outlet></router-outlet>
+@if (toast.notification(); as notification) {
+  <div class="notification-toast" [class.notification-success]="notification.success"
+    [class.notification-error]="!notification.success"
+    [attr.role]="notification.success ? 'status' : 'alert'" aria-atomic="true">
+    <span>{{ notification.message }}</span>
+    <button type="button" (click)="toast.dismiss()" aria-label="Fechar notificação">×</button>
+  </div>
+}

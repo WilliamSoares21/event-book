@@ -10,24 +10,17 @@ http:
     - name: eventId
       value: "{{eventId}}"
       type: path
-  auth: inherit
   body:
     type: json
-    body: |
+    data: |-
       {
-        "name": "Lote Promocional",
-        "unitPrice": 50.00,
-        "capacity": 100,
-        "salesStart": "2026-10-20T00:00:00Z",
-        "salesEnd": "2026-11-20T18:00:00Z"
+        "name": "Lote 2 VIP - Tech Event",
+        "unitPrice": 60,
+        "capacity": 10,
+        "salesStart": "2026-11-15T15:01:27.032Z",
+        "salesEnd": "2026-11-16T16:01:27.032Z"
       }
-
-settings:
-  encodeUrl: true
-  timeout: 0
-  followRedirects: true
-  maxRedirects: 5
-  forwardAuthorizationHeader: false
+  auth: inherit
 
 runtime:
   scripts:
@@ -36,3 +29,10 @@ runtime:
         if (res.status === 201 && typeof res.body?.id === "string") {
           bru.setEnvVar("lotId", res.body.id);
         }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false

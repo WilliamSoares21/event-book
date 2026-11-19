@@ -3,15 +3,15 @@ variables:
   - name: baseUrl
     value: http://localhost:8080/api
   - name: eventId
-    value: a9b9ecd5-180d-43b8-8233-2f10f6194e27
+    value: c4fe3892-ed3a-4ad9-aa92-4bb14feb66b8
   - name: lotId
-    value: 8987add8-74fa-4720-bd44-2f6425275ee4
+    value: addc47af-7d95-4c08-b2a8-2c1ba2fcd8ea
   - name: organizerEmail
-    value: leto@example.com
+    value: juan@example.com
   - name: organizerPassword
     value: "12345678"
   - name: buyerEmail
-    value: julia@example.com
+    value: lari@gmail.com
   - name: buyerPassword
     value: "12345678"
   - name: staffEmail
@@ -26,3 +26,5 @@ variables:
     name: buyerToken
   - secret: true
     name: staffToken
+  - name: cardId
+    value: 65e5ca7c-cb2b-4e11-b582-31d949234c52

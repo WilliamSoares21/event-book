@@ -5,8 +5,13 @@ info:
 
 http:
   method: DELETE
-  url: "{{baseUrl}}/api/orders/{{orderId}}"
+  url: "{{baseUrl}}/orders/{{orderId}}"
   auth: inherit
+
+runtime:
+  variables:
+    - name: orderId
+      value: db229a8b-a5fd-49d2-bb20-8565e5928667
 
 settings:
   encodeUrl: true

@@ -1,0 +1,20 @@
+info:
+  name: get-occupancy-unauthorized
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}/api/events/{{eventId}}/occupancy"
+  params:
+    - name: eventId
+      value: ""
+      type: path
+  auth: inherit
+
+scripts:
+  pre-request: ""
+  post-response: |
+    bru.assert.status.is(401)
+    bru.assert.header.has("Content-Type")
+    bru.assert.jsonpath("$.status", 401)
