@@ -28,6 +28,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -133,5 +134,21 @@ public class OrderController {
         orderService.cancel(orderId, user.getId());
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('COMPRADOR')")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(summary = "Lista os pedidos do comprador autenticado")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista de pedidos do comprador"),
+            @ApiResponse(responseCode = "401", description = "Não autenticado"),
+            @ApiResponse(responseCode = "403", description = "Usuário não é comprador")
+    })
+    public ResponseEntity<List<OrderResponseDTO>> listOwnOrders(
+            @AuthenticationPrincipal AuthenticatedUser authUser) {
+
+        List<OrderResponseDTO> orders = orderService.findOwnOrders(authUser.id());
+        return ResponseEntity.ok(orders);
     }
 }

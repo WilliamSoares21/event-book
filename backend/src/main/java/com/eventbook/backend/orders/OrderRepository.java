@@ -13,7 +13,13 @@ import java.util.UUID;
 
 public interface OrderRepository extends JpaRepository<Order, UUID> {
 
-    List<Order> findByBuyerId(UUID buyerId);
+    @Query("""
+            SELECT o FROM Order o
+            JOIN FETCH o.ticketLot lot
+            WHERE o.buyer.id = :buyerId
+            ORDER BY o.createdAt DESC
+            """)
+    List<Order> findByBuyerId(@Param("buyerId") UUID buyerId);
 
     @Query("""
             SELECT COUNT(o)

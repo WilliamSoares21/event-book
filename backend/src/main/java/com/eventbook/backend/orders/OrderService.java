@@ -11,6 +11,7 @@ import com.eventbook.backend.lots.LotStatus;
 import com.eventbook.backend.lots.TicketLot;
 import com.eventbook.backend.lots.TicketLotRepository;
 import com.eventbook.backend.orders.dto.CheckoutResponseDTO;
+import com.eventbook.backend.orders.dto.OrderResponseDTO;
 import com.eventbook.backend.orders.exception.InsufficientCapacityException;
 import com.eventbook.backend.orders.exception.LotNotActiveException;
 import com.eventbook.backend.orders.exception.LotNotFoundException;
@@ -343,5 +344,12 @@ public class OrderService {
       ticket.setStatus(TicketStatus.CANCELLED);
     }
     ticketRepository.saveAll(tickets);
+  }
+
+  @Transactional(readOnly = true)
+  public List<OrderResponseDTO> findOwnOrders(UUID buyerId) {
+    return orderRepository.findByBuyerId(buyerId).stream()
+            .map(OrderResponseDTO::from)
+            .toList();
   }
 }
