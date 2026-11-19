@@ -52,11 +52,11 @@
                         <div class="row">
                             <div class="col-6">
                                 <label for="eventStartedDate">Data de início do evento</label>
-                                <input type="date" class="form-control" id="eventStartedDate" formControlName="eventStartedDate">
+                                <input type="date" [attr.min]="today" class="form-control" id="eventStartedDate" formControlName="eventStartedDate">
                             </div>
                             <div class="col-6">
                                 <label for="eventEndDate">Data de fim do evento</label>
-                                <input type="date" class="form-control" id="eventEndDate" formControlName="eventEndDate">
+                                <input type="date" [attr.min]="today" class="form-control" id="eventEndDate" formControlName="eventEndDate">
                             </div>
                         </div>
                     </div>       

@@ -46,13 +46,13 @@
                     <div class="col-12 col-md-4">
                          <label [for]="'data-inicio-vendas-' + lot.id">Início das vendas</label>
                         <div class="input-group">                    
-                            <input type="date" class="form-control" [id]="'data-inicio-vendas-' + lot.id" [name]="'data-inicio-vendas-' + lot.id" [(ngModel)]="lot.salesStart" aria-label="Data início das vendas"/>
+                            <input type="date" [attr.min]="today" class="form-control" [id]="'data-inicio-vendas-' + lot.id" [name]="'data-inicio-vendas-' + lot.id" [(ngModel)]="lot.salesStart" aria-label="Data início das vendas"/>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
                          <label [for]="'data-fim-vendas-' + lot.id">Fim das vendas</label>
                         <div class="input-group">                    
-                            <input type="date" class="form-control" [id]="'data-fim-vendas-' + lot.id" [name]="'data-fim-vendas-' + lot.id" [(ngModel)]="lot.salesEnd" aria-label="Data fim das vendas"/>
+                            <input type="date" [attr.min]="today" class="form-control" [id]="'data-fim-vendas-' + lot.id" [name]="'data-fim-vendas-' + lot.id" [(ngModel)]="lot.salesEnd" aria-label="Data fim das vendas"/>
                         </div>
                     </div>
                 </div>

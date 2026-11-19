@@ -1,7 +1,7 @@
 import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { ToastService } from '../../../services/toast/toast';
 import { CreateLotsComponents } from './create-lots';
@@ -15,10 +15,12 @@ const event = {
 const base = `${environment.apiUrl.replace(/\/$/, '').replace(/\/api$/, '')}/api`;
 
 describe('CreateLotsComponents requests', () => {
+  let fixture: ComponentFixture<CreateLotsComponents>;
   let component: CreateLotsComponents;
   let http: HttpTestingController;
 
   beforeEach(() => {
+    vi.setSystemTime(new Date(2026, 11, 1, 12));
     TestBed.configureTestingModule({
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(),
         { provide: Location, useValue: { getState: () => ({ event }) } }],
@@ -28,7 +30,8 @@ describe('CreateLotsComponents requests', () => {
     });
     http = TestBed.inject(HttpTestingController);
     vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    component = TestBed.createComponent(CreateLotsComponents).componentInstance;
+    fixture = TestBed.createComponent(CreateLotsComponents);
+    component = fixture.componentInstance;
     Object.assign(component.lots[0], {
       name: 'Primeiro lote', price: 50, quantity: 100, salesStart: '2026-12-01', salesEnd: '2026-12-09',
     });
@@ -38,7 +41,23 @@ describe('CreateLotsComponents requests', () => {
     });
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    vi.useRealTimers();
+    http.verify();
+  });
+
+  it('blocks dates before today in every lot and before submitting', () => {
+    fixture.detectChanges();
+    const calendars = fixture.nativeElement.querySelectorAll('input[type="date"]');
+    expect(Array.from(calendars, (input: unknown) => (input as HTMLInputElement).min))
+      .toEqual(Array(4).fill('2026-12-01'));
+
+    component.lots[1].salesStart = '2026-11-30';
+    component.createEvent();
+
+    http.expectNone(`${base}/events`);
+    expect(component.message()).toBe('As datas de venda devem ser de hoje em diante.');
+  });
 
   it('creates the event first, then each lot with the returned ID and mapped inputs', () => {
     component.createEvent();

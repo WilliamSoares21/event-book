@@ -20,6 +20,7 @@ export class EventsComponent implements OnInit {
   get roleUser() { return this.session.user()?.role; }
   readonly events = signal<EventListItem[]>([]);
   readonly loadError = signal('');
+  readonly loaded = signal(false);
 
   constructor(private router: Router) {}
 
@@ -29,7 +30,10 @@ export class EventsComponent implements OnInit {
       : this.eventsService.listPublishedEvents();
 
     request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (events) => this.events.set(events),
+      next: (events) => {
+        this.events.set(events);
+        this.loaded.set(true);
+      },
       error: () => this.loadError.set('Não foi possível carregar os eventos. Tente novamente mais tarde.'),
     });
   }

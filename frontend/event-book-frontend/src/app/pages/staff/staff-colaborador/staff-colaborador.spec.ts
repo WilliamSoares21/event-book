@@ -40,8 +40,9 @@ describe('StaffColaborador', () => {
     harness.detectChanges();
 
     const page = harness.routeNativeElement!;
+    expect(page.querySelector('app-menu-side-bar a[href="/events"]')).not.toBeNull();
     expect(page.textContent).toContain('Bruno');
-    expect(page.querySelectorAll('li button')).toHaveLength(1);
+    expect(page.querySelectorAll('main li button')).toHaveLength(1);
     page.querySelector<HTMLButtonElement>('button[aria-label="Associar Ana"]')!.click();
     const add = http.expectOne((request) =>
       request.method === 'POST' && request.url.endsWith('/api/events/event-1/staff'));
@@ -49,7 +50,7 @@ describe('StaffColaborador', () => {
     add.flush({}, { status: 201, statusText: 'Created' });
     harness.detectChanges();
 
-    expect(page.querySelectorAll('li button')).toHaveLength(0);
+    expect(page.querySelectorAll('main li button')).toHaveLength(0);
     expect(page.textContent).toContain('Colaborador associado ao evento.');
     http.verify();
   });

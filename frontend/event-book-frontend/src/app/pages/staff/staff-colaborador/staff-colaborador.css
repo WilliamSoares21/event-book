@@ -1,7 +1,7 @@
 .staff-page {
   max-width: 48rem;
-  margin-inline: auto;
-  padding: clamp(1rem, 4vw, 3rem);
+  padding: 1rem;
+  font-size: 1rem;
   color: #102a43;
 }
 
