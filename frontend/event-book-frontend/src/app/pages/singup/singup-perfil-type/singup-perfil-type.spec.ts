@@ -1,16 +1,18 @@
+import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SingupPerfilType } from './singup-perfil-type';
+import { SingupPerfilTypeComponet } from './singup-perfil-type';
 
-describe('SingupPerfilType', () => {
-  let component: SingupPerfilType;
-  let fixture: ComponentFixture<SingupPerfilType>;
+describe('SingupPerfilTypeComponet', () => {
+  let component: SingupPerfilTypeComponet;
+  let fixture: ComponentFixture<SingupPerfilTypeComponet>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SingupPerfilType],
+      imports: [SingupPerfilTypeComponet],
+      providers: [provideRouter([])],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(SingupPerfilType);
+    fixture = TestBed.createComponent(SingupPerfilTypeComponet);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
