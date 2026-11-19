@@ -1,0 +1,28 @@
+info:
+  name: add-staff-user-not-staff
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{baseUrl}}/events/{{eventId}}/staff"
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    raw: '{"userId": "{{buyerUserId}}"}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 422 - Usuário não tem role STAFF
+    script: |
+      test.status(422)
+      test.jsonPath("$.error").equals("O usuário indicado deve possuir role STAFF")

@@ -36,6 +36,7 @@ public class Order {
 
 
     @Column(name = "unit_price_snapshot", nullable = false, precision = 10, scale = 2)
+    @Setter(AccessLevel.NONE)
     private BigDecimal unitPriceSnapshot;
 
     @Enumerated(EnumType.STRING)

@@ -1,0 +1,28 @@
+info:
+  name: add-staff-event-not-found
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{baseUrl}}/events/00000000-0000-0000-0000-000000000000/staff"
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    raw: '{"userId": "{{staffUserId}}"}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 404 - Evento inexistente
+    script: |
+      test.status(404)
+      test.jsonPath("$.error").equals("Evento não encontrado")

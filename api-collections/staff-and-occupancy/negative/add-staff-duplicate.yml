@@ -1,0 +1,28 @@
+info:
+  name: add-staff-duplicate
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{baseUrl}}/events/{{eventId}}/staff"
+  auth: inherit
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    raw: '{"userId": "{{staffUserId}}"}'
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
+
+tests:
+  - name: Status 409 - Associação duplicada
+    script: |
+      test.status(409)
+      test.jsonPath("$.error").equals("Usuário já associado a este evento")
