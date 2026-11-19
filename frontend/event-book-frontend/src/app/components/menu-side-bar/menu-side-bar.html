@@ -19,11 +19,11 @@
                 </a>
             </li>
             }
-            <li class="logout-item" routerLinkActive="active">
-                <a routerLink="/login" [replaceUrl]="true" aria-label="Sair do sistema">
-                    <img src="assets/logout.png" width="20" height="20" alt="Ícone de Sair">
-                    <label>Sair</label>
-                </a>
+            <li class="logout-item">
+                <button type="button" class="logout-button" (click)="logout()" [disabled]="loggingOut()">
+                    <img src="assets/logout.png" width="20" height="20" alt="">
+                    {{ loggingOut() ? 'Saindo…' : 'Sair' }}
+                </button>
             </li>
         </ul>
     </nav>

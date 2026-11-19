@@ -91,7 +91,11 @@ describe('DetailsEvents', () => {
     expect(harness.routeNativeElement?.querySelector('main button')).toBeNull();
   });
 
-  it('confirms the requested quantity before reserving tickets from a lot with stock', () => {
+  it.each([
+    { hasCard: true, approved: true },
+    { hasCard: false, approved: true },
+    { hasCard: true, approved: false },
+  ])('handles checkout with existing card $hasCard and approval $approved', ({ hasCard, approved }) => {
     user.set({ id: 'buyer', role: 'COMPRADOR', token: 'test-token' });
     http.expectOne((req) => req.url.endsWith('/api/events/event-1')).flush({
       ...event,
@@ -131,14 +135,43 @@ describe('DetailsEvents', () => {
 
     buy.click();
     dialog.querySelector<HTMLButtonElement>('.btn-primary')!.click();
+    const cards = http.expectOne((req) => req.method === 'GET' && req.url.endsWith('/api/cards/me'));
+    const card = { id: 'card-1', status: 'ACTIVE' };
+    cards.flush(hasCard ? [card] : []);
+    if (!hasCard) {
+      http.expectOne((req) => req.method === 'POST' && req.url.endsWith('/api/cards')).flush(
+        card, { status: 201, statusText: 'Created' },
+      );
+    }
     const order = http.expectOne((req) => req.url.endsWith('/api/orders'));
     expect(order.request.method).toBe('POST');
     expect(order.request.headers.get('Authorization')).toBe('Bearer test-token');
     expect(order.request.body).toEqual({ ticketLotId: 'lot-2', quantity: 2 });
-    order.flush({}, { status: 201, statusText: 'Created' });
+    order.flush({ id: 'order-1' }, { status: 201, statusText: 'Created' });
+    const checkout = http.expectOne((req) => req.url.endsWith('/api/orders/order-1/checkout'));
+    expect(checkout.request.method).toBe('POST');
+    expect(checkout.request.headers.get('Authorization')).toBe('Bearer test-token');
+    expect(checkout.request.body).toEqual({ cardId: 'card-1' });
+    harness.detectChanges();
+    expect(page.querySelector('.alert-link')).toBeNull();
+    expect(buy.disabled).toBe(true);
+
+    if (approved) {
+      checkout.flush({ status: 'PAID' });
+    } else {
+      checkout.flush({ error: 'Limite insuficiente. O pedido continua pendente.' },
+        { status: 422, statusText: 'Unprocessable Content' });
+    }
     harness.detectChanges();
 
-    expect(page.textContent).toContain('Pedido criado. Pagamento pendente.');
+    if (approved) {
+      expect(page.textContent).toContain('Compra aprovada.');
+      expect(page.querySelector('.alert-link')?.getAttribute('href')).toBe('/tickets');
+    } else {
+      expect(page.querySelector('[role="alert"]')?.textContent).toContain('Limite insuficiente.');
+      expect(page.querySelector('.alert-link')).toBeNull();
+    }
+    expect(buy.disabled).toBe(false);
     expect(input.max).toBe('3');
     expect(page.querySelectorAll('.list-group-item')[1].textContent).toMatch(/3\s+ingressos disponíveis/);
   });

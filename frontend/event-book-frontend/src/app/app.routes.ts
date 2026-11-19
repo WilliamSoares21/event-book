@@ -20,5 +20,5 @@ export const routes: Routes = [
   { path: 'events/lots/create', component: CreateLotsComponents,canActivate: [AcessoGuard] },
   { path: 'events/:id', component: DetailsEvents, canActivate: [AcessoGuard] },
   { path: 'tickets', component: TicketsComponent,canActivate: [AcessoGuard] },
-  { path: 'tickets/:id', component: DetailsTickets},
+  { path: 'tickets/:id', component: DetailsTickets, canActivate: [AcessoGuard] },
 ];

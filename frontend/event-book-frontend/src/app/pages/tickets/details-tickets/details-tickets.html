@@ -3,41 +3,43 @@
     <div class="side-page-content">
         <header class="brand-header">
             <div class="brand-header-content">
-                <h2>Detalhes do Ticket</h2>
-                <p>Confira as informações do seu ticket.</p>
+                <h2>Detalhes do ticket</h2>
             </div>
         </header>
         <main class="ticket-details">
-                <div class="card ticket-card">
-                     <img src="assets/tickets/default-ticket.png" class="ticket-image" [alt]="ticket.name">
-                    <div class="card-body">
-                        <h3 class="card-title mb-2">{{ ticket.name }}</h3>
-                        <div class="row mb-2">
-                            <div class="col-6">
-                                <p class="card-text">Data do Evento</p>
+            @if (details(); as result) {
+                @if (result.ticket; as ticket) {
+                    <article class="card ticket-card">
+                        <img src="assets/tickets/default-ticket.png" class="ticket-image" alt="">
+                        <div class="card-body">
+                            <div class="ticket-heading">
+                                <h3 class="card-title">{{ ticket.eventTitle }}</h3>
+                                <span class="custom-etiqueta">{{ statusLabels[ticket.status] }}</span>
                             </div>
-                            <div class="col-6">
-                                <p class="card-text">{{ ticket.day }}</p>
-                            </div>
+                            <dl class="ticket-facts">
+                                <div>
+                                    <dt>Data do evento</dt>
+                                    <dd>{{ ticket.eventStartsAt | date:'dd/MM/yyyy' }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Horário do evento</dt>
+                                    <dd>{{ ticket.eventStartsAt | date:'HH:mm' }}</dd>
+                                </div>
+                            </dl>
+                            <h4 class="ticket-code-heading">Código para check-in</h4>
+                            @if (qrImage() | async; as qr) {
+                                <img class="ticket-qr" [src]="qr" alt="QR Code do ticket para check-in" width="192" height="192">
+                            }
+                            <code class="ticket-code">{{ ticket.uniqueCode }}</code>
                         </div>
-                        <div class="row mb-2">
-                            <div class="col-6">
-                                <p class="card-text">Horário do Evento</p>
-                            </div>
-                            <div class="col-6">
-                                <p class="card-text">{{ ticket.time }}</p>
-                            </div>
-                        </div>
-                        <div class="row mb-2">
-                            <div class="col-6">
-                                <p class="card-text">Código do Ticket</p>
-                            </div>
-                            <div class="col-6">
-                                <p class="card-text">{{ ticket.codigo }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    </article>
+                } @else {
+                    <p class="alert alert-danger" role="alert">{{ result.error }}</p>
+                }
+            } @else {
+                <p role="status">Carregando detalhes do ticket…</p>
+            }
+            <a class="back-link" routerLink="/tickets"><span aria-hidden="true">←</span> Voltar para meus tickets</a>
         </main>
     </div>
 </section>

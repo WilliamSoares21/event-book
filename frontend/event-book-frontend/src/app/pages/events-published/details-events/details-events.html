@@ -71,6 +71,7 @@
                                 <dialog #confirmation class="order-dialog" aria-labelledby="order-dialog-title">
                                     <h4 id="order-dialog-title">Confirmar compra</h4>
                                     <p>Você confirma a compra de {{ quantity() }} {{ quantity() === 1 ? 'ingresso' : 'ingressos' }}?</p>
+                                    <p>O pagamento será simulado com seu cartão fictício. Se você ainda não tiver um cartão ativo, ele será cadastrado na confirmação.</p>
                                     <div class="d-flex flex-wrap justify-content-end gap-2">
                                         <button class="btn btn-outline-secondary" type="button" autofocus
                                                 (click)="confirmation.close()">Cancelar</button>
@@ -86,6 +87,9 @@
                                 <p class="alert mt-3 mb-0" [class.alert-danger]="feedback.error"
                                    [class.alert-success]="!feedback.error" [attr.role]="feedback.error ? 'alert' : 'status'">
                                     {{ feedback.message }}
+                                    @if (!feedback.error) {
+                                        <a routerLink="/tickets" class="alert-link">Ver meus tickets</a>
+                                    }
                                 </p>
                             }
                         }

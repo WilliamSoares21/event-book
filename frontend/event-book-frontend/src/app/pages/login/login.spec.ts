@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
@@ -12,20 +14,27 @@ describe('LoginComponent', () => {
     sessionStorage.clear();
     await TestBed.configureTestingModule({
       imports: [LoginComponent],
-      providers: [provideRouter([])],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  afterEach(() => sessionStorage.clear());
+  afterEach(() => {
+    TestBed.inject(HttpTestingController).verify();
+    sessionStorage.clear();
+  });
 
-  it('autentica o vendedor mockado e navega uma vez ao enviar o formulário', () => {
+  it('salva a sessão do comprador e navega para eventos sem guardar o token no histórico', () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     component.loginForm.setValue({ email: 'fulano1@gmail.com', password: '12345678' });
     fixture.nativeElement.querySelector('button[type="submit"]').click();
-    expect(TestBed.inject(SessionService).user()?.role).toBe('VENDEDOR');
+    TestBed.inject(HttpTestingController).expectOne((req) => req.url.endsWith('/auth/login')).flush({
+      token: 'test-token',
+      user: { id: 'buyer', name: 'Fulano', email: 'fulano1@gmail.com', role: 'COMPRADOR' },
+    });
+    expect(TestBed.inject(SessionService).user()).toMatchObject({ role: 'COMPRADOR', token: 'test-token' });
     expect(navigate).toHaveBeenCalledExactlyOnceWith(['/events']);
   });
 

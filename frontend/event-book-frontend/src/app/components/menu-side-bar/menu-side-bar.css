@@ -22,7 +22,8 @@
   margin-top: 2rem;
 }
 
-.side-page-nav a {
+.side-page-nav a,
+.logout-button {
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -30,11 +31,22 @@
   cursor: pointer;
 }
 
-.side-page-nav label {
+.side-page-nav label,
+.logout-button {
   text-decoration: none;
   color: #616367;
   font-weight: 600;
   font-size: 1.2rem;
+}
+
+.logout-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.logout-button:disabled {
+  cursor: wait;
 }
 
 .side-page-nav a:hover {

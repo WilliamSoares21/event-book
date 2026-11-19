@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, EMPTY, switchMap } from 'rxjs';
+import { catchError, EMPTY, switchMap, tap } from 'rxjs';
 import { MenuSideBarComponent } from '../../../components/menu-side-bar/menu-side-bar';
 import type { EventResponse } from '../../../model/event.model';
 import { EventsService } from '../../../services/events/events';
@@ -92,34 +92,48 @@ export class DetailsEvents implements OnInit {
     dialog.close();
     this.ordering.set(true);
     this.orderFeedback.set(null);
-    this.eventsService.createOrder(selection.ticketLotId, selection.quantity)
-      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-        next: () => {
-          if (this.event() !== event) return;
+    let reservationCreated = false;
+    let displayedEvent = event;
+    this.eventsService.getOrCreateSimulatedCard().pipe(
+      switchMap((card) => this.eventsService.createOrder(selection.ticketLotId, selection.quantity).pipe(
+        tap(() => {
+          reservationCreated = true;
+          if (this.event() !== displayedEvent) return;
 
-          this.event.set({
+          displayedEvent = {
             ...event,
-            availableTicketLots: this.availableLots().map((lot) => lot.id === selection.ticketLotId
+            availableTicketLots: event.availableTicketLots?.map((lot) => lot.id === selection.ticketLotId
               ? { ...lot, availableQuantity: lot.availableQuantity - selection.quantity }
               : lot),
-          });
+          };
+          this.event.set(displayedEvent);
           this.quantity.set(1);
-          this.ordering.set(false);
-          this.orderFeedback.set({ message: 'Pedido criado. Pagamento pendente.', error: false });
-        },
-        error: (error) => {
-          if (this.event() !== event) return;
+        }),
+        switchMap((order) => this.eventsService.checkoutOrder(order.id, card.id)),
+      )),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: () => {
+        if (this.event() !== displayedEvent) return;
 
-          this.ordering.set(false);
-          const message = error.error?.error;
-          this.orderFeedback.set({
-            message: typeof message === 'string' && message
-              ? message
-              : 'Não foi possível criar o pedido.',
-            error: true,
-          });
-        },
-      });
+        this.ordering.set(false);
+        this.orderFeedback.set({ message: 'Compra aprovada. Seus ingressos estão em Meus tickets.', error: false });
+      },
+      error: (error) => {
+        if (this.event() !== displayedEvent) return;
+
+        this.ordering.set(false);
+        const message = error.error?.error;
+        this.orderFeedback.set({
+          message: typeof message === 'string' && message
+            ? message
+            : reservationCreated
+              ? 'O pedido foi reservado, mas não foi possível confirmar o pagamento.'
+              : 'Não foi possível iniciar a compra.',
+          error: true,
+        });
+      },
+    });
   }
 
   publishEvent() {
