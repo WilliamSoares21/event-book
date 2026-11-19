@@ -1,16 +1,20 @@
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Singup } from './singup';
+import { SingupComponent } from './singup';
 
-describe('Singup', () => {
-  let component: Singup;
-  let fixture: ComponentFixture<Singup>;
+describe('SingupComponent', () => {
+  let component: SingupComponent;
+  let fixture: ComponentFixture<SingupComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Singup],
+      imports: [SingupComponent],
+      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Singup);
+    fixture = TestBed.createComponent(SingupComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
