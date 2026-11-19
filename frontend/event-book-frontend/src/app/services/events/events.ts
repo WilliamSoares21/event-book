@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import type { Event, EventListItem } from '../../model/event.model';
+import type { Event, EventListItem, EventResponse } from '../../model/event.model';
 import type { TicketLotRequest, TicketLotResponse } from '../../model/ticket-lot.model';
 import { SessionService } from '../session/session';
 
@@ -19,8 +19,26 @@ export class EventsService {
     return this.http.get<EventListItem[]>(`${this.apiUrl}/organizer/events`, this.authOptions());
   }
 
+  getEvent(eventId: string) {
+    return this.http.get<EventResponse>(
+      `${this.apiUrl}/events/${encodeURIComponent(eventId)}`, this.authOptions(),
+    );
+  }
+
+  publishEvent(eventId: string) {
+    return this.http.post<void>(
+      `${this.apiUrl}/events/${encodeURIComponent(eventId)}/publication`, null, this.authOptions(),
+    );
+  }
+
+  createOrder(ticketLotId: string, quantity: number) {
+    return this.http.post<unknown>(
+      `${this.apiUrl}/orders`, { ticketLotId, quantity }, this.authOptions(),
+    );
+  }
+
   createEvent(event: Event) {
-    return this.http.post<Event & { id: string }>(`${this.apiUrl}/events`, event, this.authOptions());
+    return this.http.post<EventResponse>(`${this.apiUrl}/events`, event, this.authOptions());
   }
 
   createLot(eventId: string, lot: TicketLotRequest) {

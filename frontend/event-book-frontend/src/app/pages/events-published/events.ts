@@ -3,12 +3,12 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MenuSideBarComponent } from '../../components/menu-side-bar/menu-side-bar';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { EventsService } from '../../services/events/events';
 import type { EventListItem } from '../../model/event.model';
 
 @Component({
-  imports: [MenuSideBarComponent, CommonModule],
+  imports: [MenuSideBarComponent, CommonModule, RouterLink],
   selector: 'app-events',
   styleUrl: './events.css',
   templateUrl: './events.html',

@@ -6,4 +6,19 @@ export interface Event {
   location: string;
 }
 
-export type EventListItem = Pick<Event, 'title' | 'startsAt' | 'location'>;
+export type EventListItem = Pick<EventResponse, 'id' | 'title' | 'startsAt' | 'location'>;
+
+export interface EventResponse extends Event {
+  id: string;
+  organizerId: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'FINISHED';
+  version: number;
+  availableTicketLots?: AvailableTicketLot[];
+}
+
+export interface AvailableTicketLot {
+  id: string;
+  name: string;
+  unitPrice: number;
+  availableQuantity: number;
+}

@@ -1,0 +1,120 @@
+<section class="side-page">
+    <app-menu-side-bar [roleUser]="roleUser()"></app-menu-side-bar>
+    <div class="side-page-content">
+        <footer class="brand-header">
+            <div class="brand-header-content">
+                <h2>Detalhes do evento</h2>
+            </div>
+        </footer>
+        <main class="event-details">
+            @if (loadError()) {
+                <p class="alert alert-danger" role="alert">{{ loadError() }}</p>
+            } @else if (event(); as details) {
+                <article class="card event-card">
+                    <img src="assets/events/default-event.png" class="event-image" alt="">
+                    <div class="card-body">
+                        <div class="event-heading">
+                            <h3 class="card-title">{{ details.title }}</h3>
+                            <span class="custom-etiqueta">{{ statusLabels[details.status] }}</span>
+                        </div>
+
+                        <dl class="event-facts">
+                            <div>
+                                <dt>Início</dt>
+                                <dd>{{ details.startsAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+                            </div>
+                            <div>
+                                <dt>Término</dt>
+                                <dd>{{ details.endsAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+                            </div>
+                            <div>
+                                <dt>Local</dt>
+                                <dd>{{ details.location }}</dd>
+                            </div>
+                        </dl>
+
+                        <h4 class="description-heading">Descrição</h4>
+                        <p class="event-description">{{ details.description }}</p>
+
+                        @if (roleUser() === 'COMPRADOR' && details.status === 'PUBLISHED') {
+                            @if (availableLots().length) {
+                                <section class="mb-4" aria-labelledby="available-lots-title">
+                                    <h4 id="available-lots-title" class="description-heading">Lotes disponíveis</h4>
+                                    <ul class="list-group">
+                                        @for (lot of availableLots(); track lot.id) {
+                                            <li class="list-group-item d-flex flex-wrap justify-content-between gap-2">
+                                                <div>
+                                                    <strong>{{ lot.name }}</strong>
+                                                    <div class="text-body-secondary">
+                                                        {{ lot.availableQuantity }}
+                                                        {{ lot.availableQuantity === 1 ? 'ingresso disponível' : 'ingressos disponíveis' }}
+                                                    </div>
+                                                </div>
+                                                <span>{{ ticketPrice.format(lot.unitPrice) }} por ingresso</span>
+                                            </li>
+                                        }
+                                    </ul>
+                                </section>
+                                <form class="ticket-order" (submit)="$event.preventDefault(); confirmation.showModal()">
+                                    <div>
+                                        <label class="form-label" for="ticket-quantity">Quantidade de ingressos</label>
+                                        <input #ticketQuantity class="form-control" id="ticket-quantity"
+                                               type="number" min="1" [max]="maxQuantity()" step="1" required
+                                               [value]="quantity()" [disabled]="ordering()"
+                                               (input)="quantity.set(ticketQuantity.valueAsNumber)">
+                                    </div>
+                                    <button class="btn btn-primary" type="submit" [disabled]="!orderSelection() || ordering()">
+                                        {{ ordering() ? 'Enviando…' : 'Comprar' }}
+                                    </button>
+                                </form>
+
+                                <dialog #confirmation class="order-dialog" aria-labelledby="order-dialog-title">
+                                    <h4 id="order-dialog-title">Confirmar compra</h4>
+                                    <p>Você confirma a compra de {{ quantity() }} {{ quantity() === 1 ? 'ingresso' : 'ingressos' }}?</p>
+                                    <div class="d-flex flex-wrap justify-content-end gap-2">
+                                        <button class="btn btn-outline-secondary" type="button" autofocus
+                                                (click)="confirmation.close()">Cancelar</button>
+                                        <button class="btn btn-primary" type="button"
+                                                (click)="confirmOrder(confirmation)">Confirmar</button>
+                                    </div>
+                                </dialog>
+                            } @else {
+                                <p class="mb-0">Não há ingressos disponíveis no momento.</p>
+                            }
+
+                            @if (orderFeedback(); as feedback) {
+                                <p class="alert mt-3 mb-0" [class.alert-danger]="feedback.error"
+                                   [class.alert-success]="!feedback.error" [attr.role]="feedback.error ? 'alert' : 'status'">
+                                    {{ feedback.message }}
+                                </p>
+                            }
+                        }
+
+                        @if (canPublish()) {
+                            <button class="btn btn-primary" type="button"
+                                    [disabled]="publishing()" (click)="publishEvent()">
+                                {{ publishing() ? 'Publicando…' : 'Publicar evento' }}
+                            </button>
+                        }
+                        @if (publicationError()) {
+                            <p class="alert alert-danger mt-3 mb-0" role="alert">{{ publicationError() }}</p>
+                        }
+                        @if (published()) {
+                            <p class="alert alert-success mt-3 mb-0" role="status">Evento publicado com sucesso.</p>
+                        }
+                    </div>
+                </article>
+            } @else {
+                <p role="status">Carregando detalhes do evento…</p>
+            }
+        </main>
+        <footer class="brand-header">
+            <div class="brand-header-content">
+                <a class="back-link" routerLink="/events">
+                    <span aria-hidden="true">←</span>
+                    Voltar para eventos
+                </a>
+            </div>
+        </footer>
+    </div>
+</section>

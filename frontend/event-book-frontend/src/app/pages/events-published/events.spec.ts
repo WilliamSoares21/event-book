@@ -36,6 +36,7 @@ describe('EventsComponent listing', () => {
         role === 'ORGANIZADOR' ? 'Bearer test-token' : null,
       );
       request.flush([{
+        id: 'event-1',
         title: 'Encontro de tecnologia', startsAt: '2027-06-15T18:30:00',
         location: 'Centro de convenções',
         status: role === 'ORGANIZADOR' ? 'DRAFT' : 'PUBLISHED',
@@ -43,6 +44,7 @@ describe('EventsComponent listing', () => {
       fixture.detectChanges();
       const card = fixture.nativeElement.querySelector('.card');
       expect(card.querySelector('.card-title').textContent).toContain('Encontro de tecnologia');
+      expect(card.querySelector('a').getAttribute('href')).toBe('/events/event-1');
       expect(Array.from(card.querySelectorAll('.card-text'), (el: any) => el.textContent.trim()))
         .toEqual(['15/06/2027', '18:30', 'Centro de convenções']);
       expect(fixture.nativeElement.querySelectorAll('.page-item').length).toBe(5);
