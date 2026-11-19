@@ -1,5 +1,6 @@
 package com.eventbook.backend.events;
 
+import com.eventbook.backend.common.dto.PageResponse;
 import com.eventbook.backend.common.exception.ApiExceptionHandler;
 import com.eventbook.backend.common.exception.BusinessException;
 import com.eventbook.backend.events.dto.EventResponseDTO;
@@ -13,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -151,28 +154,27 @@ class EventControllerTest {
 
     @Test
     void deveRetornar200AoListarEventosPublicados() throws Exception {
-        when(eventService.findAllPublished())
-                .thenReturn(java.util.List.of(
-                        EventResponseDTO.builder()
-                                .id(UUID.randomUUID())
-                                .title("Evento publicado")
-                                .startsAt(OffsetDateTime.parse(
-                                        "2026-11-20T19:00:00-03:00"
-                                ))
-                                .endsAt(OffsetDateTime.parse(
-                                        "2026-11-20T23:00:00-03:00"
-                                ))
-                                .location("São Paulo")
-                                .status(EventStatus.PUBLISHED)
-                                .build()
-                ));
+        EventResponseDTO event = EventResponseDTO.builder()
+                .id(UUID.randomUUID())
+                .title("Evento publicado")
+                .startsAt(OffsetDateTime.parse("2026-11-20T19:00:00-03:00"))
+                .endsAt(OffsetDateTime.parse("2026-11-20T23:00:00-03:00"))
+                .location("São Paulo")
+                .status(EventStatus.PUBLISHED)
+                .build();
+        PageImpl<EventResponseDTO> page = new PageImpl<>(java.util.List.of(event));
+        when(eventService.findAllPublished(any(Pageable.class)))
+                .thenReturn(PageResponse.from(page));
 
         mockMvc.perform(get("/api/events"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].status").value("PUBLISHED"))
-                .andExpect(jsonPath("$[0].title").value("Evento publicado"));
+                .andExpect(jsonPath("$.content[0].status").value("PUBLISHED"))
+                .andExpect(jsonPath("$.content[0].title").value("Evento publicado"))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(1))
+                .andExpect(jsonPath("$.totalElements").value(1));
 
-        verify(eventService).findAllPublished();
+        verify(eventService).findAllPublished(any(Pageable.class));
     }
 
     @Test
