@@ -54,9 +54,12 @@ describe('EventsComponent listing', () => {
   it('leaves the listing empty when there are no events', () => {
     const fixture = TestBed.createComponent(EventsComponent);
     fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('Nenhum evento cadastrado.');
     http.expectOne((req) => req.url.endsWith('/api/organizer/events')).flush([]);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.card').length).toBe(0);
+    expect(fixture.nativeElement.querySelector('.pagination')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Nenhum evento cadastrado.');
   });
 
   it('shows an error without falling back to public events when organizer authorization fails', () => {

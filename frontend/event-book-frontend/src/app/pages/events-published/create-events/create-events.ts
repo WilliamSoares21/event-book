@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { SessionService } from '../../../services/session/session';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Location } from '@angular/common';
+import { ToastService } from '../../../services/toast/toast';
 import type { Event } from '../../../model/event.model';
 
 @Component({
@@ -14,6 +15,8 @@ import type { Event } from '../../../model/event.model';
 })
 export class CreateEventsComponent {
   private readonly session = inject(SessionService);
+  private readonly toast = inject(ToastService);
+  get today(): string { return this.toLocalFields(new Date()).date; }
   get roleUser() { return this.session.user()?.role; }
 
   singUpForm: FormGroup;
@@ -33,8 +36,8 @@ export class CreateEventsComponent {
       { event?: Event } | null;
     if (state?.event) {
       const event = state.event;
-      const start = this.toLocalFields(event.startsAt);
-      const end = this.toLocalFields(event.endsAt);
+      const start = this.toLocalFields(new Date(event.startsAt));
+      const end = this.toLocalFields(new Date(event.endsAt));
       this.singUpForm.patchValue({
         eventName: event.title,
         eventDescription: event.description,
@@ -47,8 +50,7 @@ export class CreateEventsComponent {
     }
   }
 
-  private toLocalFields(value: string): { date: string; time: string } {
-    const date = new Date(value);
+  private toLocalFields(date: Date): { date: string; time: string } {
     if (Number.isNaN(date.getTime())) {
       return { date: '', time: '' };
     }
@@ -67,6 +69,15 @@ export class CreateEventsComponent {
   }
 
   createLots() {
+    const { eventStartedDate, eventEndDate } = this.singUpForm.value;
+    const earliestDate = new Date(`${this.today}T00:00:00`);
+    if (new Date(`${eventStartedDate}T00:00:00`) < earliestDate ||
+        new Date(`${eventEndDate}T00:00:00`) < earliestDate) {
+      this.toast.show('As datas do evento devem ser de hoje em diante.');
+      return;
+    }
+
+    this.toast.dismiss();
     const event = {
       title: this.singUpForm.get('eventName')?.value,
       description: this.singUpForm.get('eventDescription')?.value,

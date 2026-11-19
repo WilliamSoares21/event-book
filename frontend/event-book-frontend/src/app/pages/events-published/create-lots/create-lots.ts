@@ -44,6 +44,13 @@ export class CreateLotsComponents {
     this.addLot();
   }
 
+  get today(): string {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${now.getFullYear()}-${month}-${day}`;
+  }
+
   addLot() {
     if (this.saving() || this.success()) return;
     this.lots.push({
@@ -78,6 +85,7 @@ export class CreateLotsComponents {
       return;
     }
 
+    const earliestDate = new Date(`${this.today}T00:00:00`);
     const pending: { id: number; payload: TicketLotRequest }[] = [];
     for (const lot of this.lots) {
       if (this.createdLots.has(lot.id)) continue;
@@ -87,6 +95,10 @@ export class CreateLotsComponents {
           lot.quantity === null || !Number.isInteger(lot.quantity) || lot.quantity <= 0 ||
           !Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start) {
         this.showError('Preencha os lotes com nome, preço válido, quantidade positiva e data final posterior à inicial.');
+        return;
+      }
+      if (start < earliestDate || end < earliestDate) {
+        this.showError('As datas de venda devem ser de hoje em diante.');
         return;
       }
       pending.push({

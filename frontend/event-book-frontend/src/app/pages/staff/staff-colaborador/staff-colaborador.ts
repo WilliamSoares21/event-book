@@ -2,10 +2,12 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, EMPTY, switchMap } from 'rxjs';
+import { MenuSideBarComponent } from '../../../components/menu-side-bar/menu-side-bar';
+import { SessionService } from '../../../services/session/session';
 import { EventStaffOption, EventsService } from '../../../services/events/events';
 
 @Component({
-  imports: [RouterLink],
+  imports: [MenuSideBarComponent, RouterLink],
   selector: 'app-staff-colaborador',
   styleUrl: './staff-colaborador.css',
   templateUrl: './staff-colaborador.html',
@@ -15,6 +17,7 @@ export class StaffColaborador implements OnInit {
   private readonly eventsService = inject(EventsService);
   private readonly destroyRef = inject(DestroyRef);
 
+  readonly session = inject(SessionService);
   readonly eventId = signal('');
   readonly staff = signal<EventStaffOption[] | null>(null);
   readonly loadError = signal('');

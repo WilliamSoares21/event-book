@@ -26,6 +26,10 @@
         <main class="side-page-main col-12">
             @if (loadError()) {
             <p role="alert">{{ loadError() }}</p>
+            } @else if (loaded() && events().length === 0) {
+            <p role="status">{{ roleUser === 'ORGANIZADOR'
+                ? 'Nenhum evento cadastrado.'
+                : 'Nenhum evento disponível no momento.' }}</p>
             }
             <section *ngFor="let event of events()" class="card" style="max-width: 220px">
                 <img src="assets/events/default-event.png" class="card-img-top" alt="...">
@@ -37,17 +41,19 @@
                     <a [routerLink]="['/events', event.id]" class="btn-solid theme-primary">Mais Informações</a>
                 </div>
             </section>
-            <nav aria-label="...">
-                <ul class="pagination">
-                    <li class="page-item"><a href="#" class="page-link">Previous</a></li>
-                    <li class="page-item"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item active">
-                    <a class="page-link" href="#" aria-current="page">2</a>
-                    </li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item"><a class="page-link" href="#">Next</a></li>
-                </ul>
-            </nav>    
+            @if (events().length > 0) {
+                <nav aria-label="Paginação de eventos">
+                    <ul class="pagination">
+                        <li class="page-item"><a href="#" class="page-link">Previous</a></li>
+                        <li class="page-item"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item active">
+                            <a class="page-link" href="#" aria-current="page">2</a>
+                        </li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                    </ul>
+                </nav>
+            }
         </main>
     </div>
 </section>
