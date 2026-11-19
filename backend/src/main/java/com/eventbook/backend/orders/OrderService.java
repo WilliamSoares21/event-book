@@ -354,9 +354,9 @@ public class OrderService {
   }
 
   @Transactional(readOnly = true)
-  public PageResponse<OrderResponseDTO> findOwnOrders(UUID buyerId, int page, int size) {
-    Pageable pageable = PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE), DEFAULT_SORT);
-    Page<Order> ordersPage = orderRepository.findByBuyerId(buyerId, pageable);
-    return PageResponse.from(ordersPage.map(OrderResponseDTO::from));
+  public List<OrderResponseDTO> findOwnOrders(UUID buyerId) {
+    return orderRepository.findByBuyerId(buyerId).stream()
+            .map(OrderResponseDTO::from)
+            .toList();
   }
 }

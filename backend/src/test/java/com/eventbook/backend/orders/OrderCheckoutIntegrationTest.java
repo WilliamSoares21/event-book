@@ -1,11 +1,13 @@
 package com.eventbook.backend.orders;
 
+import com.eventbook.backend.cards.SimulatedCardRepository;
 import com.eventbook.backend.events.Event;
 import com.eventbook.backend.events.EventRepository;
 import com.eventbook.backend.events.EventStatus;
 import com.eventbook.backend.lots.LotStatus;
 import com.eventbook.backend.lots.TicketLot;
 import com.eventbook.backend.lots.TicketLotRepository;
+import com.eventbook.backend.payments.PaymentTransactionRepository;
 import com.eventbook.backend.tickets.Ticket;
 import com.eventbook.backend.tickets.TicketRepository;
 import com.eventbook.backend.tickets.TicketStatus;
@@ -87,12 +89,20 @@ class OrderCheckoutIntegrationTest {
     private TicketRepository ticketRepository;
 
     @Autowired
+    private PaymentTransactionRepository paymentTransactionRepository;
+
+    @Autowired
+    private SimulatedCardRepository simulatedCardRepository;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     private final String commonPassword = "password123";
 
     @BeforeEach
     void setup() {
+        paymentTransactionRepository.deleteAll();
+        simulatedCardRepository.deleteAll();
         ticketRepository.deleteAll();
         orderRepository.deleteAll();
         ticketLotRepository.deleteAll();

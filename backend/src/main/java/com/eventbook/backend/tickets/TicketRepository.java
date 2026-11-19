@@ -1,8 +1,6 @@
 package com.eventbook.backend.tickets;
 
 import jakarta.persistence.LockModeType;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -39,5 +37,5 @@ public interface TicketRepository extends JpaRepository <Ticket, UUID> {
             WHERE o.buyer.id = :buyerId
             ORDER BY t.createdAt DESC
             """)
-    Page<Ticket> findByBuyerId(@Param("buyerId") UUID buyerId, Pageable pageable);
+    List<Ticket> findByBuyerId(@Param("buyerId") UUID buyerId);
 }

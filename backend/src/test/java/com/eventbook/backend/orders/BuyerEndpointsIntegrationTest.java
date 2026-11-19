@@ -233,11 +233,11 @@ class BuyerEndpointsIntegrationTest {
         mockMvc.perform(get("/api/tickets/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[0].status").value("VALID"))
-                .andExpect(jsonPath("$.content[0].eventTitle").value("Test Event"))
-                .andExpect(jsonPath("$.content[0].uniqueCode").exists());
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].status").value("VALID"))
+                .andExpect(jsonPath("$[0].eventTitle").value("Test Event"))
+                .andExpect(jsonPath("$[0].uniqueCode").exists());
     }
 
     @Test
@@ -248,14 +248,8 @@ class BuyerEndpointsIntegrationTest {
         mockMvc.perform(get("/api/tickets/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(0))
-                .andExpect(jsonPath("$.page").value(0))
-                .andExpect(jsonPath("$.size").value(10))
-                .andExpect(jsonPath("$.totalElements").value(0))
-                .andExpect(jsonPath("$.totalPages").value(0))
-                .andExpect(jsonPath("$.first").value(true))
-                .andExpect(jsonPath("$.last").value(true));
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 
     @Test
@@ -277,8 +271,8 @@ class BuyerEndpointsIntegrationTest {
         mockMvc.perform(get("/api/tickets/me")
                         .header("Authorization", "Bearer " + token2))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(0));
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 
     @Test
@@ -296,9 +290,9 @@ class BuyerEndpointsIntegrationTest {
         mockMvc.perform(get("/api/tickets/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(3))
-                .andExpect(jsonPath("$.content[*].status").value(everyItem(is("VALID"))));
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$[*].status").value(everyItem(is("VALID"))));
     }
 
     @Test
@@ -333,10 +327,10 @@ class BuyerEndpointsIntegrationTest {
         mockMvc.perform(get("/api/orders/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[0].status").value("PENDING"))
-                .andExpect(jsonPath("$.content[*].quantity").value(everyItem(greaterThan(0))));
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].status").value("PENDING"))
+                .andExpect(jsonPath("$[*].quantity").value(everyItem(greaterThan(0))));
     }
 
     @Test
@@ -347,14 +341,8 @@ class BuyerEndpointsIntegrationTest {
         mockMvc.perform(get("/api/orders/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(0))
-                .andExpect(jsonPath("$.page").value(0))
-                .andExpect(jsonPath("$.size").value(10))
-                .andExpect(jsonPath("$.totalElements").value(0))
-                .andExpect(jsonPath("$.totalPages").value(0))
-                .andExpect(jsonPath("$.first").value(true))
-                .andExpect(jsonPath("$.last").value(true));
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 
     @Test
@@ -373,8 +361,8 @@ class BuyerEndpointsIntegrationTest {
         mockMvc.perform(get("/api/orders/me")
                         .header("Authorization", "Bearer " + token2))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(0));
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 
     @Test
@@ -396,9 +384,9 @@ class BuyerEndpointsIntegrationTest {
         mockMvc.perform(get("/api/orders/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(2))
-                .andExpect(jsonPath("$.content[*].status").value(containsInAnyOrder("PENDING", "PAID")));
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[*].status").value(containsInAnyOrder("PENDING", "PAID")));
     }
 
     @Test
