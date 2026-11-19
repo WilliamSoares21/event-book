@@ -5,12 +5,14 @@ import com.eventbook.backend.cards.SimulatedCard;
 import com.eventbook.backend.cards.SimulatedCardRepository;
 import com.eventbook.backend.cards.exception.CardAccessDeniedException;
 import com.eventbook.backend.cards.exception.CardNotFoundException;
+import com.eventbook.backend.common.dto.PageResponse;
 import com.eventbook.backend.common.exception.BusinessException;
 import com.eventbook.backend.events.EventStatus;
 import com.eventbook.backend.lots.LotStatus;
 import com.eventbook.backend.lots.TicketLot;
 import com.eventbook.backend.lots.TicketLotRepository;
 import com.eventbook.backend.orders.dto.CheckoutResponseDTO;
+import com.eventbook.backend.orders.dto.OrderResponseDTO;
 import com.eventbook.backend.orders.exception.InsufficientCapacityException;
 import com.eventbook.backend.orders.exception.LotNotActiveException;
 import com.eventbook.backend.orders.exception.LotNotFoundException;
@@ -29,6 +31,10 @@ import com.eventbook.backend.tickets.TicketRepository;
 import com.eventbook.backend.tickets.TicketStatus;
 import com.eventbook.backend.users.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +52,8 @@ import java.util.UUID;
 public class OrderService {
 
   private static final int RESERVATION_MINUTES = 15;
+  private static final int MAX_PAGE_SIZE = 50;
+  private static final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "createdAt");
 
   private final OrderRepository orderRepository;
   private final TicketLotRepository ticketLotRepository;
@@ -343,5 +351,12 @@ public class OrderService {
       ticket.setStatus(TicketStatus.CANCELLED);
     }
     ticketRepository.saveAll(tickets);
+  }
+
+  @Transactional(readOnly = true)
+  public PageResponse<OrderResponseDTO> findOwnOrders(UUID buyerId, int page, int size) {
+    Pageable pageable = PageRequest.of(page, Math.min(size, MAX_PAGE_SIZE), DEFAULT_SORT);
+    Page<Order> ordersPage = orderRepository.findByBuyerId(buyerId, pageable);
+    return PageResponse.from(ordersPage.map(OrderResponseDTO::from));
   }
 }

@@ -6,9 +6,14 @@ info:
 http:
   method: GET
   url: "{{baseUrl}}/tickets/me"
-  auth:
-    type: bearer
-    token: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjNzJjYTg2My02ZGE2LTQzMGItOTJlYS1lMDYzZDQ1NjNlYTMiLCJlbWFpbCI6Imp1YW5AZXhhbXBsZS5jb20iLCJyb2xlIjoiUk9MRV9PUkdBTklaQURPUiIsIm5hbWUiOiJKdWFuIFRlbXBlc3RvIiwidG9rZW5WZXJzaW9uIjowLCJpYXQiOjE3OTUwNTM0OTEsImV4cCI6MTc5NTA4MjI5MX0.99Lmzan8MvRu1K_BOuFQOdl6_FQvM2uj-oBPB1lFxaUQR8b6HHiVCibU3T74bg0IWtt2twcc8UXg30WzXbsPUw
+  auth: inherit
+  params:
+    - name: page
+      value: "0"
+      disabled: false
+    - name: size
+      value: "10"
+      disabled: false
 
 settings:
   encodeUrl: true

@@ -1,5 +1,6 @@
 package com.eventbook.backend.events;
 
+import com.eventbook.backend.common.dto.PageResponse;
 import com.eventbook.backend.events.dto.EventOccupancyDTO;
 import com.eventbook.backend.events.dto.EventRequestDTO;
 import com.eventbook.backend.events.dto.EventResponseDTO;
@@ -10,7 +11,12 @@ import com.eventbook.backend.staff.dto.AddEventStaffRequest;
 import com.eventbook.backend.staff.dto.EventStaffResponseDTO;
 import com.eventbook.backend.staff.dto.StaffOptionResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -18,11 +24,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
-import java.util.List;
 import java.net.URI;
 import java.util.UUID;
 
@@ -35,10 +41,20 @@ public class EventController {
     private final StaffService staffService;
 
     @GetMapping
-    @Operation(summary = "Lista eventos publicados")
-    @ApiResponse(responseCode = "200", description = "Eventos retornados com sucesso")
-    public ResponseEntity<List<EventResponseDTO>> listEvents() {
-        return ResponseEntity.ok(eventService.findAllPublished());
+    @Operation(summary = "Lista eventos publicados (paginado)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Eventos retornados com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Parâmetros de paginação inválidos")
+    })
+    public ResponseEntity<PageResponse<EventResponseDTO>> listEvents(
+            @Parameter(description = "Número da página (base 0)", example = "0")
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @Parameter(description = "Tamanho da página (máx 50)", example = "10")
+            @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("startsAt").ascending().and(Sort.by("id").ascending()));
+        PageResponse<EventResponseDTO> events = eventService.findAllPublished(pageable);
+        return ResponseEntity.ok(events);
     }
 
     @GetMapping("/{eventId}")

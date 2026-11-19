@@ -13,8 +13,8 @@ http:
     type: json
     data: |-
       {
-        "ticketLotId": "03dee13b-701f-4b3d-b3f6-4e7ea03541b5",
-        "quantity": "2"
+        "ticketLotId": "addc47af-7d95-4c08-b2a8-2c1ba2fcd8ea",
+        "quantity": 1
       }
   auth: inherit
 

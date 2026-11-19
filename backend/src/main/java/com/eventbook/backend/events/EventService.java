@@ -1,6 +1,7 @@
 package com.eventbook.backend.events;
 
 import com.eventbook.backend.checkin.CheckInRepository;
+import com.eventbook.backend.common.dto.PageResponse;
 import com.eventbook.backend.common.exception.BusinessException;
 import com.eventbook.backend.events.dto.EventOccupancyDTO;
 import com.eventbook.backend.events.dto.TicketLotOccupancyDTO;
@@ -19,6 +20,8 @@ import com.eventbook.backend.orders.OrderStatus;
 import com.eventbook.backend.tickets.TicketRepository;
 import com.eventbook.backend.users.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -135,7 +138,37 @@ public class EventService {
         .toList();
   }
 
-  // Lista todos os eventos cadastrados
+  // Lista todos os eventos publicados com paginação
+  @Transactional(readOnly = true)
+  public PageResponse<EventResponseDTO> findAllPublished(Pageable pageable) {
+    // Ordenação determinística padrão: startsAt asc, id asc
+    if (pageable.getSort().isEmpty()) {
+      pageable = org.springframework.data.domain.PageRequest.of(
+          pageable.getPageNumber(),
+          Math.min(pageable.getPageSize(), 50), // limite máximo de 50
+          org.springframework.data.domain.Sort.by("startsAt").and(
+              org.springframework.data.domain.Sort.by("id"))
+      );
+    } else {
+      // Limitar o tamanho para o máximo permitido
+      int size = pageable.getPageSize();
+      if (size > 50) {
+        // Reconstruir Pageable com tamanho limitado, mantendo ordenação e outros parâmetros
+        pageable = org.springframework.data.domain.PageRequest.of(
+            pageable.getPageNumber(),
+            50,
+            pageable.getSort()
+        );
+      }
+    }
+
+    return PageResponse.from(
+        eventRepository.findByStatus(EventStatus.PUBLISHED, pageable)
+            .map(this::toResponseDTO)
+    );
+  }
+
+  // Versão simples sem paginação (para o endpoint do organizador)
   @Transactional(readOnly = true)
   public List<EventResponseDTO> findAllPublished() {
     // A consulta já filtra os eventos no banco, evitando carregar rascunhos
