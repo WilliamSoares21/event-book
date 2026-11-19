@@ -10,10 +10,10 @@ http:
     type: json
     data: |-
       {
-        "title": "Festival Tech ",
-        "description": "Evento de tecnologia.",
-        "startsAt": "2026-12-20T19:00:00-03:00",
-        "endsAt": "2026-12-20T23:00:00-03:00",
+        "title": "Conveção CLOUD agent",
+        "description": "Evento de nuvem e implação segura.",
+        "startsAt": "2026-11-18T14:05:00-03:00",
+        "endsAt": "2026-11-18T17:00:00-03:00",
         "location": "Fortaleza - CE"
       }
   auth: inherit

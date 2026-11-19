@@ -1,6 +1,8 @@
 package com.eventbook.backend.orders;
 
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -13,7 +15,13 @@ import java.util.UUID;
 
 public interface OrderRepository extends JpaRepository<Order, UUID> {
 
-    List<Order> findByBuyerId(UUID buyerId);
+    @Query("""
+            SELECT o FROM Order o
+            JOIN FETCH o.ticketLot lot
+            WHERE o.buyer.id = :buyerId
+            ORDER BY o.createdAt DESC
+            """)
+    Page<Order> findByBuyerId(@Param("buyerId") UUID buyerId, Pageable pageable);
 
     @Query("""
             SELECT COUNT(o)

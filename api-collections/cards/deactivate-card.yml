@@ -5,7 +5,7 @@ info:
 
 http:
   method: PATCH
-  url: "{{baseUrl}}/api/cards/{{cardId}}/deactivate"
+  url: "{{baseUrl}}/cards/{{cardId}}/deactivate"
   auth: inherit
 
 settings:

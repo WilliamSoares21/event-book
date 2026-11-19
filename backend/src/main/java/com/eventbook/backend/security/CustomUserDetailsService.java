@@ -27,10 +27,12 @@ public class CustomUserDetailsService implements UserDetailsService {
     /**
      * Busca o usuário no banco através do e-mail digitado no login.
      * Transforma esse usuário no formato padrão que o Spring Security exige.
+     * Normaliza o email removendo espaços externos antes da consulta.
      */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email)
+        String normalizedEmail = normalizeEmail(email);
+        User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         return toAuthenticatedUser(user);
@@ -57,5 +59,13 @@ public class CustomUserDetailsService implements UserDetailsService {
                 authorities,
                 user.getTokenVersion()
         );
+    }
+
+    /**
+     * Normaliza o email removendo espaços em branco do início e fim.
+     * Não altera espaços internos do email.
+     */
+    public static String normalizeEmail(String email) {
+        return email != null ? email.trim() : email;
     }
 }

@@ -1,5 +1,6 @@
 package com.eventbook.backend.users;
 
+import com.eventbook.backend.security.CustomUserDetailsService;
 import com.eventbook.backend.users.dto.RegisterUserRequest;
 import com.eventbook.backend.users.dto.UserResponse;
 import com.eventbook.backend.users.exception.DuplicateEmailException;
@@ -18,13 +19,14 @@ public class UserService {
 
     @Transactional
     public UserResponse register(RegisterUserRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
+        String normalizedEmail = CustomUserDetailsService.normalizeEmail(request.email());
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw new DuplicateEmailException("Já existe um usuário cadastrado com este email");
         }
 
         User user = User.builder()
                 .name(request.name())
-                .email(request.email())
+                .email(normalizedEmail)
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .role(request.role())
                 .build();
@@ -35,7 +37,8 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserResponse getByEmail(String email) {
-        User user = userRepository.findByEmail(email)
+        String normalizedEmail = CustomUserDetailsService.normalizeEmail(email);
+        User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new IllegalStateException("Usuário autenticado não encontrado"));
         return userMapper.toResponse(user);
     }
