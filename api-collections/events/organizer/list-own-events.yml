@@ -6,7 +6,9 @@ info:
 http:
   method: GET
   url: "{{baseUrl}}/organizer/events"
-  auth: inherit
+  auth:
+    type: bearer
+    token: eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJjNzJjYTg2My02ZGE2LTQzMGItOTJlYS1lMDYzZDQ1NjNlYTMiLCJlbWFpbCI6Imp1YW5AZXhhbXBsZS5jb20iLCJyb2xlIjoiUk9MRV9PUkdBTklaQURPUiIsIm5hbWUiOiJKdWFuIFRlbXBlc3RvIiwidG9rZW5WZXJzaW9uIjowLCJpYXQiOjE3OTQ5MTg3OTUsImV4cCI6MTc5NDk0NzU5NX0.MC2IIthZUMc8vZNaQ7yJgo2u8gh_eDBHRtQ61PLrwz7LjBCp259OIAjtsisGUU8yS-o3esDHWoX6LQlXBDhQ3Q
 
 settings:
   encodeUrl: true

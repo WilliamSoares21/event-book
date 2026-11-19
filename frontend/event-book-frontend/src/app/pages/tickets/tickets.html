@@ -8,27 +8,39 @@
             </div>
         </header>
         <main class="side-page-main col-12">
-            <section *ngFor="let ticket of tickets" class="card" style="max-width: 220px">
+            @if (loading()) {
+                <p role="status">Carregando seus tickets...</p>
+            } @else if (error()) {
+                <p role="alert">{{ error() }}</p>
+            } @else if (!tickets().length) {
+                <p>Você ainda não comprou tickets.</p>
+            }
+            @for (ticket of tickets(); track ticket.id) {
+            <section class="card" style="max-width: 220px">
                 <img src="assets/tickets/default-ticket.png" class="card-img-top" alt="...">
                 <div class="card-body">
-                    <h4 class="card-title">{{ ticket.name }}</h4>
-                    <p class="card-text">{{ ticket.day }}</p>
-                    <p class="card-text">{{ ticket.time }}</p>
-                    <p class="card-text">{{ ticket.codigo }}</p>
-                    <a href="#" class="btn-solid theme-primary">Mais Informações</a>
+                    <h4 class="card-title">{{ ticket.eventTitle }}</h4>
+                    <p class="card-text">{{ ticket.eventStartsAt | date:'dd/MM/yyyy' }}</p>
+                    <p class="card-text">{{ ticket.eventStartsAt | date:'HH:mm' }}</p>
+                    <p class="card-text">{{ ticket.uniqueCode }}</p>
+                    <p class="card-text">{{ statusLabels[ticket.status] }}</p>
+                    <a [routerLink]="['/tickets', ticket.id]" class="btn-solid theme-primary">Mais Informações</a>
                 </div>
             </section>
-            <nav aria-label="...">
-                <ul class="pagination">
-                    <li class="page-item"><a href="#" class="page-link">Previous</a></li>
-                    <li class="page-item"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item active">
-                    <a class="page-link" href="#" aria-current="page">2</a>
-                    </li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item"><a class="page-link" href="#">Next</a></li>
-                </ul>
-            </nav>    
+            }
+            @if (tickets().length > 0) {
+                <nav aria-label="...">
+                    <ul class="pagination">
+                        <li class="page-item"><a href="#" class="page-link">Previous</a></li>
+                        <li class="page-item"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item active">
+                            <a class="page-link" href="#" aria-current="page">2</a>
+                        </li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                    </ul>
+                </nav>
+            }
         </main>
     </div>
 </section>

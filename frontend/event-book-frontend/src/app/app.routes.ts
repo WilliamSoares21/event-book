@@ -3,6 +3,7 @@ import { LoginComponent } from './pages/login/login';
 import { SingupComponent } from './pages/singup/singup';
 import { SingupPerfilTypeComponet } from './pages/singup/singup-perfil-type/singup-perfil-type';
 import { EventsComponent } from './pages/events-published/events';
+import { DetailsEvents } from './pages/events-published/details-events/details-events';
 import { TicketsComponent } from './pages/tickets/tickets';
 import { CreateEventsComponent } from './pages/events-published/create-events/create-events';
 import { CreateLotsComponents } from './pages/events-published/create-lots/create-lots';
@@ -17,6 +18,7 @@ export const routes: Routes = [
   { path: 'events', component: EventsComponent,canActivate: [AcessoGuard] },
   { path: 'events/create', component: CreateEventsComponent,canActivate: [AcessoGuard] },
   { path: 'events/lots/create', component: CreateLotsComponents,canActivate: [AcessoGuard] },
+  { path: 'events/:id', component: DetailsEvents, canActivate: [AcessoGuard] },
   { path: 'tickets', component: TicketsComponent,canActivate: [AcessoGuard] },
-  { path: 'tickets/:id', component: DetailsTickets},
+  { path: 'tickets/:id', component: DetailsTickets, canActivate: [AcessoGuard] },
 ];

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -30,6 +31,7 @@ import com.eventbook.backend.events.dto.EventRequestDTO;
 import com.eventbook.backend.events.dto.EventResponseDTO;
 import com.eventbook.backend.events.dto.EventUpdateDTO;
 import com.eventbook.backend.lots.LotStatus;
+import com.eventbook.backend.lots.TicketLot;
 import com.eventbook.backend.lots.TicketLotRepository;
 import com.eventbook.backend.orders.OrderRepository;
 import com.eventbook.backend.tickets.TicketRepository;
@@ -179,6 +181,29 @@ public class EventServiceTest {
 
         assertThat(response.getStatus()).isEqualTo(EventStatus.DRAFT);
         assertThat(response.getOrganizerId()).isEqualTo(ownerId);
+    }
+
+    @Test
+    void deveRetornarSomenteLotesEmVendaComEstoqueNosDetalhes() {
+        Event published = event(EventStatus.PUBLISHED, UUID.randomUUID());
+        UUID lotId = UUID.randomUUID();
+        BigDecimal unitPrice = new BigDecimal("50.00");
+        TicketLot available = TicketLot.builder().id(lotId).status(LotStatus.ACTIVE)
+                .name("Primeiro lote").unitPrice(unitPrice)
+                .salesStart(NOW.minusSeconds(60)).salesEnd(NOW.plusSeconds(60))
+                .capacity(10).sold(3).reserved(2).build();
+        TicketLot soldOut = TicketLot.builder().status(LotStatus.ACTIVE)
+                .salesStart(NOW.minusSeconds(60)).salesEnd(NOW.plusSeconds(60))
+                .capacity(10).sold(10).build();
+        TicketLot future = TicketLot.builder().status(LotStatus.ACTIVE)
+                .salesStart(NOW.plusSeconds(60)).salesEnd(NOW.plusSeconds(120))
+                .capacity(10).build();
+        when(eventRepository.findById(published.getId())).thenReturn(Optional.of(published));
+        when(ticketLotRepository.findByEventId(published.getId()))
+                .thenReturn(List.of(soldOut, future, available));
+
+        assertThat(eventService.getById(published.getId(), null).getAvailableTicketLots())
+                .containsExactly(new EventResponseDTO.AvailableTicketLot(lotId, "Primeiro lote", unitPrice, 5));
     }
 
     @Test

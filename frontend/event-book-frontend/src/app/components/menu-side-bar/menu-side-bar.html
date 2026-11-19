@@ -19,6 +19,12 @@
                 </a>
             </li>
             }
+            <li class="logout-item">
+                <button type="button" class="logout-button" (click)="logout()" [disabled]="loggingOut()">
+                    <img src="assets/logout.png" width="20" height="20" alt="">
+                    {{ loggingOut() ? 'Saindo…' : 'Sair' }}
+                </button>
+            </li>
         </ul>
     </nav>
 </div>

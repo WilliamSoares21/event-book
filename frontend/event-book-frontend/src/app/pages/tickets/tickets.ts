@@ -1,41 +1,45 @@
-import { Component, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { MenuSideBarComponent } from '../../components/menu-side-bar/menu-side-bar';
-import { CommonModule } from '@angular/common';
 import { SessionService } from '../../services/session/session';
+import { BuyerTicket, TicketsService, ticketStatusLabels } from '../../services/tickets/tickets';
 
 @Component({
-  imports: [MenuSideBarComponent, CommonModule],
+  imports: [MenuSideBarComponent, DatePipe, RouterLink],
   selector: 'app-tickets',
   styleUrl: './tickets.css',
   templateUrl: './tickets.html',
 })
-export class TicketsComponent {
-  readonly session = inject(SessionService);
+export class TicketsComponent implements OnInit {
+  private readonly session = inject(SessionService);
+  private readonly ticketsService = inject(TicketsService);
+  private readonly destroyRef = inject(DestroyRef);
+
   get roleUser() { return this.session.user()?.role; }
-  tickets = [
-    {
-      name: 'Event 1',
-      day: '12/12/2023',
-      time: '10:00 AM',
-      codigo: 'aldhajdhaj'
-    },
-    {
-      name: 'Event 2',
-      day: '06/06/2023',
-      time: '2:00 PM',
-      codigo: 'lkdhjakdkd'
-    },
-    {
-      name: 'Event 4',
-      day: '04/04/2023',
-      time: '4:00 PM',
-      codigo: 'ladaiuduaidg'
-    },
-    {
-      name: 'Event 5',
-      day: '05/05/2023',
-      time: '6:00 PM',
-      codigo: 'akdgakdbd'
+
+  readonly tickets = signal<BuyerTicket[]>([]);
+  readonly loading = signal(false);
+  readonly error = signal('');
+  readonly statusLabels = ticketStatusLabels;
+
+  ngOnInit() {
+    if (this.roleUser !== 'COMPRADOR') {
+      this.error.set('A listagem de tickets é exclusiva para compradores.');
+      return;
     }
-  ];
+
+    this.loading.set(true);
+    this.ticketsService.listOwnTickets().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (tickets) => {
+        this.tickets.set(tickets);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Não foi possível carregar seus tickets.');
+        this.loading.set(false);
+      },
+    });
+  }
 }

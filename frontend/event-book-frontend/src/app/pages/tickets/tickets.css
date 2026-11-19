@@ -51,6 +51,10 @@
     gap: 1rem;
 }
 
+.side-page-main > nav {
+    flex: 0 0 100%;
+}
+
 .side-page-main section p {
     font-size: 1rem;
     color: #9DA1A7;

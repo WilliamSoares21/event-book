@@ -1,46 +1,38 @@
 import { SessionService } from '../../services/session/session';
-import { Component, inject } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MenuSideBarComponent } from '../../components/menu-side-bar/menu-side-bar';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { EventsService } from '../../services/events/events';
+import type { EventListItem } from '../../model/event.model';
 
 @Component({
-  imports: [MenuSideBarComponent, CommonModule],
+  imports: [MenuSideBarComponent, CommonModule, RouterLink],
   selector: 'app-events',
   styleUrl: './events.css',
   templateUrl: './events.html',
 })
-export class EventsComponent {
+export class EventsComponent implements OnInit {
   readonly session = inject(SessionService);
+  private readonly eventsService = inject(EventsService);
+  private readonly destroyRef = inject(DestroyRef);
   get roleUser() { return this.session.user()?.role; }
-  events = [
-    {
-      name: 'Event 1',
-      day: '12/12/2023',
-      time: '10:00 AM',
-      location: 'Location for Event 1'
-    },
-    {
-      name: 'Event 2',
-      day: '06/06/2023',
-      time: '2:00 PM',
-      location: 'Location for Event 2'
-    },
-    {
-      name: 'Event 4',
-      day: '04/04/2023',
-      time: '4:00 PM',
-      location: 'Location for Event 4'
-    },
-    {
-      name: 'Event 5',
-      day: '05/05/2023',
-      time: '6:00 PM',
-      location: 'Location for Event 5'
-    }
-  ];
+  readonly events = signal<EventListItem[]>([]);
+  readonly loadError = signal('');
 
   constructor(private router: Router) {}
+
+  ngOnInit() {
+    const request = this.roleUser === 'ORGANIZADOR'
+      ? this.eventsService.listOwnEvents()
+      : this.eventsService.listPublishedEvents();
+
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (events) => this.events.set(events),
+      error: () => this.loadError.set('Não foi possível carregar os eventos. Tente novamente mais tarde.'),
+    });
+  }
 
   createEvent() {
     this.router.navigate(['/events/create']);
