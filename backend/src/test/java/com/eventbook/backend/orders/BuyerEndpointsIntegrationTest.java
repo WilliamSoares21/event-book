@@ -33,6 +33,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -226,16 +230,14 @@ class BuyerEndpointsIntegrationTest {
         performCheckout(token, orderId, cardId);
 
         // Consultar tickets
-        String response = mockMvc.perform(get("/api/tickets/me")
+        mockMvc.perform(get("/api/tickets/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        assertThat(response).contains("VALID");
-        assertThat(response).contains("Test Event");
-        assertThat(response).contains("uniqueCode");
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].status").value("VALID"))
+                .andExpect(jsonPath("$.content[0].eventTitle").value("Test Event"))
+                .andExpect(jsonPath("$.content[0].uniqueCode").exists());
     }
 
     @Test
@@ -243,14 +245,17 @@ class BuyerEndpointsIntegrationTest {
         User buyer = createBuyer("buyer2@test.com");
         String token = obtainToken(buyer.getEmail());
 
-        String response = mockMvc.perform(get("/api/tickets/me")
+        mockMvc.perform(get("/api/tickets/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        assertThat(response).isEqualTo("[]");
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(0))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(true));
     }
 
     @Test
@@ -269,14 +274,11 @@ class BuyerEndpointsIntegrationTest {
         performCheckout(token1, orderId, cardId1);
 
         // Buyer2 consulta seus tickets - deve ser vazio
-        String response = mockMvc.perform(get("/api/tickets/me")
+        mockMvc.perform(get("/api/tickets/me")
                         .header("Authorization", "Bearer " + token2))
                 .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        assertThat(response).isEqualTo("[]");
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(0));
     }
 
     @Test
@@ -291,18 +293,12 @@ class BuyerEndpointsIntegrationTest {
         UUID orderId = UUID.fromString(orderResponse.split("\"id\":\"")[1].split("\"")[0]);
         performCheckout(token, orderId, cardId);
 
-        String response = mockMvc.perform(get("/api/tickets/me")
+        mockMvc.perform(get("/api/tickets/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        // Todos devem ser VALID
-        assertThat(response).contains("VALID");
-        // Verifica se há 3 ingressos (contando ocorrências de VALID)
-        long validCount = response.chars().filter(ch -> ch == 'V').count();
-        assertThat(validCount).isGreaterThanOrEqualTo(3);
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(3))
+                .andExpect(jsonPath("$.content[*].status").value(everyItem(is("VALID"))));
     }
 
     @Test
@@ -334,15 +330,13 @@ class BuyerEndpointsIntegrationTest {
         performCreateOrder(token, lot.getId(), 1);
         performCreateOrder(token, lot.getId(), 2);
 
-        String response = mockMvc.perform(get("/api/orders/me")
+        mockMvc.perform(get("/api/orders/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        assertThat(response).contains("PENDING");
-        assertThat(response).contains("quantity");
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].status").value("PENDING"))
+                .andExpect(jsonPath("$.content[*].quantity").value(everyItem(greaterThan(0))));
     }
 
     @Test
@@ -350,14 +344,17 @@ class BuyerEndpointsIntegrationTest {
         User buyer = createBuyer("buyer5@test.com");
         String token = obtainToken(buyer.getEmail());
 
-        String response = mockMvc.perform(get("/api/orders/me")
+        mockMvc.perform(get("/api/orders/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        assertThat(response).isEqualTo("[]");
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(0))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.totalElements").value(0))
+                .andExpect(jsonPath("$.totalPages").value(0))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(true));
     }
 
     @Test
@@ -373,14 +370,11 @@ class BuyerEndpointsIntegrationTest {
         performCreateOrder(token1, lot.getId(), 1);
 
         // Buyer2 consulta seus pedidos - deve ser vazio
-        String response = mockMvc.perform(get("/api/orders/me")
+        mockMvc.perform(get("/api/orders/me")
                         .header("Authorization", "Bearer " + token2))
                 .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        assertThat(response).isEqualTo("[]");
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(0));
     }
 
     @Test
@@ -399,15 +393,12 @@ class BuyerEndpointsIntegrationTest {
         UUID orderId = UUID.fromString(orderResponse.split("\"id\":\"")[1].split("\"")[0]);
         performCheckout(token, orderId, cardId);
 
-        String response = mockMvc.perform(get("/api/orders/me")
+        mockMvc.perform(get("/api/orders/me")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-
-        assertThat(response).contains("PENDING");
-        assertThat(response).contains("PAID");
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[*].status").value(containsInAnyOrder("PENDING", "PAID")));
     }
 
     @Test
