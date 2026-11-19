@@ -2,12 +2,12 @@ import { isPlatformBrowser } from '@angular/common';
 import { SessionService } from '../../services/session/session';
 import { Component, PLATFORM_ID, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LoginService } from '../../services/login/login';
 import { LoginRequest } from '../../model/LoginRequest';
 
 @Component({
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   selector: 'app-login',
   styleUrl: './login.css',
   templateUrl: './login.html',
@@ -53,6 +53,7 @@ export class LoginComponent {
 
     const email = this.loginForm.value.email.trim().toLowerCase();
     const requestLogin: LoginRequest ={ name: null, email, password: this.loginForm.value.password, role: null };
+    const eventId = this.route.snapshot.queryParamMap.get('eventId')?.trim();
     this.loginService.login(requestLogin)
     .subscribe({
       next: (response) => {
@@ -63,7 +64,7 @@ export class LoginComponent {
             name: response.user.name,
             email: response.user.email,
           });
-          this.router.navigate(['/events']);
+          this.router.navigate(eventId ? ['/events', eventId] : ['/events']);
         },
         error: (error) => {
           const body = error.error;

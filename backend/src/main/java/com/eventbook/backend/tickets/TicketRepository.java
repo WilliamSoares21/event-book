@@ -28,4 +28,17 @@ public interface TicketRepository extends JpaRepository <Ticket, UUID> {
     Long countByEventId(@Param("eventId") UUID eventId);
     
     List<Ticket> findByOrderId(UUID orderId);
+
+    @Query("""
+            SELECT new com.eventbook.backend.tickets.BuyerTicketResponse(
+                t.id, e.title, e.startsAt, t.uniqueCode, t.status
+            )
+            FROM Ticket t
+            JOIN t.order o
+            JOIN o.ticketLot l
+            JOIN l.event e
+            WHERE o.buyer.id = :buyerId
+            ORDER BY t.createdAt DESC, t.id DESC
+            """)
+    List<BuyerTicketResponse> listByBuyerId(@Param("buyerId") UUID buyerId);
 }

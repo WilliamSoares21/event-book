@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login';
 import { SingupComponent } from './pages/singup/singup';
 import { SingupPerfilTypeComponet } from './pages/singup/singup-perfil-type/singup-perfil-type';
+import { ShopEvents } from './pages/events-published/shop-events/shop-events';
 import { EventsComponent } from './pages/events-published/events';
 import { DetailsEvents } from './pages/events-published/details-events/details-events';
 import { TicketsComponent } from './pages/tickets/tickets';
@@ -15,6 +16,8 @@ export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'singup-perfil-type', component: SingupPerfilTypeComponet },
   { path: 'singup', component: SingupComponent },
+  { path: 'shop-events', component: ShopEvents },
+  { path: 'shop-events/:id', component: DetailsEvents, data: { publicCatalog: true } },
   { path: 'events', component: EventsComponent,canActivate: [AcessoGuard] },
   { path: 'events/create', component: CreateEventsComponent,canActivate: [AcessoGuard] },
   { path: 'events/lots/create', component: CreateLotsComponents,canActivate: [AcessoGuard] },

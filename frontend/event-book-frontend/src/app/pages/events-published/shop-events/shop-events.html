@@ -1,0 +1,43 @@
+<main class="shop-events">
+  <header class="catalog-banner">
+    <div class="banner-content">
+      <div class="catalog-brand">
+        <img src="assets/logo.png" width="36" height="36" alt="">
+        <span>EventBook</span>
+      </div>
+      <h1>Explore os eventos</h1>
+      <p>Encontre seu próximo evento e confira datas, locais e detalhes.</p>
+    </div>
+  </header>
+
+  @if (loadError()) {
+    <p class="catalog-status" role="alert">Não foi possível carregar os eventos. Tente novamente mais tarde.</p>
+  } @else if (events(); as publishedEvents) {
+    @if (publishedEvents.length) {
+      <section aria-labelledby="published-events-title">
+        <h2 class="section-title" id="published-events-title">Eventos publicados</h2>
+        <div class="event-grid">
+          @for (event of publishedEvents; track event.id) {
+            <article class="card">
+              <img src="assets/events/default-event.png" class="card-img-top" alt="" loading="lazy">
+              <div class="card-body">
+                <h3 class="card-title">{{ event.title }}</h3>
+                <p class="card-text">
+                  <time [attr.datetime]="event.startsAt">{{ event.startsAt | date:'dd/MM/yyyy · HH:mm' }}</time>
+                </p>
+                <p class="card-text">{{ event.location }}</p>
+                <a [routerLink]="['/shop-events', event.id]" class="btn btn-primary">
+                  Mais Informações <span aria-hidden="true">→</span>
+                </a>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    } @else {
+      <p class="catalog-status">Nenhum evento publicado no momento.</p>
+    }
+  } @else {
+    <p class="catalog-status" role="status">Carregando eventos…</p>
+  }
+</main>

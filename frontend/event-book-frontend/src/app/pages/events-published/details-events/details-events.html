@@ -1,5 +1,7 @@
-<section class="side-page">
-    <app-menu-side-bar [roleUser]="roleUser()"></app-menu-side-bar>
+<section [class.side-page]="!publicCatalog" [class.public-event-page]="publicCatalog">
+    @if (!publicCatalog) {
+        <app-menu-side-bar [roleUser]="roleUser()"></app-menu-side-bar>
+    }
     <div class="side-page-content">
         <footer class="brand-header">
             <div class="brand-header-content">
@@ -35,6 +37,11 @@
 
                         <h4 class="description-heading">Descrição</h4>
                         <p class="event-description">{{ details.description }}</p>
+
+                        @if (publicCatalog && !roleUser() && details.status === 'PUBLISHED') {
+                            <a routerLink="/login" [queryParams]="{ eventId: details.id }"
+                               class="btn btn-primary catalog-buy">Comprar</a>
+                        }
 
                         @if (roleUser() === 'COMPRADOR' && details.status === 'PUBLISHED') {
                             @if (availableLots().length) {
@@ -114,7 +121,7 @@
         </main>
         <footer class="brand-header">
             <div class="brand-header-content">
-                <a class="back-link" routerLink="/events">
+                <a class="back-link" [routerLink]="publicCatalog ? '/shop-events' : '/events'">
                     <span aria-hidden="true">←</span>
                     Voltar para eventos
                 </a>
