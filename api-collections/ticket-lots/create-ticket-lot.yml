@@ -14,11 +14,11 @@ http:
     type: json
     data: |-
       {
-        "name": "Lote 2 VIP - Tech Event",
-        "unitPrice": 60,
+        "name": "Lote 1 VIP - CLOUD event",
+        "unitPrice": 500,
         "capacity": 10,
-        "salesStart": "2026-11-15T15:01:27.032Z",
-        "salesEnd": "2026-11-16T16:01:27.032Z"
+        "salesStart": "2026-11-17T17:01:27.032Z",
+        "salesEnd": "2026-11-17T20:01:27.032Z"
       }
   auth: inherit
 

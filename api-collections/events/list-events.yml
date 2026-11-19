@@ -7,6 +7,13 @@ http:
   method: GET
   url: "{{baseUrl}}/events"
   auth: none
+  params:
+    - name: page
+      value: "0"
+      disabled: false
+    - name: size
+      value: "10"
+      disabled: false
 
 settings:
   encodeUrl: true
