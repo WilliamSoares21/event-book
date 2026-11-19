@@ -20,6 +20,11 @@ spring:
         format_sql: true
     show-sql: true
     open-in-view: false
+
+server:
+  port: ${PORT:8080}
+  address: 0.0.0.0
+
 security:
   jwt:
     secret: "essa-chave-e-tao-segura-que-nem-a-sua-mae-adivinha-o-segredo-jwt"
