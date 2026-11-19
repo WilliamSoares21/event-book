@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://api.seudominio.com'
+  apiUrl: 'https://eventbook-backend-eqo5.onrender.com/api',
 };
