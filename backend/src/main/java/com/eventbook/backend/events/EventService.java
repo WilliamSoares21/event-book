@@ -11,6 +11,7 @@ import com.eventbook.backend.events.dto.EventResponseDTO;
 import com.eventbook.backend.events.dto.EventUpdateDTO;
 import com.eventbook.backend.events.dto.OrganizerEventResponseDTO;
 import com.eventbook.backend.lots.LotStatus;
+import com.eventbook.backend.lots.TicketLot;
 import com.eventbook.backend.lots.TicketLotRepository;
 import com.eventbook.backend.lots.dto.TicketLotResponseDTO;
 import com.eventbook.backend.orders.OrderRepository;
@@ -26,7 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.OffsetDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -113,7 +116,23 @@ public class EventService {
           HttpStatus.NOT_FOUND);
     }
 
-    return toResponseDTO(event);
+    EventResponseDTO response = toResponseDTO(event);
+    response.setAvailableTicketLots(event.getStatus() == EventStatus.PUBLISHED
+        ? findAvailableTicketLots(eventId)
+        : List.of());
+    return response;
+  }
+
+  private List<EventResponseDTO.AvailableTicketLot> findAvailableTicketLots(UUID eventId) {
+    Instant now = clock.instant();
+    return ticketLotRepository.findByEventId(eventId).stream()
+        .filter(lot -> lot.getStatus() == LotStatus.ACTIVE
+            && !now.isBefore(lot.getSalesStart()) && !now.isAfter(lot.getSalesEnd())
+            && lot.availableCapacity() > 0)
+        .sorted(Comparator.comparing(TicketLot::getSalesStart).thenComparing(TicketLot::getId))
+        .map(lot -> new EventResponseDTO.AvailableTicketLot(
+            lot.getId(), lot.getName(), lot.getUnitPrice(), lot.availableCapacity()))
+        .toList();
   }
 
   // Lista todos os eventos cadastrados

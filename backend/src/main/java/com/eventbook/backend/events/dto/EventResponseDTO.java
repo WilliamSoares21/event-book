@@ -1,6 +1,7 @@
 package com.eventbook.backend.events.dto;
 
 import com.eventbook.backend.events.EventStatus;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,7 +9,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -36,4 +39,9 @@ public class EventResponseDTO {
     private EventStatus status;
     @Schema(description = "Versão para controle otimista", accessMode = Schema.AccessMode.READ_ONLY)
     private Long version;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @Schema(description = "Lotes à venda com estoque, retornados na consulta de detalhes")
+    private List<AvailableTicketLot> availableTicketLots;
+
+    public record AvailableTicketLot(UUID id, String name, BigDecimal unitPrice, int availableQuantity) {}
 }
