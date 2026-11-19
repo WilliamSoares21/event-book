@@ -101,6 +101,12 @@
                             }
                         }
 
+                        @if (canManageStaff()) {
+                            <a class="btn btn-outline-primary me-2" [routerLink]="['/events', details.id, 'staff']">
+                                Adicionar Staff
+                            </a>
+                        }
+
                         @if (canPublish()) {
                             <button class="btn btn-primary" type="button"
                                     [disabled]="publishing()" (click)="publishEvent()">

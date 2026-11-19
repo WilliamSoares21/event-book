@@ -1,0 +1,60 @@
+.checkin-page {
+  max-width: 46rem;
+  padding: clamp(1rem, 4vw, 2rem);
+  color: #102a43;
+  font-size: 1rem;
+}
+
+.back-link,
+.event-date {
+  color: #00699e;
+}
+
+.checkin-page h1 {
+  margin: 0.75rem 0 1.25rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 600;
+}
+
+.card {
+  border-color: #d7e6f1;
+  border-radius: 1rem;
+}
+
+.card-body {
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.card h2 {
+  font-size: 1.25rem;
+  overflow-wrap: anywhere;
+}
+
+.event-date {
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.event-location {
+  color: #425d73;
+}
+
+.btn-primary {
+  --bs-btn-bg: #00699e;
+  --bs-btn-border-color: #00699e;
+  --bs-btn-hover-bg: #005580;
+  --bs-btn-hover-border-color: #005580;
+}
+
+@media (max-width: 700px) {
+  .side-page {
+    flex-direction: column;
+  }
+
+  .side-page .side-page-content {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}

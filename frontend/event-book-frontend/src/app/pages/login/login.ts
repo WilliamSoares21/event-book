@@ -57,14 +57,19 @@ export class LoginComponent {
     this.loginService.login(requestLogin)
     .subscribe({
       next: (response) => {
+          const role = response.user.role.toUpperCase();
           this.session.login({
             token: response.token,
             id: response.user.id.toString(),
-            role: response.user.role.toUpperCase(),
+            role,
             name: response.user.name,
             email: response.user.email,
           });
-          this.router.navigate(eventId ? ['/events', eventId] : ['/events']);
+          if (role === 'STAFF') {
+            this.router.navigate(['/staff/events']);
+          } else {
+            this.router.navigate(eventId ? ['/events', eventId] : ['/events']);
+          }
         },
         error: (error) => {
           const body = error.error;

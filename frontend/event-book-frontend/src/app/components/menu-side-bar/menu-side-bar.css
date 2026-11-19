@@ -32,6 +32,7 @@
 }
 
 .side-page-nav label,
+.side-page-nav .menu-label,
 .logout-button {
   text-decoration: none;
   color: #616367;

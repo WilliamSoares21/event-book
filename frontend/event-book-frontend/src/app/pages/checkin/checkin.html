@@ -1,0 +1,44 @@
+<section class="side-page">
+  <app-menu-side-bar [roleUser]="session.user()?.role"></app-menu-side-bar>
+  <div class="side-page-content">
+    <main class="checkin-page">
+      <a routerLink="/staff/events" class="back-link">← Voltar para Staff Eventos</a>
+      <h1>Check-in</h1>
+
+      @if (loadError()) {
+        <p class="alert alert-danger" role="alert">{{ loadError() }}</p>
+      } @else if (event(); as selectedEvent) {
+        <section class="card" aria-labelledby="checkin-event-title">
+          <div class="card-body">
+            <h2 id="checkin-event-title">{{ selectedEvent.title }}</h2>
+            <p class="event-date">
+              <time [attr.datetime]="selectedEvent.startsAt">{{ selectedEvent.startsAt | date:'dd/MM/yyyy · HH:mm' }}</time>
+            </p>
+            <p class="event-location">{{ selectedEvent.location }}</p>
+
+            <form (submit)="$event.preventDefault(); checkIn(ticketCode)">
+              <label for="ticket-code" class="form-label">Código do ingresso</label>
+              <input #ticketCode type="text" id="ticket-code" class="form-control"
+                     autocomplete="off" [spellcheck]="false" maxlength="64" required [readOnly]="submitting()">
+              <button type="submit" class="btn btn-primary mt-3" [disabled]="submitting()">
+                {{ submitting() ? 'Validando…' : 'Fazer Check-in' }}
+              </button>
+            </form>
+
+            @if (feedback(); as result) {
+              <p class="alert mt-3 mb-0" [class.alert-success]="!result.error" [class.alert-danger]="result.error"
+                 [attr.role]="result.error ? 'alert' : 'status'">
+                {{ result.message }}
+                @if (result.checkedInAt; as checkedInAt) {
+                  <time class="d-block" [attr.datetime]="checkedInAt">{{ checkedInAt | date:'dd/MM/yyyy · HH:mm:ss' }}</time>
+                }
+              </p>
+            }
+          </div>
+        </section>
+      } @else {
+        <p role="status">Carregando evento…</p>
+      }
+    </main>
+  </div>
+</section>

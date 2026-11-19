@@ -1,0 +1,25 @@
+.staff-page {
+  max-width: 48rem;
+  margin-inline: auto;
+  padding: clamp(1rem, 4vw, 3rem);
+  color: #102a43;
+}
+
+.staff-page h1 {
+  margin: 0.75rem 0 1.25rem;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+}
+
+.back-link {
+  color: #00699e;
+}
+
+.list-group-item {
+  min-height: 4rem;
+  border-color: #d7e6f1;
+}
+
+.staff-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

@@ -8,6 +8,7 @@ import com.eventbook.backend.security.AuthenticatedUser;
 import com.eventbook.backend.staff.StaffService;
 import com.eventbook.backend.staff.dto.AddEventStaffRequest;
 import com.eventbook.backend.staff.dto.EventStaffResponseDTO;
+import com.eventbook.backend.staff.dto.StaffOptionResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -151,6 +152,16 @@ public class EventController {
         return ResponseEntity.ok(
                 eventService.getOccupancy(eventId, authUser.id())
         );
+    }
+
+    @PreAuthorize("hasRole('ORGANIZADOR')")
+    @SecurityRequirement(name = "bearerAuth")
+    @GetMapping("/{eventId}/staff")
+    @Operation(summary = "Lista colaboradores cadastrados e indica se estão associados ao evento")
+    public List<StaffOptionResponse> listEventStaff(
+            @PathVariable UUID eventId,
+            @AuthenticationPrincipal AuthenticatedUser authUser) {
+        return staffService.listStaffForEvent(eventId, authUser.id());
     }
 
     @PreAuthorize("hasRole('ORGANIZADOR')")

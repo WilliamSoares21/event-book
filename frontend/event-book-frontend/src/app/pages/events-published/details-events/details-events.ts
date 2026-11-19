@@ -53,6 +53,12 @@ export class DetailsEvents implements OnInit {
     FINISHED: 'Encerrado',
   };
 
+  readonly canManageStaff = computed(() => {
+    const user = this.session.user();
+    return !this.publicCatalog && user?.role === 'ORGANIZADOR'
+      && user.id === this.event()?.organizerId;
+  });
+
   readonly canPublish = computed(() => {
     const event = this.event();
     const user = this.session.user();

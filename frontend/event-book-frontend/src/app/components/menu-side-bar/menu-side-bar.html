@@ -5,12 +5,21 @@
         </header>
     <nav class="side-page-nav">
         <ul>
+            @if (roleUser === 'STAFF') {
+            <li routerLinkActive="active">
+                <a routerLink="/staff/events">
+                    <img src="assets/events/calendar.png" width="20" height="20" alt="">
+                    <span class="menu-label">Staff Eventos</span>
+                </a>
+            </li>
+            } @else {
             <li routerLinkActive="active">
                 <a routerLink="/events">
                     <img src="assets/events/calendar.png" width="20" height="20" alt="Ícone de Eventos">
                     <label>Eventos</label>
                 </a>
             </li>
+            }
             @if (roleUser === 'COMPRADOR') {
             <li routerLinkActive="active">
                 <a routerLink="/tickets">
