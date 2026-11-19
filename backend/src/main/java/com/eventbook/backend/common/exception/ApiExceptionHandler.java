@@ -252,11 +252,4 @@ public class ApiExceptionHandler {
 
         return ResponseEntity.status(status).body(body);
     }
-
-    @ExceptionHandler(OrderAlreadyCancelledException.class)
-    public ResponseEntity<Map<String, Object>> handleOrderAlreadyCancelled(
-            OrderAlreadyCancelledException ex) {
-
-        return buildError(HttpStatus.CONFLICT, ex.getMessage());
-    }
 }
