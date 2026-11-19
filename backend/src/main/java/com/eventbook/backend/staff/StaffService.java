@@ -5,6 +5,8 @@ import com.eventbook.backend.events.Event;
 import com.eventbook.backend.events.EventRepository;
 import com.eventbook.backend.staff.dto.AddEventStaffRequest;
 import com.eventbook.backend.staff.dto.EventStaffResponseDTO;
+import com.eventbook.backend.staff.dto.StaffOptionResponse;
+import com.eventbook.backend.staff.dto.StaffEventResponse;
 import com.eventbook.backend.users.User;
 import com.eventbook.backend.users.UserRepository;
 import com.eventbook.backend.users.Role;
@@ -15,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -26,16 +30,24 @@ public class StaffService {
     private final UserRepository userRepository;
     private final EntityManager entityManager;
 
+    @Transactional(readOnly = true)
+    public List<StaffEventResponse> listAssignedEvents(UUID userId) {
+        return eventStaffRepository.findEventsByUserId(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<StaffOptionResponse> listStaffForEvent(UUID eventId, UUID organizerId) {
+        requireOwnedEvent(eventId, organizerId);
+        Set<UUID> associatedIds = eventStaffRepository.findUserIdsByEventId(eventId);
+
+        return userRepository.findByRoleOrderByNameAscIdAsc(Role.STAFF).stream()
+                .map(user -> new StaffOptionResponse(user.getId(), user.getName(), associatedIds.contains(user.getId())))
+                .toList();
+    }
+
     @Transactional
     public EventStaffResponseDTO addStaffToEvent(UUID eventId, AddEventStaffRequest request, UUID organizerId) {
-        // 1. Verifica se o evento existe
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new BusinessException("Evento não encontrado", HttpStatus.NOT_FOUND));
-
-        // 2. Verifica se o organizador autenticado é o proprietário do evento
-        if (!event.getOrganizer().getId().equals(organizerId)) {
-            throw new BusinessException("Somente o organizador proprietário pode associar staff ao evento", HttpStatus.FORBIDDEN);
-        }
+        Event event = requireOwnedEvent(eventId, organizerId);
 
         // 3. Verifica se o usuário indicado existe
         UUID userId = request.getUserId();
@@ -61,6 +73,19 @@ public class StaffService {
         }
 
         return toResponseDTO(eventStaff);
+    }
+
+    private Event requireOwnedEvent(UUID eventId, UUID organizerId) {
+        // 1. Verifica se o evento existe
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new BusinessException("Evento não encontrado", HttpStatus.NOT_FOUND));
+
+        // 2. Verifica se o organizador autenticado é o proprietário do evento
+        if (!event.getOrganizer().getId().equals(organizerId)) {
+            throw new BusinessException("Somente o organizador proprietário pode associar staff ao evento", HttpStatus.FORBIDDEN);
+        }
+
+        return event;
     }
 
     private EventStaffResponseDTO toResponseDTO(EventStaff eventStaff) {

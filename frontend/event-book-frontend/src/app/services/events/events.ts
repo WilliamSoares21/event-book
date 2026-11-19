@@ -11,6 +11,12 @@ interface SimulatedCard {
   status: 'ACTIVE' | 'INACTIVE';
 }
 
+export interface EventStaffOption {
+  id: string;
+  name: string;
+  associated: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class EventsService {
   private readonly http = inject(HttpClient);
@@ -28,6 +34,28 @@ export class EventsService {
   getEvent(eventId: string) {
     return this.http.get<EventResponse>(
       `${this.apiUrl}/events/${encodeURIComponent(eventId)}`, this.authOptions(),
+    );
+  }
+
+  listAssignedStaffEvents() {
+    return this.http.get<EventListItem[]>(`${this.apiUrl}/staff/events`, this.authOptions());
+  }
+
+  checkInTicket(code: string) {
+    return this.http.post<{ ticketCode: string; checkedInAt: string; staffId: string }>(
+      `${this.apiUrl}/tickets/${encodeURIComponent(code)}/check-in`, null, this.authOptions(),
+    );
+  }
+
+  listStaffForEvent(eventId: string) {
+    return this.http.get<EventStaffOption[]>(
+      `${this.apiUrl}/events/${encodeURIComponent(eventId)}/staff`, this.authOptions(),
+    );
+  }
+
+  addStaffToEvent(eventId: string, userId: string) {
+    return this.http.post(
+      `${this.apiUrl}/events/${encodeURIComponent(eventId)}/staff`, { userId }, this.authOptions(),
     );
   }
 

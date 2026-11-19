@@ -1,0 +1,12 @@
+info:
+  name: list-event-staff
+  type: http
+  seq: 2
+
+http:
+  method: GET
+  url: "{{baseUrl}}/events/{{eventId}}/staff"
+  headers:
+    - name: Authorization
+      value: "Bearer {{organizerToken}}"
+  auth: inherit

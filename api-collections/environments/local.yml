@@ -11,7 +11,7 @@ variables:
   - name: organizerPassword
     value: "12345678"
   - name: buyerEmail
-    value: lari@gmail.com
+    value: juan@example.com
   - name: buyerPassword
     value: "12345678"
   - name: staffEmail

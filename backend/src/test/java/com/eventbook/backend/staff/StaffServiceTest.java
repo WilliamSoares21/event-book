@@ -19,7 +19,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -83,6 +85,29 @@ class StaffServiceTest {
         request = AddEventStaffRequest.builder()
                 .userId(staffUserId)
                 .build();
+    }
+
+    @Test
+    void listaStaffComEstadoDeAssociacaoParaOOrganizadorDoEvento() {
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(eventStaffRepository.findUserIdsByEventId(eventId)).thenReturn(Set.of(staffUserId));
+        when(userRepository.findByRoleOrderByNameAscIdAsc(Role.STAFF)).thenReturn(List.of(staffUser));
+
+        assertThat(staffService.listStaffForEvent(eventId, organizerId)).singleElement().satisfies(option -> {
+            assertThat(option.id()).isEqualTo(staffUserId);
+            assertThat(option.name()).isEqualTo(staffUser.getName());
+            assertThat(option.associated()).isTrue();
+        });
+    }
+
+    @Test
+    void recusaListagemParaOrganizadorQueNaoPossuiOEvento() {
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() -> staffService.listStaffForEvent(eventId, UUID.randomUUID()))
+                .isInstanceOfSatisfying(BusinessException.class,
+                        error -> assertThat(error.getStatus()).isEqualTo(HttpStatus.FORBIDDEN));
+        verifyNoInteractions(userRepository, eventStaffRepository);
     }
 
     @Test

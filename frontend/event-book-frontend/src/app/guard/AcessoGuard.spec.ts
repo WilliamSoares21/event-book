@@ -11,10 +11,10 @@ describe('AcessoGuard', () => {
 
   afterEach(() => sessionStorage.clear());
 
-  const access = () => TestBed.runInInjectionContext(() =>
-    AcessoGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot));
+  const access = (allowedRoles?: string[]) => TestBed.runInInjectionContext(() =>
+    AcessoGuard({ data: { allowedRoles } } as unknown as ActivatedRouteSnapshot, {} as RouterStateSnapshot));
 
-  for (const role of ['VENDEDOR', 'COMPRADOR'] as const) {
+  for (const role of ['ORGANIZADOR', 'COMPRADOR'] as const) {
     it(`mantém o acesso de ${role} sem depender do estado da navegação`, () => {
       TestBed.inject(SessionService).login({ id: '123', role, name: 'Fulano', email: 'fulano@gmail.com' });
       expect(access()).toBe(true);
@@ -23,10 +23,18 @@ describe('AcessoGuard', () => {
   }
 
   it('restaura a sessão ao recarregar', () => {
-    const user: MockUser = { id: '123', role: 'VENDEDOR', name: 'Fulano', email: 'fulano1@gmail.com' };
+    const user: MockUser = { id: '123', role: 'ORGANIZADOR', name: 'Fulano', email: 'fulano1@gmail.com' };
     sessionStorage.setItem('event-book-user', JSON.stringify(user));
     expect(TestBed.inject(SessionService).user()).toEqual(user);
     expect(access()).toBe(true);
+  });
+
+  it('restaura a sessão de STAFF e limita o acesso às rotas desse perfil', () => {
+    const user: MockUser = { id: '123', role: 'STAFF', name: 'Staff', email: 'staff@example.com' };
+    sessionStorage.setItem('event-book-user', JSON.stringify(user));
+    expect(TestBed.inject(SessionService).user()).toEqual(user);
+    expect(access(['STAFF'])).toBe(true);
+    expect(access()).not.toBe(true);
   });
 
   it('redireciona usuários sem sessão para login', () => {

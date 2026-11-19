@@ -1,0 +1,158 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f3f8fc;
+  color: #102a43;
+}
+
+.shop-events {
+  max-width: 76rem;
+  margin-inline: auto;
+  padding: clamp(1rem, 4vw, 3rem);
+}
+
+.catalog-banner {
+  display: flex;
+  align-items: center;
+  min-height: 20rem;
+  margin-bottom: clamp(1.75rem, 4vw, 3rem);
+  padding: clamp(1.5rem, 5vw, 4rem);
+  border-radius: 1.5rem;
+  background: #081c33;
+  background-image:
+    linear-gradient(90deg, #081c33 20%, #081c33 39%, rgb(8 28 51 / 0%) 82%),
+    url('/assets/events/catalog-banner.webp');
+  background-position: center, right center;
+  background-repeat: no-repeat;
+  background-size: cover, 67% auto;
+  color: #fff;
+}
+
+.banner-content {
+  max-width: 31rem;
+}
+
+.catalog-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #cdeeff;
+  font-weight: 600;
+}
+
+.catalog-banner h1 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(2.25rem, 5vw, 4rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+}
+
+.catalog-banner p {
+  max-width: 28ch;
+  margin: 0;
+  color: #dcecf8;
+  font-size: clamp(1rem, 2vw, 1.125rem);
+}
+
+.section-title {
+  margin: 0 0 1rem;
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.card {
+  overflow: hidden;
+  border: 1px solid #d7e6f1;
+  border-radius: 1rem;
+  box-shadow: 0 6px 18px rgb(10 54 89 / 6%);
+}
+
+.card-img-top {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #e3f2fd;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+}
+
+.card-title {
+  color: #102a43;
+  font-size: 1.2rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.card-text {
+  margin-bottom: 0.375rem;
+  color: #425d73;
+  overflow-wrap: anywhere;
+}
+
+.card-text time {
+  color: #00699e;
+  font-weight: 600;
+}
+
+.card-text:last-of-type {
+  margin-bottom: 1.125rem;
+}
+
+.card-body .btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #c3e2f4;
+  border-radius: 0.625rem;
+  background: #edf7fe;
+  color: #005c8e;
+  font-weight: 600;
+  text-align: left;
+}
+
+.card-body .btn:hover,
+.card-body .btn:focus-visible {
+  border-color: #00699e;
+  background: #00699e;
+  color: #fff;
+}
+
+.card-body .btn:focus-visible {
+  outline: 2px solid #00699e;
+  outline-offset: 3px;
+}
+
+.catalog-status {
+  padding: 1rem 1.25rem;
+  border: 1px solid #d7e6f1;
+  border-radius: 1rem;
+  background: #fff;
+  color: #425d73;
+}
+
+@media (max-width: 700px) {
+  .catalog-banner {
+    align-items: flex-end;
+    min-height: 22rem;
+    background-image:
+      linear-gradient(0deg, #081c33 10%, rgb(8 28 51 / 85%) 46%, rgb(8 28 51 / 15%) 100%),
+      url('/assets/events/catalog-banner.webp');
+    background-position: center;
+    background-size: cover;
+  }
+}

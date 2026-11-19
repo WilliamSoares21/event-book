@@ -38,7 +38,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -225,6 +227,31 @@ class OrderCheckoutIntegrationTest {
     }
 
     // ===== Autorização e existência =====
+
+    @Test
+    void deveListarSomenteTicketsEmitidosParaOCompradorAutenticado() throws Exception {
+        User organizer = createOrganizer();
+        TicketLot lot = createActiveLot(organizer, 100, new BigDecimal("50.00"));
+        String buyerToken = obtainToken(createBuyer("buyer@test.com").getEmail());
+        String otherToken = obtainToken(createBuyer("other@test.com").getEmail());
+        UUID orderId = createOrder(buyerToken, lot.getId(), 1);
+        createOrder(otherToken, lot.getId(), 1);
+        performCheckout(buyerToken, orderId, createCard(buyerToken)).andExpect(status().isOk());
+        Ticket ticket = ticketRepository.findByOrderId(orderId).getFirst();
+
+        mockMvc.perform(get("/api/tickets/me").header("Authorization", "Bearer " + buyerToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(ticket.getId().toString()))
+                .andExpect(jsonPath("$[0].uniqueCode").value(ticket.getUniqueCode()))
+                .andExpect(jsonPath("$[0].status").value("VALID"));
+        mockMvc.perform(get("/api/tickets/me").header("Authorization", "Bearer " + otherToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+        mockMvc.perform(get("/api/tickets/me")
+                        .header("Authorization", "Bearer " + obtainToken(organizer.getEmail())))
+                .andExpect(status().isForbidden());
+    }
 
     @Test
     void deveNegarCheckoutParaOutroComprador() throws Exception {

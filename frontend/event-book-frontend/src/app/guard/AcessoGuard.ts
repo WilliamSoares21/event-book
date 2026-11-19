@@ -1,18 +1,16 @@
-import { inject } from "@angular/core";
+import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { SessionService } from '../services/session/session';
 
-export const AcessoGuard: CanActivateFn = () => {
-    const router = inject(Router);
-    const dadosUsuario = inject(SessionService).user();
-    const role = dadosUsuario?.role;
+export const AcessoGuard: CanActivateFn = (route) => {
+  const role = inject(SessionService).user()?.role;
+  const allowedRoles: string[] = route.data?.['allowedRoles'] ?? ['ORGANIZADOR', 'COMPRADOR'];
 
-    if (role === 'ORGANIZADOR') {
-        return true;
-    } else if(role === 'COMPRADOR') {
-        return true;
-    } else {
-        return router.createUrlTree(['/login'], { queryParams: { mensagem: 'Acesso negado. Você não tem permissão para acessar esta página.' } });
-    }
-    
-}
+  if (role && allowedRoles.includes(role)) {
+    return true;
+  }
+
+  return inject(Router).createUrlTree(['/login'], {
+    queryParams: { mensagem: 'Acesso negado. Você não tem permissão para acessar esta página.' },
+  });
+};

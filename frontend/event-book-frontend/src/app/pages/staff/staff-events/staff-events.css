@@ -1,0 +1,55 @@
+.brand-header h1 {
+  margin: 0;
+  color: #102a43;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 600;
+}
+
+.staff-events {
+  padding: 1rem;
+  font-size: 1rem;
+}
+
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: 1rem;
+}
+
+.event-grid .card {
+  overflow: hidden;
+  border-color: #d7e6f1;
+}
+
+.card-img-top {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.card-title {
+  font-size: 1.125rem;
+  color: #102a43;
+}
+
+.card-text {
+  margin-bottom: 0.25rem;
+  color: #425d73;
+}
+
+.card-title,
+.card-text {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .side-page {
+    flex-direction: column;
+  }
+
+  .side-page .side-page-content {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}

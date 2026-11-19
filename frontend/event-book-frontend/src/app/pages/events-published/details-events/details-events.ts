@@ -20,6 +20,7 @@ export class DetailsEvents implements OnInit {
   private readonly session = inject(SessionService);
   private readonly destroyRef = inject(DestroyRef);
 
+  readonly publicCatalog = this.route.snapshot.data['publicCatalog'] === true;
   readonly roleUser = computed(() => this.session.user()?.role);
   readonly event = signal<EventResponse | null>(null);
   readonly loadError = signal('');
@@ -52,6 +53,12 @@ export class DetailsEvents implements OnInit {
     FINISHED: 'Encerrado',
   };
 
+  readonly canManageStaff = computed(() => {
+    const user = this.session.user();
+    return !this.publicCatalog && user?.role === 'ORGANIZADOR'
+      && user.id === this.event()?.organizerId;
+  });
+
   readonly canPublish = computed(() => {
     const event = this.event();
     const user = this.session.user();
@@ -80,7 +87,14 @@ export class DetailsEvents implements OnInit {
         );
       }),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe((event) => this.event.set(event));
+    ).subscribe((event) => {
+      if (this.publicCatalog && event.status !== 'PUBLISHED') {
+        this.loadError.set('Evento não encontrado.');
+        return;
+      }
+
+      this.event.set(event);
+    });
   }
 
   confirmOrder(dialog: HTMLDialogElement) {
