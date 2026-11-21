@@ -12,6 +12,11 @@
         <p>Entre para criar e gerenciar eventos ou comprar seus ingressos.</p>
       </div>
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        @if (mensagemErro()) {
+          <div class="alert alert-danger" role="alert">
+            {{ mensagemErro() }}
+          </div>
+        }
         <div class="mb-3">
           <label for="email" class="form-label">Endereço de e-mail</label>
           <div class="input-group">
@@ -34,7 +39,9 @@
             <input type="password" class="form-control" formControlName="password" id="password" placeholder="••••••••">
           </div>
         </div>
-        <button type="submit" class="btn btn-primary">Entrar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+          {{ submitting() ? 'Entrando...' : 'Entrar' }}
+        </button>
       </form>
     </main>
     <footer>

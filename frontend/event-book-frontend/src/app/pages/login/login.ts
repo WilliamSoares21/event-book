@@ -1,9 +1,9 @@
 import { isPlatformBrowser } from '@angular/common';
 import { SessionService } from '../../services/session/session';
-import { Component, PLATFORM_ID, inject, signal } from '@angular/core';
+import { Component, PLATFORM_ID, inject, signal, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { LoginService } from '../../services/login/login';
+import { LoginService, LoginError } from '../../services/login/login';
 import { LoginRequest } from '../../model/LoginRequest';
 
 @Component({
@@ -12,14 +12,15 @@ import { LoginRequest } from '../../model/LoginRequest';
   styleUrl: './login.css',
   templateUrl: './login.html',
 })
-export class LoginComponent {
+export class LoginComponent implements OnDestroy {
   private readonly session = inject(SessionService);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   mensagem = signal('');
   private timerMensagem?: ReturnType<typeof setTimeout>;
   loginForm: FormGroup;
   private timerErro?: ReturnType<typeof setTimeout>;
-  mensagemErro: ReturnType<typeof signal> = signal('');
+  mensagemErro = signal('');
+  submitting = signal(false);
 
   constructor(private route: ActivatedRoute,
      private router: Router,
@@ -42,6 +43,7 @@ export class LoginComponent {
 
   ngOnDestroy() {
     clearTimeout(this.timerMensagem);
+    clearTimeout(this.timerErro);
   }
 
   onSubmit() {
@@ -51,35 +53,34 @@ export class LoginComponent {
       return;
     }
 
+    this.submitting.set(true);
+    this.mensagemErro.set('');
+
     const email = this.loginForm.value.email.trim().toLowerCase();
     const requestLogin: LoginRequest ={ name: null, email, password: this.loginForm.value.password, role: null };
     const eventId = this.route.snapshot.queryParamMap.get('eventId')?.trim();
     this.loginService.login(requestLogin)
     .subscribe({
       next: (response) => {
-          const role = response.user.role.toUpperCase();
-          this.session.login({
-            token: response.token,
-            id: response.user.id.toString(),
-            role,
-            name: response.user.name,
-            email: response.user.email,
-          });
-          if (role === 'STAFF') {
-            this.router.navigate(['/staff/events']);
-          } else {
-            this.router.navigate(eventId ? ['/events', eventId] : ['/events']);
-          }
-        },
-        error: (error) => {
-          const body = error.error;
-          const mensagemErro = body?.fields?.password ??
-            body?.fields?.email ??
-            body?.error ??
-            'Entre em contato com o nosso suporte para mais informações.';
-
-          this.exibirErro('Não foi possível realizar o cadastro. ' + mensagemErro + '.');    
+        this.submitting.set(false);
+        const role = response.user.role.toUpperCase();
+        this.session.login({
+          token: response.token,
+          id: response.user.id.toString(),
+          role,
+          name: response.user.name,
+          email: response.user.email,
+        });
+        if (role === 'STAFF') {
+          this.router.navigate(['/staff/events']);
+        } else {
+          this.router.navigate(eventId ? ['/events', eventId] : ['/events']);
         }
+      },
+      error: (error: LoginError) => {
+        this.submitting.set(false);
+        this.exibirErro(error.message);
+      }
     });
   }
 
@@ -88,6 +89,6 @@ export class LoginComponent {
     this.mensagemErro.set(mensagem);
     this.timerErro = setTimeout(() => {
       this.mensagemErro.set('');
-    }, 4000);
+    }, 5000);
   }
 }
