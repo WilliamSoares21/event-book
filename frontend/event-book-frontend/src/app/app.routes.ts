@@ -13,6 +13,7 @@ import { CreateEventsComponent } from './pages/events-published/create-events/cr
 import { CreateLotsComponents } from './pages/events-published/create-lots/create-lots';
 import { AcessoGuard } from './guard/AcessoGuard';
 import { DetailsTickets } from './pages/tickets/details-tickets/details-tickets';
+import { OrdersComponent } from './pages/orders/orders';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -30,4 +31,5 @@ export const routes: Routes = [
   { path: 'events/:id', component: DetailsEvents, canActivate: [AcessoGuard] },
   { path: 'tickets', component: TicketsComponent,canActivate: [AcessoGuard] },
   { path: 'tickets/:id', component: DetailsTickets, canActivate: [AcessoGuard] },
+  { path: 'orders', component: OrdersComponent, canActivate: [AcessoGuard], data: { allowedRoles: ['COMPRADOR'] } },
 ];

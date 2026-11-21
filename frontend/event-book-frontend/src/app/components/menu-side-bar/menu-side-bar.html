@@ -28,6 +28,14 @@
                 </a>
             </li>
             }
+            @if (roleUser === 'COMPRADOR') {
+            <li routerLinkActive="active">
+                <a routerLink="/orders">
+                    <img src="assets/orders/order.png" width="20" height="20" alt="Ícone de Pedidos">
+                    <label>Pedidos</label>
+                </a>
+            </li>
+            }
             <li class="logout-item">
                 <button type="button" class="logout-button" (click)="logout()" [disabled]="loggingOut()">
                     <img src="assets/logout.png" width="20" height="20" alt="">
