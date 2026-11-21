@@ -28,6 +28,7 @@ services:
       DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-eventbook}
       DB_USERNAME: ${POSTGRES_USER:-eventbook}
       DB_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET no .env}
     depends_on:
       db:
         condition: service_healthy

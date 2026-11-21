@@ -18,7 +18,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    show-sql: true
+    show-sql: false
     open-in-view: false
 
 server:
@@ -27,5 +27,5 @@ server:
 
 security:
   jwt:
-    secret: "essa-chave-e-tao-segura-que-nem-a-sua-mae-adivinha-o-segredo-jwt"
+    secret: ${JWT_SECRET}
     expiration-ms: 28800000
