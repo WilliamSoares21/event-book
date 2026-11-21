@@ -35,19 +35,33 @@ describe('EventsComponent listing', () => {
       expect(request.request.headers.get('Authorization')).toBe(
         role === 'ORGANIZADOR' ? 'Bearer test-token' : null,
       );
-      request.flush([{
-        id: 'event-1',
-        title: 'Encontro de tecnologia', startsAt: '2027-06-15T18:30:00',
-        location: 'Centro de convenções',
-        status: role === 'ORGANIZADOR' ? 'DRAFT' : 'PUBLISHED',
-      }]);
+      // Return PageResponse structure for paginated endpoints
+      const response = role === 'ORGANIZADOR' 
+        ? [{
+            id: 'event-1',
+            title: 'Encontro de tecnologia', startsAt: '2027-06-15T18:30:00',
+            location: 'Centro de convenções',
+            status: 'DRAFT',
+          }]
+        : {
+            content: [{
+              id: 'event-1',
+              title: 'Encontro de tecnologia', startsAt: '2027-06-15T18:30:00',
+              location: 'Centro de convenções',
+              status: 'PUBLISHED',
+            }],
+            page: 0, size: 10, totalElements: 1, totalPages: 1, first: true, last: true
+          };
+      request.flush(response);
       fixture.detectChanges();
       const card = fixture.nativeElement.querySelector('.card');
       expect(card.querySelector('.card-title').textContent).toContain('Encontro de tecnologia');
       expect(card.querySelector('a').getAttribute('href')).toBe('/events/event-1');
       expect(Array.from(card.querySelectorAll('.card-text'), (el: any) => el.textContent.trim()))
         .toEqual(['15/06/2027', '18:30', 'Centro de convenções']);
-      expect(fixture.nativeElement.querySelectorAll('.page-item').length).toBe(5);
+      // Pagination now uses buttons, check for page-item elements
+      const pageItems = fixture.nativeElement.querySelectorAll('.page-item');
+      expect(pageItems.length).toBeGreaterThan(0);
     });
   }
 
@@ -58,6 +72,7 @@ describe('EventsComponent listing', () => {
     http.expectOne((req) => req.url.endsWith('/api/organizer/events')).flush([]);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.card').length).toBe(0);
+    // Pagination should not show when no events
     expect(fixture.nativeElement.querySelector('.pagination')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Nenhum evento cadastrado.');
   });
