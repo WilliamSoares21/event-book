@@ -22,7 +22,10 @@ describe('ShopEvents', () => {
       location: 'Centro de convenções',
     };
 
-    http.expectOne((req) => req.url.endsWith('/api/events')).flush([event]);
+    http.expectOne((req) => req.url.endsWith('/api/events')).flush({
+      content: [event],
+      page: 0, size: 10, totalElements: 1, totalPages: 1, first: true, last: true
+    });
     harness.detectChanges();
 
     const link = harness.routeNativeElement!.querySelector<HTMLAnchorElement>('article a')!;

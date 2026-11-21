@@ -2,8 +2,9 @@ import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import type { EventListItem } from '../../../model/event.model';
+import type { EventListItem, EventResponse } from '../../../model/event.model';
 import { EventsService } from '../../../services/events/events';
+import { PageResponse } from '../../../model/page-response.model';
 
 @Component({
   imports: [DatePipe, RouterLink],
@@ -17,13 +18,43 @@ export class ShopEvents implements OnInit {
 
   readonly events = signal<EventListItem[] | null>(null);
   readonly loadError = signal(false);
+  readonly page = signal(0);
+  readonly totalPages = signal(0);
+  readonly loading = signal(false);
 
   ngOnInit() {
-    this.eventsService.listPublishedEvents()
+    this.loadEvents();
+  }
+
+  loadEvents() {
+    this.loading.set(true);
+    this.eventsService.listPublishedEvents(this.page(), 10)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (events) => this.events.set(events),
-        error: () => this.loadError.set(true),
+        next: (response: PageResponse<EventResponse>) => {
+          this.events.set(response.content as EventListItem[]);
+          this.totalPages.set(response.totalPages);
+          this.loadError.set(false);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.loadError.set(true);
+          this.loading.set(false);
+        },
       });
+  }
+
+  nextPage() {
+    if (this.page() < this.totalPages() - 1) {
+      this.page.update(p => p + 1);
+      this.loadEvents();
+    }
+  }
+
+  prevPage() {
+    if (this.page() > 0) {
+      this.page.update(p => p - 1);
+      this.loadEvents();
+    }
   }
 }

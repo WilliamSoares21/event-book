@@ -12,6 +12,8 @@
 
   @if (loadError()) {
     <p class="catalog-status" role="alert">Não foi possível carregar os eventos. Tente novamente mais tarde.</p>
+  } @else if (loading()) {
+    <p class="catalog-status" role="status">Carregando eventos…</p>
   } @else if (events(); as publishedEvents) {
     @if (publishedEvents.length) {
       <section aria-labelledby="published-events-title">
@@ -34,10 +36,21 @@
           }
         </div>
       </section>
+      <nav aria-label="Paginação de eventos" class="pagination-nav">
+        <ul class="pagination">
+          <li class="page-item" [class.disabled]="page() === 0">
+            <button class="page-link" (click)="prevPage()" [disabled]="page() === 0">Anterior</button>
+          </li>
+          <li class="page-item" [class.active]="true">
+            <span class="page-link">{{ page() + 1 }} de {{ totalPages() }}</span>
+          </li>
+          <li class="page-item" [class.disabled]="page() >= totalPages() - 1">
+            <button class="page-link" (click)="nextPage()" [disabled]="page() >= totalPages() - 1">Próxima</button>
+          </li>
+        </ul>
+      </nav>
     } @else {
       <p class="catalog-status">Nenhum evento publicado no momento.</p>
     }
-  } @else {
-    <p class="catalog-status" role="status">Carregando eventos…</p>
   }
 </main>

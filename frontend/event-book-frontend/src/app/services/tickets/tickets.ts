@@ -21,11 +21,10 @@ export const ticketStatusLabels: Record<BuyerTicket['status'], string> = {
 export class TicketsService {
   private readonly http = inject(HttpClient);
   private readonly session = inject(SessionService);
-  private readonly apiUrl = `${environment.apiUrl.replace(/\/$/, '').replace(/\/api$/, '')}/api`;
 
   listOwnTickets() {
     const token = this.session.user()?.token;
-    return this.http.get<BuyerTicket[]>(`${this.apiUrl}/tickets/me`, {
+    return this.http.get<BuyerTicket[]>(`${environment.apiUrl}/tickets/me`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       transferCache: false,
     });

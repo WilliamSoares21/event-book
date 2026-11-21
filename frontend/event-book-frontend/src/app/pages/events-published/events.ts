@@ -5,7 +5,8 @@ import { MenuSideBarComponent } from '../../components/menu-side-bar/menu-side-b
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { EventsService } from '../../services/events/events';
-import type { EventListItem } from '../../model/event.model';
+import type { EventListItem, EventResponse } from '../../model/event.model';
+import { PageResponse } from '../../model/page-response.model';
 
 @Component({
   imports: [MenuSideBarComponent, CommonModule, RouterLink],
@@ -21,21 +22,66 @@ export class EventsComponent implements OnInit {
   readonly events = signal<EventListItem[]>([]);
   readonly loadError = signal('');
   readonly loaded = signal(false);
+  readonly page = signal(0);
+  readonly totalPages = signal(0);
+  readonly loading = signal(false);
 
   constructor(private router: Router) {}
 
   ngOnInit() {
-    const request = this.roleUser === 'ORGANIZADOR'
-      ? this.eventsService.listOwnEvents()
-      : this.eventsService.listPublishedEvents();
+    this.loadEvents();
+  }
 
-    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (events) => {
-        this.events.set(events);
-        this.loaded.set(true);
-      },
-      error: () => this.loadError.set('Não foi possível carregar os eventos. Tente novamente mais tarde.'),
-    });
+  loadEvents() {
+    this.loading.set(true);
+    this.loadError.set('');
+
+    const isOrganizer = this.roleUser === 'ORGANIZADOR';
+    
+    if (isOrganizer) {
+      this.eventsService.listOwnEvents()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (response: EventListItem[]) => {
+            this.events.set(response);
+            this.loaded.set(true);
+            this.loading.set(false);
+          },
+          error: () => {
+            this.loadError.set('Não foi possível carregar os eventos. Tente novamente mais tarde.');
+            this.loading.set(false);
+          },
+        });
+    } else {
+      this.eventsService.listPublishedEvents(this.page(), 10)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (response: PageResponse<EventResponse>) => {
+            this.events.set(response.content as EventListItem[]);
+            this.totalPages.set(response.totalPages);
+            this.loaded.set(true);
+            this.loading.set(false);
+          },
+          error: () => {
+            this.loadError.set('Não foi possível carregar os eventos. Tente novamente mais tarde.');
+            this.loading.set(false);
+          },
+        });
+    }
+  }
+
+  nextPage() {
+    if (this.page() < this.totalPages() - 1) {
+      this.page.update(p => p + 1);
+      this.loadEvents();
+    }
+  }
+
+  prevPage() {
+    if (this.page() > 0) {
+      this.page.update(p => p - 1);
+      this.loadEvents();
+    }
   }
 
   createEvent() {

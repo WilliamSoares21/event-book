@@ -1,0 +1,36 @@
+section.side-page {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+side-page-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.brand-header {
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 1.5rem;
+}
+
+.card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+    background-color: #fff;
+}
+
+.btn-solid.theme-danger {
+    background-color: #d9534f;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-solid.theme-danger:hover {
+    background-color: #c9302c;
+}

@@ -1,10 +1,11 @@
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import type { Event, EventListItem, EventResponse } from '../../model/event.model';
 import type { TicketLotRequest, TicketLotResponse } from '../../model/ticket-lot.model';
 import { SessionService } from '../session/session';
 import { catchError, map, of, switchMap, throwError } from 'rxjs';
+import { PageResponse } from '../../model/page-response.model';
 
 interface SimulatedCard {
   id: string;
@@ -21,10 +22,11 @@ export interface EventStaffOption {
 export class EventsService {
   private readonly http = inject(HttpClient);
   private readonly session = inject(SessionService);
-  private readonly apiUrl = `${environment.apiUrl.replace(/\/$/, '').replace(/\/api$/, '')}/api`;
+  private readonly apiUrl = environment.apiUrl;
 
-  listPublishedEvents() {
-    return this.http.get<EventListItem[]>(`${this.apiUrl}/events`);
+  listPublishedEvents(page = 0, size = 10) {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<PageResponse<EventResponse>>(`${this.apiUrl}/events`, { params });
   }
 
   listOwnEvents() {

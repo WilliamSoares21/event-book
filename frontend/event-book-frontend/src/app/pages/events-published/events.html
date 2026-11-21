@@ -26,12 +26,15 @@
         <main class="side-page-main col-12">
             @if (loadError()) {
             <p role="alert">{{ loadError() }}</p>
+            } @else if (loading()) {
+            <p role="status">Carregando eventos…</p>
             } @else if (loaded() && events().length === 0) {
             <p role="status">{{ roleUser === 'ORGANIZADOR'
                 ? 'Nenhum evento cadastrado.'
                 : 'Nenhum evento disponível no momento.' }}</p>
             }
-            <section *ngFor="let event of events()" class="card" style="max-width: 220px">
+            @for (event of events(); track event.id) {
+            <section class="card" style="max-width: 220px">
                 <img src="assets/events/default-event.png" class="card-img-top" alt="...">
                 <div class="card-body">
                     <h4 class="card-title">{{ event.title }}</h4>
@@ -41,16 +44,19 @@
                     <a [routerLink]="['/events', event.id]" class="btn-solid theme-primary">Mais Informações</a>
                 </div>
             </section>
-            @if (events().length > 0) {
+            }
+            @if (events().length > 0 && !loading()) {
                 <nav aria-label="Paginação de eventos">
                     <ul class="pagination">
-                        <li class="page-item"><a href="#" class="page-link">Previous</a></li>
-                        <li class="page-item"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item active">
-                            <a class="page-link" href="#" aria-current="page">2</a>
+                        <li class="page-item" [class.disabled]="page() === 0">
+                            <button class="page-link" (click)="prevPage()" [disabled]="page() === 0">Anterior</button>
                         </li>
-                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                        <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                        <li class="page-item" [class.active]="true">
+                            <span class="page-link">{{ page() + 1 }} de {{ totalPages() }}</span>
+                        </li>
+                        <li class="page-item" [class.disabled]="page() >= totalPages() - 1">
+                            <button class="page-link" (click)="nextPage()" [disabled]="page() >= totalPages() - 1">Próxima</button>
+                        </li>
                     </ul>
                 </nav>
             }
