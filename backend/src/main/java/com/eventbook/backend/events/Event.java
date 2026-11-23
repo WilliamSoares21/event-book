@@ -23,6 +23,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "events")
@@ -54,6 +56,32 @@ public class Event {
 
     @Column (name ="location", nullable = false)
     private String location;
+
+    @Column(name = "venue_name")
+    private String venueName;
+
+    @Column(name = "street")
+    private String street;
+
+    @Column(name = "number", length = 20)
+    private String number;
+
+    @Column(name = "complement", length = 100)
+    private String complement;
+
+    @Column(name = "neighborhood", length = 100)
+    private String neighborhood;
+
+    @Column(name = "city", length = 100)
+    private String city;
+
+    // V10 criou a coluna como CHAR(2) (bpchar); o tipo JDBC precisa casar em ddl-auto=validate.
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(name = "state", length = 2)
+    private String state;
+
+    @Column(name = "zip_code", length = 9)
+    private String zipCode;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

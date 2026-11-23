@@ -1,19 +1,18 @@
 package com.eventbook.backend.common.deserializer;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import org.springframework.boot.jackson.JacksonComponent;
-import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 
-import java.io.IOException;
-
-@JacksonComponent
-@Component
-public class EmptyStringAsNullDeserializer extends JsonDeserializer<String> {
+/**
+ * Usado via {@code @JsonDeserialize(using = ...)} em campos específicos.
+ * Não deve ser registrado como componente Jackson global: isso o aplicaria a todo String.
+ */
+public class EmptyStringAsNullDeserializer extends ValueDeserializer<String> {
 
     @Override
-    public String deserialize(JsonParser parser, DeserializationContext context) throws IOException {
+    public String deserialize(JsonParser parser, DeserializationContext context) throws JacksonException {
         String value = parser.getValueAsString();
         if (value == null || value.trim().isEmpty()) {
             return null;

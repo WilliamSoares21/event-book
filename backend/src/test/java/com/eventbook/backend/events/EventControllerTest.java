@@ -116,8 +116,13 @@ class EventControllerTest {
                                 {
                                   "title": "Festival EventBook",
                                   "description": "Evento de demonstração",
-                                  "startsAt": "2026-11-20T19:00:00-03:00",
-                                  "endsAt": "2026-11-20T23:00:00-03:00",
+                                  "startsAt": "2030-11-20T19:00:00-03:00",
+                                  "endsAt": "2030-11-20T23:00:00-03:00",
+                                  "venueName": "Arena Castelão",
+                                  "street": "Av. Alberto Craveiro",
+                                  "neighborhood": "Castelão",
+                                  "city": "Fortaleza",
+                                  "state": "CE",
                                   "location": "São Paulo"
                                 }
                                 """))

@@ -229,6 +229,28 @@ public class EventService {
       event.setLocation(dto.getLocation().trim());
     }
 
+    // Campos opcionais de endereço: "" limpa o valor; omitido/null não altera.
+    if (dto.getNumber() != null) {
+      event.setNumber(normalizeOptionalText(dto.getNumber()));
+    }
+
+    if (dto.getComplement() != null) {
+      event.setComplement(normalizeOptionalText(dto.getComplement()));
+    }
+
+    if (dto.getCity() != null) {
+      event.setCity(normalizeOptionalText(dto.getCity()));
+    }
+
+    if (dto.getState() != null) {
+      event.setState(dto.getState());
+    }
+
+    // zipCode: null/omitido não altera; "" limpa (null); valor válido substitui.
+    if (dto.getZipCode() != null || dto.isZipCodeCleared()) {
+      event.setZipCode(dto.getZipCode());
+    }
+
     // Combina os valores recebidos com os já existentes para validar
     // o intervalo completo, mesmo quando apenas uma das datas é alterada.
     OffsetDateTime startsAt = dto.getStartsAt() != null
