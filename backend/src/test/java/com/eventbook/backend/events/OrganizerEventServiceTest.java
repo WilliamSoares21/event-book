@@ -51,6 +51,12 @@ class OrganizerEventServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private EventImageRepository eventImageRepository;
+
+    @Mock
+    private EventImageService eventImageService;
+
     private EventService eventService;
 
     @BeforeEach
@@ -62,6 +68,8 @@ class OrganizerEventServiceTest {
                 ticketRepository,
                 checkInRepository,
                 userRepository,
+                eventImageRepository,
+                eventImageService,
                 CLOCK
         );
     }

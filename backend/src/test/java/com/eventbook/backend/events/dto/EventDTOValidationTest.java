@@ -145,6 +145,7 @@ class EventDTOValidationTest {
                 .neighborhood("Centro")
                 .city("Fortaleza")
                 .state("CE")
+                .location("Local do Evento")
                 .build();
 
         Set<ConstraintViolation<EventRequestDTO>> violations = validator.validate(dto);
@@ -377,7 +378,7 @@ class EventDTOValidationTest {
     }
 
     @Test
-    void request_semLocation_devePassar() {
+    void request_semLocation_deveFalhar() {
         EventRequestDTO dto = EventRequestDTO.builder()
                 .title("Festival")
                 .startsAt(java.time.OffsetDateTime.now().plusDays(10))
@@ -390,7 +391,7 @@ class EventDTOValidationTest {
                 .build();
 
         Set<ConstraintViolation<EventRequestDTO>> violations = validator.validate(dto);
-        assertThat(violations).noneMatch(v -> v.getPropertyPath().toString().equals("location"));
+        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("location"));
     }
 
     @Test
@@ -423,11 +424,11 @@ class EventDTOValidationTest {
                 .neighborhood("Centro")
                 .city("Fortaleza")
                 .state("CE")
-                .location(null)
+                .location("Local do Evento")
                 .build();
 
         Set<ConstraintViolation<EventRequestDTO>> violations = validator.validate(dto);
-        assertThat(violations).noneMatch(v -> v.getPropertyPath().toString().equals("location"));
+        assertThat(violations).isEmpty();
     }
 
     // --- Atualização (EventUpdateDTO) ---
@@ -498,7 +499,8 @@ class EventDTOValidationTest {
                     "street": "Av. Principal",
                     "neighborhood": "Centro",
                     "city": "Fortaleza",
-                    "state": "CE"
+                    "state": "CE",
+                    "location": "Local do Evento"
                 }
                 """;
         EventRequestDTO dto = objectMapper.readValue(json, EventRequestDTO.class);
@@ -518,7 +520,8 @@ class EventDTOValidationTest {
                     "neighborhood": "Centro",
                     "city": "Fortaleza",
                     "state": "CE",
-                    "zipCode": "60000-000"
+                    "zipCode": "60000-000",
+                    "location": "Local do Evento"
                 }
                 """;
         EventRequestDTO dto = objectMapper.readValue(json, EventRequestDTO.class);
