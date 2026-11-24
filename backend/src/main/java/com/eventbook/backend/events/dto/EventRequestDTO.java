@@ -79,8 +79,8 @@ public class EventRequestDTO {
     private String zipCode;
 
     @Schema(description = "Local do evento legado/computado", example = "São Paulo")
-    @Size(min = 1, max = 255)
-    @Pattern(regexp = ".*\\S.*", message = "Local não pode ser vazio")
+    @NotBlank
+    @Size(max = 255)
     private String location;
 
     public void setNumber(String number) {

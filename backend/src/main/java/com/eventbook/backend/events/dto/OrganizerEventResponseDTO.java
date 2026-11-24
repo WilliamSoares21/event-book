@@ -34,9 +34,10 @@ public class OrganizerEventResponseDTO {
     private String location;
     private EventStatus status;
     private Long version;
+    private String coverImageUrl;
     private List<TicketLotResponseDTO> ticketLots;
 
-    public static OrganizerEventResponseDTO from(Event event, List<TicketLotResponseDTO> lots) {
+    public static OrganizerEventResponseDTO from(Event event, List<TicketLotResponseDTO> lots, String coverImageUrl) {
         return OrganizerEventResponseDTO.builder()
                 .id(event.getId())
                 .title(event.getTitle())
@@ -46,6 +47,7 @@ public class OrganizerEventResponseDTO {
                 .location(event.getLocation())
                 .status(event.getStatus())
                 .version(event.getVersion())
+                .coverImageUrl(coverImageUrl)
                 .ticketLots(lots)
                 .build();
     }

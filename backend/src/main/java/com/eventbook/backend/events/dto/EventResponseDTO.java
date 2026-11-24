@@ -39,6 +39,8 @@ public class EventResponseDTO {
     private EventStatus status;
     @Schema(description = "Versão para controle otimista", accessMode = Schema.AccessMode.READ_ONLY)
     private Long version;
+    @Schema(description = "URL da imagem de capa do evento", accessMode = Schema.AccessMode.READ_ONLY)
+    private String coverImageUrl;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @Schema(description = "Lotes à venda com estoque, retornados na consulta de detalhes")
     private List<AvailableTicketLot> availableTicketLots;

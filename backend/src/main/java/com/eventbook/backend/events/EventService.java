@@ -35,6 +35,7 @@ import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -48,6 +49,8 @@ public class EventService {
   private final TicketRepository ticketRepository;
   private final CheckInRepository checkInRepository;
   private final UserRepository userRepository;
+  private final EventImageRepository eventImageRepository;
+  private final EventImageService eventImageService;
 
   private final Clock clock;
 
@@ -71,10 +74,19 @@ public class EventService {
             lot -> lot.getEvent().getId(),
             Collectors.mapping(TicketLotResponseDTO::from, Collectors.toList())));
 
+    // Busca URLs das imagens de capa em uma query
+    Map<UUID, String> coverImages = eventImageRepository.findByEventIdIn(eventIds)
+        .stream()
+        .collect(Collectors.toMap(
+            img -> img.getEvent().getId(),
+            EventImage::getPublicUrl
+        ));
+
     return events.stream()
         .map(event -> OrganizerEventResponseDTO.from(
             event,
-            lotsByEvent.getOrDefault(event.getId(), List.of())))
+            lotsByEvent.getOrDefault(event.getId(), List.of()),
+            coverImages.get(event.getId())))
         .toList();
   }
 
@@ -94,7 +106,7 @@ public class EventService {
         .description(normalizeOptionalText(dto.getDescription()))
         .startsAt(dto.getStartsAt())
         .endsAt(dto.getEndsAt())
-        .location(dto.getLocation().trim())
+        .location(normalizeOptionalText(dto.getLocation()))
         .organizer(organizer)
         .status(EventStatus.DRAFT) // Todo evento nasce como rascunho e precisa ser publicado posteriormente.
         .build();
@@ -441,6 +453,10 @@ public class EventService {
   private EventResponseDTO toResponseDTO(Event event) {
     // Converte a entidade para DTO, evitando expor diretamente
     // os detalhes internos da entidade JPA na resposta da API.
+    String coverImageUrl = eventImageRepository.findByEventId(event.getId())
+        .map(EventImage::getPublicUrl)
+        .orElse(null);
+
     return EventResponseDTO.builder()
         .id(event.getId())
         .title(event.getTitle())
@@ -451,6 +467,7 @@ public class EventService {
         .organizerId(event.getOrganizer().getId())
         .status(event.getStatus())
         .version(event.getVersion())
+        .coverImageUrl(coverImageUrl)
         .build();
   }
 }
