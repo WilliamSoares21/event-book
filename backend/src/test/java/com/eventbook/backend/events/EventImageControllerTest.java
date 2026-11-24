@@ -28,6 +28,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
@@ -106,7 +107,8 @@ class EventImageControllerTest {
                 eq(organizerId),
                 eq("image/webp"),
                 eq("sha256-base64"),
-                eq("write-id-123")
+                eq("write-id-123"),
+                eq(3564530L)
         )).thenReturn(uploadResult);
 
         mockMvc.perform(post("/api/events/{eventId}/images/upload-url", eventId)
@@ -115,7 +117,8 @@ class EventImageControllerTest {
                                 {
                                   "contentType": "image/webp",
                                   "sha256Base64": "sha256-base64",
-                                  "writeId": "write-id-123"
+                                  "writeId": "write-id-123",
+                                  "sizeBytes": 3564530
                                 }
                                 """))
                 .andExpect(status().isOk())
@@ -128,7 +131,8 @@ class EventImageControllerTest {
                 eq(organizerId),
                 eq("image/webp"),
                 eq("sha256-base64"),
-                eq("write-id-123")
+                eq("write-id-123"),
+                eq(3564530L)
         );
     }
 
@@ -156,7 +160,8 @@ class EventImageControllerTest {
                                 {
                                   "contentType": "image/gif",
                                   "sha256Base64": "sha256-base64",
-                                  "writeId": "write-id-123"
+                                  "writeId": "write-id-123",
+                                  "sizeBytes": 3564530
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
@@ -180,7 +185,8 @@ class EventImageControllerTest {
                 eq(organizerId),
                 eq("events/uuid.webp"),
                 eq("write-id-123"),
-                eq("sha256-base64")
+                eq("sha256-base64"),
+                eq(3564530L)
         )).thenReturn(response);
 
         mockMvc.perform(post("/api/events/{eventId}/images/confirm", eventId)
@@ -189,7 +195,8 @@ class EventImageControllerTest {
                                 {
                                   "objectKey": "events/uuid.webp",
                                   "writeId": "write-id-123",
-                                  "sha256Base64": "sha256-base64"
+                                  "sha256Base64": "sha256-base64",
+                                  "sizeBytes": 3564530
                                 }
                                 """))
                 .andExpect(status().isOk())
@@ -203,7 +210,8 @@ class EventImageControllerTest {
                 eq(organizerId),
                 eq("events/uuid.webp"),
                 eq("write-id-123"),
-                eq("sha256-base64")
+                eq("sha256-base64"),
+                eq(3564530L)
         );
     }
 
@@ -227,7 +235,7 @@ class EventImageControllerTest {
         doThrow(new BusinessException(
                 "Objeto não encontrado no storage. Upload pode ter falhado.",
                 HttpStatus.BAD_REQUEST
-        )).when(eventImageService).confirmUpload(any(), any(), any(), any(), any());
+        )).when(eventImageService).confirmUpload(any(), any(), any(), any(), any(), anyLong());
 
         mockMvc.perform(post("/api/events/{eventId}/images/confirm", eventId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -235,7 +243,8 @@ class EventImageControllerTest {
                                 {
                                   "objectKey": "events/uuid.webp",
                                   "writeId": "write-id-123",
-                                  "sha256Base64": "sha256-base64"
+                                  "sha256Base64": "sha256-base64",
+                                  "sizeBytes": 3564530
                                 }
                                 """))
                 .andExpect(status().isBadRequest())

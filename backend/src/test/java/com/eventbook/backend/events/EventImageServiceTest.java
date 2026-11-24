@@ -22,6 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -67,12 +68,14 @@ class EventImageServiceTest {
                 .build();
 
         lenient().when(r2Properties.getPublicBaseUrl()).thenReturn("https://images.eventbook.app");
+        lenient().when(r2Properties.getMaxFileSizeBytes()).thenReturn(5L * 1024 * 1024);
+        lenient().when(r2Properties.getMaxFileSizeMb()).thenReturn(5);
     }
 
     @Test
     void deveGerarUploadUrlComSucesso() {
         lenient().when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
-        lenient().when(r2StorageService.generatePresignedUploadUrl(anyString(), anyString(), anyString()))
+        lenient().when(r2StorageService.generatePresignedUploadUrl(anyString(), anyString(), anyString(), anyLong()))
                 .thenReturn(new R2StorageService.PresignedUploadResult(
                         "https://presigned-url.com",
                         "events/uuid.webp",
@@ -85,22 +88,23 @@ class EventImageServiceTest {
                 .contentType("image/webp")
                 .sha256Base64("sha256-base64")
                 .writeId(UUID.randomUUID().toString())
+                .sizeBytes(1024L)
                 .build();
 
         var result = eventImageService.generateUploadUrl(eventId, organizerId,
-                request.getContentType(), request.getSha256Base64(), request.getWriteId());
+                request.getContentType(), request.getSha256Base64(), request.getWriteId(), request.getSizeBytes());
 
         assertThat(result.uploadUrl()).isEqualTo("https://presigned-url.com");
         assertThat(result.objectKey()).isEqualTo("events/uuid.webp");
         assertThat(result.publicUrl()).isEqualTo("https://images.eventbook.app/events/uuid.webp");
         verify(eventRepository).findById(eventId);
-        verify(r2StorageService).generatePresignedUploadUrl(anyString(), anyString(), anyString());
+        verify(r2StorageService).generatePresignedUploadUrl(anyString(), anyString(), anyString(), anyLong());
     }
 
     @Test
     void deveRejeitarGerarUploadUrlParaEventoInexistente() {
         lenient().when(eventRepository.findById(eventId)).thenReturn(Optional.empty());
-        lenient().when(r2StorageService.generatePresignedUploadUrl(anyString(), anyString(), anyString()))
+        lenient().when(r2StorageService.generatePresignedUploadUrl(anyString(), anyString(), anyString(), anyLong()))
                 .thenReturn(new R2StorageService.PresignedUploadResult(
                         "https://presigned-url.com",
                         "events/uuid.webp",
@@ -110,7 +114,7 @@ class EventImageServiceTest {
                 ));
 
         assertThatThrownBy(() ->
-                eventImageService.generateUploadUrl(eventId, organizerId, "image/webp", "sha256", "writeId")
+                eventImageService.generateUploadUrl(eventId, organizerId, "image/webp", "sha256", "writeId", 1024L)
         ).isInstanceOf(BusinessException.class)
          .extracting("status").isEqualTo(HttpStatus.NOT_FOUND);
     }
@@ -119,7 +123,7 @@ class EventImageServiceTest {
     void deveRejeitarGerarUploadUrlParaOutroOrganizador() {
         UUID otherOrganizerId = UUID.randomUUID();
         lenient().when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
-        lenient().when(r2StorageService.generatePresignedUploadUrl(anyString(), anyString(), anyString()))
+        lenient().when(r2StorageService.generatePresignedUploadUrl(anyString(), anyString(), anyString(), anyLong()))
                 .thenReturn(new R2StorageService.PresignedUploadResult(
                         "https://presigned-url.com",
                         "events/uuid.webp",
@@ -129,7 +133,7 @@ class EventImageServiceTest {
                 ));
 
         assertThatThrownBy(() ->
-                eventImageService.generateUploadUrl(eventId, otherOrganizerId, "image/webp", "sha256", "writeId")
+                eventImageService.generateUploadUrl(eventId, otherOrganizerId, "image/webp", "sha256", "writeId", 1024L)
         ).isInstanceOf(BusinessException.class)
          .extracting("status").isEqualTo(HttpStatus.FORBIDDEN);
     }
@@ -137,7 +141,7 @@ class EventImageServiceTest {
     @Test
     void deveRejeitarContentTypeInvalidoNoUploadUrl() {
         lenient().when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
-        lenient().when(r2StorageService.generatePresignedUploadUrl(anyString(), anyString(), anyString()))
+        lenient().when(r2StorageService.generatePresignedUploadUrl(anyString(), anyString(), anyString(), anyLong()))
                 .thenReturn(new R2StorageService.PresignedUploadResult(
                         "https://presigned-url.com",
                         "events/uuid.webp",
@@ -147,9 +151,21 @@ class EventImageServiceTest {
                 ));
 
         assertThatThrownBy(() ->
-                eventImageService.generateUploadUrl(eventId, organizerId, "image/gif", "sha256", "writeId")
+                eventImageService.generateUploadUrl(eventId, organizerId, "image/gif", "sha256", "writeId", 1024L)
         ).isInstanceOf(BusinessException.class)
          .extracting("status").isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+    }
+
+    @Test
+    void deveRejeitarUploadUrlComTamanhoAcimaDoLimite() {
+        lenient().when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() ->
+                eventImageService.generateUploadUrl(eventId, organizerId, "image/webp", "sha256", "writeId", 5L * 1024 * 1024 + 1)
+        ).isInstanceOf(BusinessException.class)
+         .extracting("status").isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+
+        verify(r2StorageService, never()).generatePresignedUploadUrl(anyString(), anyString(), anyString(), anyLong());
     }
 
     @Test
@@ -171,10 +187,11 @@ class EventImageServiceTest {
                 .objectKey(objectKey)
                 .writeId(writeId)
                 .sha256Base64(sha256Base64)
+                .sizeBytes(1024L)
                 .build();
 
         EventImageResponseDTO response = eventImageService.confirmUpload(eventId, organizerId,
-                objectKey, writeId, sha256Base64);
+                objectKey, writeId, sha256Base64, 1024L);
 
         assertThat(response.getObjectKey()).isEqualTo(objectKey);
         assertThat(response.getContentType()).isEqualTo("image/webp");
@@ -213,10 +230,11 @@ class EventImageServiceTest {
                 .objectKey(objectKey)
                 .writeId(writeId)
                 .sha256Base64(sha256Base64)
+                .sizeBytes(1024L)
                 .build();
 
         EventImageResponseDTO response = eventImageService.confirmUpload(eventId, organizerId,
-                objectKey, writeId, sha256Base64);
+                objectKey, writeId, sha256Base64, 1024L);
 
         assertThat(response.getObjectKey()).isEqualTo(objectKey);
         verify(eventImageRepository).deleteByEventId(eventId);
@@ -233,7 +251,7 @@ class EventImageServiceTest {
                 ));
 
         assertThatThrownBy(() ->
-                eventImageService.confirmUpload(eventId, organizerId, "events/uuid.webp", "writeId", "sha256")
+                eventImageService.confirmUpload(eventId, organizerId, "events/uuid.webp", "writeId", "sha256", 1024L)
         ).isInstanceOf(BusinessException.class)
           .extracting("status").isEqualTo(HttpStatus.BAD_REQUEST);
 
@@ -249,7 +267,7 @@ class EventImageServiceTest {
                 ));
 
         assertThatThrownBy(() ->
-                eventImageService.confirmUpload(eventId, organizerId, "events/uuid.webp", "writeId", "sha256")
+                eventImageService.confirmUpload(eventId, organizerId, "events/uuid.webp", "writeId", "sha256", 1024L)
         ).isInstanceOf(BusinessException.class)
           .extracting("status").isEqualTo(HttpStatus.BAD_REQUEST);
     }
@@ -263,9 +281,41 @@ class EventImageServiceTest {
                 ));
 
         assertThatThrownBy(() ->
-                eventImageService.confirmUpload(eventId, organizerId, "events/uuid.webp", "writeId", "sha256")
+                eventImageService.confirmUpload(eventId, organizerId, "events/uuid.webp", "writeId", "sha256", 1024L)
         ).isInstanceOf(BusinessException.class)
           .extracting("status").isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    void deveRejeitarConfirmacaoSeTamanhoDivergirDoStorage() {
+        lenient().when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        lenient().when(r2StorageService.validateUploadedObject(anyString(), anyString(), anyString()))
+                .thenReturn(new R2StorageService.ValidationResult(
+                        true, 2048L, "image/webp", true, true
+                ));
+
+        assertThatThrownBy(() ->
+                eventImageService.confirmUpload(eventId, organizerId, "events/uuid.webp", "writeId", "sha256", 1024L)
+        ).isInstanceOf(BusinessException.class)
+          .extracting("status").isEqualTo(HttpStatus.BAD_REQUEST);
+
+        verify(eventImageRepository, never()).save(any(EventImage.class));
+    }
+
+    @Test
+    void deveRejeitarConfirmacaoSeTamanhoExcederLimite() {
+        lenient().when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        lenient().when(r2StorageService.validateUploadedObject(anyString(), anyString(), anyString()))
+                .thenReturn(new R2StorageService.ValidationResult(
+                        true, 6L * 1024 * 1024, "image/webp", true, true
+                ));
+
+        assertThatThrownBy(() ->
+                eventImageService.confirmUpload(eventId, organizerId, "events/uuid.webp", "writeId", "sha256", 6L * 1024 * 1024)
+        ).isInstanceOf(BusinessException.class)
+          .extracting("status").isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
+
+        verify(eventImageRepository, never()).save(any(EventImage.class));
     }
 
     @Test
