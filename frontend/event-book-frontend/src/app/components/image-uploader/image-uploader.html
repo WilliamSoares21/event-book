@@ -1,0 +1,4 @@
+<div class="image-uploader">
+  <input type="file" (change)="onFileSelected($event)" accept="image/webp,image/jpeg,image/png">
+  @if (uploading()) { <p>Processando...</p> }
+</div>

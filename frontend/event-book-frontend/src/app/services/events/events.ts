@@ -18,6 +18,7 @@ export interface EventStaffOption {
   associated: boolean;
 }
 
+import type { EventImageUploadRequest, EventImageUploadUrlResponse, EventImageConfirmRequest } from "../../model/event-image.model";
 @Injectable({ providedIn: 'root' })
 export class EventsService {
   private readonly http = inject(HttpClient);
@@ -111,4 +112,21 @@ export class EventsService {
     const token = this.session.user()?.token;
     return { headers: new HttpHeaders(token ? { Authorization: `Bearer ${token}` } : {}) };
   }
+
+  getUploadUrl(eventId: string, request: EventImageUploadRequest) {
+    return this.http.post<EventImageUploadUrlResponse>(`${this.apiUrl}/events/${encodeURIComponent(eventId)}/images/upload-url`, request, this.authOptions());
+  }
+
+  confirmUploadImage(eventId: string, request: EventImageConfirmRequest) {
+    return this.http.post<unknown>(`${this.apiUrl}/events/${encodeURIComponent(eventId)}/images/confirm`, request, this.authOptions());
+  }
+
+  removeEventImage(eventId: string) {
+    return this.http.delete<void>(`${this.apiUrl}/events/${encodeURIComponent(eventId)}/images`, this.authOptions());
+  }
+
+  getEventImage(eventId: string) {
+    return this.http.get<unknown>(`${this.apiUrl}/events/${encodeURIComponent(eventId)}/images`, this.authOptions());
+  }
+
 }

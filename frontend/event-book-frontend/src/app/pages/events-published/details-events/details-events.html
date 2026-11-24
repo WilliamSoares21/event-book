@@ -13,7 +13,7 @@
                 <p class="alert alert-danger" role="alert">{{ loadError() }}</p>
             } @else if (event(); as details) {
                 <article class="card event-card">
-                    <img src="assets/events/default-event.png" class="event-image" alt="">
+                    <img [src]="details.coverImageUrl || 'assets/events/default-event.png'" class="event-image" alt="">
                     <div class="card-body">
                         <div class="event-heading">
                             <h3 class="card-title">{{ details.title }}</h3>

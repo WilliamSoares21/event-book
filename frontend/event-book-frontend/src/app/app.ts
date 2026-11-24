@@ -1,14 +1,30 @@
-import { Component, inject, signal } from '@angular/core';
-import { ToastService } from './services/toast/toast';
+import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { NavbarComponent } from './components/navbar/navbar';
+import { FooterComponent } from './components/footer/footer';
+import { ToastService } from './services/toast/toast';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  standalone: true,
+  imports: [RouterOutlet, NavbarComponent, FooterComponent],
+  template: `
+    <app-navbar></app-navbar>
+    <main class="flex-grow-1">
+      <router-outlet></router-outlet>
+    </main>
+    <app-footer></app-footer>
+    @if (toast.notification(); as notification) {
+      <div class="notification-toast" [class.notification-success]="notification.success"
+        [class.notification-error]="!notification.success"
+        [attr.role]="notification.success ? 'status' : 'alert'" aria-atomic="true">
+        <span>{{ notification.message }}</span>
+        <button type="button" (click)="toast.dismiss()" aria-label="Fechar notificação">×</button>
+      </div>
+    }
+  `,
+  styleUrls: ['./app.css']
 })
-export class App {
+export class AppComponent {
   readonly toast = inject(ToastService);
-  protected readonly title = signal('event-book-frontend');
 }

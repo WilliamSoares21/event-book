@@ -29,7 +29,14 @@ export class CreateEventsComponent {
       eventEndDate: [''],
       eventStartedTime: [''],
       eventEndTime: [''],
-      eventLocation: ['']
+      venueName: [''],
+      street: [''],
+      number: [''],
+      complement: [''],
+      neighborhood: [''],
+      city: [''],
+      state: [''],
+      zipCode: ['']
     });
 
     const state = (this.router.currentNavigation()?.extras.state ?? location.getState()) as
@@ -83,7 +90,14 @@ export class CreateEventsComponent {
       description: this.singUpForm.get('eventDescription')?.value,
       startsAt: this.toDateTime('eventStartedDate', 'eventStartedTime'),
       endsAt: this.toDateTime('eventEndDate', 'eventEndTime'),
-      location: this.singUpForm.get('eventLocation')?.value
+      venueName: this.singUpForm.get('venueName')?.value,
+      street: this.singUpForm.get('street')?.value,
+      number: this.singUpForm.get('number')?.value,
+      complement: this.singUpForm.get('complement')?.value,
+      neighborhood: this.singUpForm.get('neighborhood')?.value,
+      city: this.singUpForm.get('city')?.value,
+      state: this.singUpForm.get('state')?.value,
+      zipCode: this.singUpForm.get('zipCode')?.value
     };
 
     this.router.navigate(['/events/lots/create'], { state: { event } });

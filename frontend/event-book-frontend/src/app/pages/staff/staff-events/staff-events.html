@@ -13,7 +13,7 @@
           <div class="event-grid">
             @for (event of assignedEvents; track event.id) {
               <article class="card">
-                <img src="assets/events/default-event.png" class="card-img-top" alt="" loading="lazy">
+                <img [src]="event.coverImageUrl || 'assets/events/default-event.png'" class="card-img-top" alt="" loading="lazy">
                 <div class="card-body">
                   <h2 class="card-title">{{ event.title }}</h2>
                   <p class="card-text">
