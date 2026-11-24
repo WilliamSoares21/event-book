@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -29,4 +30,9 @@ public class EventImageUploadRequestDTO {
     @NotBlank
     @Schema(description = "ID único da operação de escrita (UUID v4)", example = "550e8400-e29b-41d4-a716-446655440000", requiredMode = Schema.RequiredMode.REQUIRED)
     private String writeId;
+
+    @NotNull
+    @Positive
+    @Schema(description = "Tamanho exato do arquivo em bytes (usado na assinatura do Content-Length)", example = "3564530", requiredMode = Schema.RequiredMode.REQUIRED)
+    private Long sizeBytes;
 }

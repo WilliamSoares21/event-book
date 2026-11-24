@@ -27,7 +27,7 @@ public class EventImageService {
      */
     @Transactional(readOnly = true)
     public R2StorageService.PresignedUploadResult generateUploadUrl(
-            UUID eventId, UUID organizerId, String contentType, String sha256Base64, String writeId) {
+            UUID eventId, UUID organizerId, String contentType, String sha256Base64, String writeId, long sizeBytes) {
 
         // Valida se o evento existe e pertence ao organizador
         Event event = eventRepository.findById(eventId)
@@ -45,9 +45,10 @@ public class EventImageService {
 
         // Valida content type
         validateContentType(contentType);
+        validateSize(sizeBytes);
 
         // Se já existe uma imagem, não impede o upload - a substituição é tratada na confirmação
-        return r2StorageService.generatePresignedUploadUrl(contentType, sha256Base64, writeId);
+        return r2StorageService.generatePresignedUploadUrl(contentType, sha256Base64, writeId, sizeBytes);
     }
 
     /**
@@ -56,7 +57,7 @@ public class EventImageService {
      */
     @Transactional
     public EventImageResponseDTO confirmUpload(
-            UUID eventId, UUID organizerId, String objectKey, String writeId, String sha256Base64) {
+            UUID eventId, UUID organizerId, String objectKey, String writeId, String sha256Base64, long sizeBytes) {
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new BusinessException(
@@ -79,6 +80,14 @@ public class EventImageService {
         if (!validation.exists()) {
             throw new BusinessException(
                     "Objeto não encontrado no storage. Upload pode ter falhado.",
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+
+        validateSize(sizeBytes);
+        if (validation.contentLength() != sizeBytes) {
+            throw new BusinessException(
+                    "Tamanho do arquivo no storage não corresponde ao declarado.",
                     HttpStatus.BAD_REQUEST
             );
         }
@@ -226,6 +235,15 @@ public class EventImageService {
                  !contentType.equals("image/png"))) {
             throw new BusinessException(
                     "Tipo de arquivo não suportado. Use WebP, JPEG ou PNG.",
+                    HttpStatus.UNPROCESSABLE_CONTENT
+            );
+        }
+    }
+
+    private void validateSize(long sizeBytes) {
+        if (sizeBytes <= 0 || sizeBytes > r2Properties.getMaxFileSizeBytes()) {
+            throw new BusinessException(
+                    "Tamanho de arquivo inválido. Limite máximo: " + r2Properties.getMaxFileSizeMb() + " MB.",
                     HttpStatus.UNPROCESSABLE_CONTENT
             );
         }

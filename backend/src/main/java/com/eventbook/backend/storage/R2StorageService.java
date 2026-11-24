@@ -43,7 +43,7 @@ public class R2StorageService {
      * Gera uma presigned URL para upload direto no R2.
      * A URL expira em 15 minutos.
      */
-    public PresignedUploadResult generatePresignedUploadUrl(String contentType, String sha256Base64, String writeId) {
+    public PresignedUploadResult generatePresignedUploadUrl(String contentType, String sha256Base64, String writeId, long sizeBytes) {
         String objectKey = buildObjectKey(contentType);
         String publicUrl = buildPublicUrl(objectKey);
 
@@ -51,7 +51,9 @@ public class R2StorageService {
                 .bucket(properties.getBucket())
                 .key(objectKey)
                 .contentType(contentType)
-                .contentLength(properties.getMaxFileSizeBytes())
+                // Content-Length entra na assinatura SigV4: precisa ser o tamanho exato do arquivo,
+                // nunca o limite maximo, senao o PUT falha com SignatureDoesNotMatch.
+                .contentLength(sizeBytes)
                 .checksumSHA256(sha256Base64)
                 .metadata(java.util.Map.of("write-id", writeId))
                 .build();
@@ -85,10 +87,8 @@ public class R2StorageService {
             HeadObjectResponse response = s3Client.headObject(headRequest);
 
             String actualWriteId = response.metadata().get("write-id");
-            String actualSha256 = response.metadata().get("x-amz-checksum-sha256");
-            if (actualSha256 == null) {
-                actualSha256 = response.metadata().get("checksum-sha256");
-            }
+            // O checksum nao vem em metadata() (apenas chaves x-amz-meta-*); ele tem campo proprio.
+            String actualSha256 = response.checksumSHA256();
 
             boolean writeIdMatches = expectedWriteId != null && expectedWriteId.equals(actualWriteId);
             boolean sha256Matches = expectedSha256Base64 != null && expectedSha256Base64.equals(actualSha256);
@@ -96,6 +96,9 @@ public class R2StorageService {
             long contentLength = response.contentLength();
             String contentType = response.contentType();
 
+            if (actualSha256 == null) {
+                log.warn("R2 não retornou checksum SHA-256 para o objeto {}; confirmação será rejeitada", objectKey);
+            }
             if (!writeIdMatches) {
                 log.warn("WriteId mismatch for object {}: expected {}, got {}", objectKey, expectedWriteId, actualWriteId);
             }

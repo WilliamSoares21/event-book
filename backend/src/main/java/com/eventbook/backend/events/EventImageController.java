@@ -52,7 +52,8 @@ public class EventImageController {
                 authUser.id(),
                 request.getContentType(),
                 request.getSha256Base64(),
-                request.getWriteId()
+                request.getWriteId(),
+                request.getSizeBytes()
         );
 
         return ResponseEntity.ok(new EventImageUploadUrlResponse(
@@ -89,7 +90,8 @@ public class EventImageController {
                 authUser.id(),
                 request.getObjectKey(),
                 request.getWriteId(),
-                request.getSha256Base64()
+                request.getSha256Base64(),
+                request.getSizeBytes()
         );
 
         return ResponseEntity.ok(image);
