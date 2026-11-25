@@ -1,9 +1,7 @@
 import { Component, EventEmitter, inject, Input, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { EventsService } from '../../services/events/events';
-import { calculateSha256Base64 } from '../../utils/crypto';
+import { EventsService, ImageUploadError } from '../../services/events/events';
 import { ToastService } from '../../services/toast/toast';
-import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-image-uploader',
@@ -15,7 +13,6 @@ import { HttpClient } from '@angular/common/http';
 export class ImageUploaderComponent {
   private readonly eventsService = inject(EventsService);
   private readonly toast = inject(ToastService);
-  private readonly http = inject(HttpClient);
 
   @Input() eventId?: string;
   @Input() currentCoverUrl?: string;
@@ -33,7 +30,7 @@ export class ImageUploaderComponent {
   }
 
   async onFileSelected(event: any) {
-    const file = event.target.files[0];
+    const file: File | undefined = event.target.files[0];
     if (!file) return;
 
     // Validate type
@@ -63,69 +60,24 @@ export class ImageUploaderComponent {
     }
 
     // Otherwise, execute R2 upload flow immediately
-    await this.uploadFile(file, this.eventId);
+    this.uploadFile(file, this.eventId);
   }
 
-  async uploadFile(file: File, eventId: string) {
+  uploadFile(file: File, eventId: string) {
     this.uploading.set(true);
-    try {
-      const sha256Base64 = await calculateSha256Base64(file);
-      const writeId = crypto.randomUUID();
-      const sizeBytes = file.size;
-      const contentType = file.type;
-
-      // 1. Get pre-signed URL
-      this.eventsService.getUploadUrl(eventId, {
-        contentType,
-        sha256Base64,
-        writeId,
-        sizeBytes
-      }).subscribe({
-        next: (urlRes) => {
-          // 2. Direct PUT to R2 pre-signed URL using HttpClient (not Angular EventsService)
-          this.http.put(urlRes.uploadUrl, file, {
-            headers: { 'Content-Type': contentType }
-          }).subscribe({
-            next: () => {
-              // 3. Confirm upload
-              this.eventsService.confirmUploadImage(eventId, {
-                objectKey: urlRes.objectKey,
-                writeId,
-                sha256Base64,
-                sizeBytes
-              }).subscribe({
-                next: () => {
-                  this.uploading.set(false);
-                  this.previewUrl.set(urlRes.publicUrl);
-                  this.imageUploaded.emit(urlRes.publicUrl);
-                  this.toast.show('Imagem de capa enviada com sucesso!');
-                },
-                error: (err) => {
-                  this.uploading.set(false);
-                  this.toast.show('Erro ao confirmar upload da imagem.');
-                  console.error(err);
-                }
-              });
-            },
-            error: (err) => {
-              this.uploading.set(false);
-              this.toast.show('Erro ao enviar arquivo para o armazenamento.');
-              console.error(err);
-            }
-          });
-        },
-        error: (err) => {
-          this.uploading.set(false);
-          this.toast.show('Erro ao obter URL de upload.');
-          console.error(err);
-        }
-      });
-
-    } catch (e) {
-      this.uploading.set(false);
-      this.toast.show('Erro ao processar imagem.');
-      console.error(e);
-    }
+    this.eventsService.uploadEventImage(eventId, file).subscribe({
+      next: (publicUrl) => {
+        this.uploading.set(false);
+        this.previewUrl.set(publicUrl);
+        this.imageUploaded.emit(publicUrl);
+        this.toast.show('Imagem de capa enviada com sucesso!');
+      },
+      error: (error) => {
+        this.uploading.set(false);
+        this.toast.show(error instanceof ImageUploadError ? error.message : 'Erro ao processar imagem.');
+        this.logUploadError(error);
+      }
+    });
   }
 
   removeImage() {
@@ -136,14 +88,23 @@ export class ImageUploaderComponent {
           this.imageRemoved.emit();
           this.toast.show('Imagem de capa removida.');
         },
-        error: (err) => {
+        error: (error) => {
           this.toast.show('Erro ao remover imagem.');
-          console.error(err);
+          this.logUploadError(error);
         }
       });
     } else {
       this.previewUrl.set(null);
       this.imageRemoved.emit();
+    }
+  }
+
+  // Loga apenas a etapa/status: o HttpErrorResponse carrega a URL pré-assinada completa.
+  private logUploadError(error: unknown) {
+    if (error instanceof ImageUploadError) {
+      console.error('Falha no upload da imagem', { stage: error.stage, status: error.status });
+    } else {
+      console.error('Falha ao processar a imagem', error instanceof Error ? error.message : error);
     }
   }
 }

@@ -5,7 +5,7 @@ import { Location } from '@angular/common';
 import type { Event } from '../../../model/event.model';
 import { MenuSideBarComponent } from '../../../components/menu-side-bar/menu-side-bar';
 import { concatMap, from, tap, toArray } from 'rxjs';
-import { EventsService } from '../../../services/events/events';
+import { EventsService, ImageUploadError } from '../../../services/events/events';
 import type { TicketLotRequest } from '../../../model/ticket-lot.model';
 import { ToastService } from '../../../services/toast/toast';
 
@@ -158,70 +158,29 @@ export class CreateLotsComponents {
     });
   }
 
-  private async uploadCoverImage(eventId: string) {
-    if (!this.pendingCoverFile) {
+  private uploadCoverImage(eventId: string) {
+    const file = this.pendingCoverFile;
+    if (!file) {
       void this.router.navigate(['/events']);
       return;
     }
-    
-    try {
-      // Import the crypto utility dynamically
-      const { calculateSha256Base64 } = await import('../../../utils/crypto');
-      const sha256Base64 = await calculateSha256Base64(this.pendingCoverFile);
-      const writeId = crypto.randomUUID();
-      const sizeBytes = this.pendingCoverFile.size;
-      const contentType = this.pendingCoverFile.type;
 
-      // 1. Get pre-signed URL
-      this.eventsService.getUploadUrl(eventId, {
-        contentType,
-        sha256Base64,
-        writeId,
-        sizeBytes
-      }).subscribe({
-        next: (urlRes) => {
-          // 2. Direct PUT to R2 pre-signed URL
-          this.eventsService.httpClient.put(urlRes.uploadUrl, this.pendingCoverFile, {
-            headers: { 'Content-Type': contentType }
-          }).subscribe({
-            next: () => {
-              // 3. Confirm upload
-              this.eventsService.confirmUploadImage(eventId, {
-                objectKey: urlRes.objectKey,
-                writeId,
-                sha256Base64,
-                sizeBytes
-              }).subscribe({
-                next: () => {
-                  this.toast.show('Imagem de capa enviada com sucesso!');
-                  void this.router.navigate(['/events']);
-                },
-                error: (err) => {
-                  this.toast.show('Evento criado, mas erro ao confirmar upload da imagem.');
-                  console.error(err);
-                  void this.router.navigate(['/events']);
-                }
-              });
-            },
-            error: (err) => {
-              this.toast.show('Evento criado, mas erro ao enviar arquivo para o armazenamento.');
-              console.error(err);
-              void this.router.navigate(['/events']);
-            }
-          });
-        },
-        error: (err) => {
-          this.toast.show('Evento criado, mas erro ao obter URL de upload.');
-          console.error(err);
-          void this.router.navigate(['/events']);
-        }
-      });
-
-    } catch (e) {
-      this.toast.show('Evento criado, mas erro ao processar imagem.');
-      console.error(e);
-      void this.router.navigate(['/events']);
-    }
+    this.eventsService.uploadEventImage(eventId, file).subscribe({
+      next: () => {
+        this.toast.show('Imagem de capa enviada com sucesso!');
+        void this.router.navigate(['/events']);
+      },
+      // O evento já existe: só o upload falhou, então não recriamos nada.
+      error: (error) => {
+        const motivo = error instanceof ImageUploadError ? error.message : 'erro ao processar a imagem.';
+        this.toast.show(`Evento criado, mas ${motivo}`);
+        console.error('Falha no upload da capa após criar o evento', {
+          stage: error instanceof ImageUploadError ? error.stage : 'unknown',
+          status: error instanceof ImageUploadError ? error.status : undefined,
+        });
+        void this.router.navigate(['/events']);
+      },
+    });
   }
 
   private showError(message: string) {

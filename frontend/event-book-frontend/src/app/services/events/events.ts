@@ -4,8 +4,9 @@ import { environment } from '../../../environments/environment';
 import type { Event, EventListItem, EventResponse } from '../../model/event.model';
 import type { TicketLotRequest, TicketLotResponse } from '../../model/ticket-lot.model';
 import { SessionService } from '../session/session';
-import { catchError, map, of, switchMap, throwError } from 'rxjs';
+import { catchError, from, map, of, switchMap, throwError } from 'rxjs';
 import { PageResponse } from '../../model/page-response.model';
+import { calculateSha256Base64 } from '../../utils/crypto';
 
 interface SimulatedCard {
   id: string;
@@ -18,10 +19,28 @@ export interface EventStaffOption {
   associated: boolean;
 }
 
+/** Etapa do fluxo de upload em que a falha ocorreu. */
+export type ImageUploadStage = 'url' | 'put' | 'confirm';
+
+export class ImageUploadError extends Error {
+  constructor(readonly stage: ImageUploadStage, readonly status: number) {
+    super(ImageUploadError.messageFor(stage, status));
+    this.name = 'ImageUploadError';
+  }
+
+  private static messageFor(stage: ImageUploadStage, status: number): string {
+    if (stage === 'url') return 'Erro ao obter URL de upload.';
+    if (stage === 'confirm') return 'Erro ao confirmar o upload da imagem.';
+    if (status === 0) return 'Falha de rede ou CORS ao enviar a imagem.';
+    if (status === 403) return 'Assinatura do upload inválida ou expirada.';
+    return 'Erro ao enviar a imagem para o armazenamento.';
+  }
+}
+
 import type { EventImageUploadRequest, EventImageUploadUrlResponse, EventImageConfirmRequest } from "../../model/event-image.model";
 @Injectable({ providedIn: 'root' })
 export class EventsService {
-  readonly httpClient = inject(HttpClient); // Exposed for direct R2 PUT
+  private readonly httpClient = inject(HttpClient);
   private readonly session = inject(SessionService);
   private readonly apiUrl = environment.apiUrl;
 
@@ -111,6 +130,46 @@ export class EventsService {
   private authOptions() {
     const token = this.session.user()?.token;
     return { headers: new HttpHeaders(token ? { Authorization: `Bearer ${token}` } : {}) };
+  }
+
+  /**
+   * Fluxo único de upload de capa: URL pré-assinada -> PUT no R2 -> confirmação.
+   * Emite a URL pública da imagem confirmada.
+   */
+  uploadEventImage(eventId: string, file: File) {
+    const contentType = file.type;
+    const sizeBytes = file.size;
+    return from(calculateSha256Base64(file)).pipe(
+      switchMap((sha256Base64) => {
+        const writeId = crypto.randomUUID();
+        return this.getUploadUrl(eventId, { contentType, sha256Base64, writeId, sizeBytes }).pipe(
+          catchError((error: HttpErrorResponse) => throwError(() => new ImageUploadError('url', error.status))),
+          switchMap((urlRes) =>
+            this.putFileToR2(urlRes.uploadUrl, file, contentType, sha256Base64, writeId).pipe(
+              switchMap(() =>
+                this.confirmUploadImage(eventId, { objectKey: urlRes.objectKey, writeId, sha256Base64, sizeBytes }).pipe(
+                  catchError((error: HttpErrorResponse) => throwError(() => new ImageUploadError('confirm', error.status))),
+                  map(() => urlRes.publicUrl),
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  private putFileToR2(uploadUrl: string, file: File, contentType: string, sha256Base64: string, writeId: string) {
+    // Headers assinados na presigned URL (SigV4). Content-Length é definido pelo browser.
+    return this.httpClient
+      .put(uploadUrl, file, {
+        headers: {
+          'Content-Type': contentType,
+          'x-amz-checksum-sha256': sha256Base64,
+          'x-amz-meta-write-id': writeId,
+        },
+      })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new ImageUploadError('put', error.status))));
   }
 
   getUploadUrl(eventId: string, request: EventImageUploadRequest) {
