@@ -7,7 +7,10 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:event-book-frontend": "node dist/event-book-frontend/server/server.mjs"
+    "serve:ssr:event-book-frontend": "node dist/event-book-frontend/server/server.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:wsl": "playwright test --config=playwright.wsl.config.ts",
+    "test:e2e:wsl:headed": "playwright test --config=playwright.wsl.config.ts --headed"
   },
   "private": true,
   "packageManager": "npm@10.9.8",
