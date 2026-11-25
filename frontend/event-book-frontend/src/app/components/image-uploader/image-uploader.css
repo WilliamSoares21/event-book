@@ -1,0 +1,20 @@
+.image-uploader-container {
+  width: 100%;
+}
+
+.image-uploader-container .card {
+  transition: all 0.2s ease;
+}
+
+.image-uploader-container img {
+  max-width: 100%;
+}
+
+.border-dash {
+  border-style: dashed !important;
+}
+
+/* Loading state */
+.btn:disabled {
+  opacity: 0.65;
+}

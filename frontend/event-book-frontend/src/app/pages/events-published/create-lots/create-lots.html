@@ -10,7 +10,7 @@
         </header>
         <main class="side-page-main">
             @for (lot of lots; track lot.id; let index = $index) {
-            <form>
+            <form #lotForm="ngForm">
                 <fieldset [disabled]="isLotLocked(lot.id)">
                 <div class="lot-header">
                     <h3>Lote {{ index + 1 }}</h3>
@@ -26,19 +26,19 @@
                     <div class="col-12 col-md-4">
                          <label [for]="'nome-lote-' + lot.id">Nome do lote</label>
                         <div class="input-group">                    
-                            <input type="text" class="form-control" [id]="'nome-lote-' + lot.id" [name]="'nome-lote-' + lot.id" [(ngModel)]="lot.name" aria-label="Nome do lote"/>
+                            <input type="text" class="form-control" [id]="'nome-lote-' + lot.id" [(ngModel)]="lot.name" [ngModelOptions]="{standalone: true}" aria-label="Nome do lote" required/>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
                          <label [for]="'valor-ingresso-' + lot.id">Valor do ingresso (R$)</label>
                         <div class="input-group">                    
-                            <input type="number" class="form-control" [id]="'valor-ingresso-' + lot.id" [name]="'valor-ingresso-' + lot.id" [(ngModel)]="lot.price" aria-label="Valor do ingresso"/>
+                            <input type="number" class="form-control" [id]="'valor-ingresso-' + lot.id" [(ngModel)]="lot.price" [ngModelOptions]="{standalone: true}" aria-label="Valor do ingresso" required min="0" step="0.01"/>
                         </div>
                     </div>
                      <div class="col-12 col-md-4">
                          <label [for]="'qtd-ingresso-' + lot.id">Quantidade disponível</label>
                         <div class="input-group">                    
-                            <input type="number" class="form-control" [id]="'qtd-ingresso-' + lot.id" [name]="'qtd-ingresso-' + lot.id" [(ngModel)]="lot.quantity" aria-label="Quantidade de ingressos disponíveis"/>
+                            <input type="number" class="form-control" [id]="'qtd-ingresso-' + lot.id" [(ngModel)]="lot.quantity" [ngModelOptions]="{standalone: true}" aria-label="Quantidade de ingressos disponíveis" required min="1"/>
                         </div>
                     </div>
                 </div>
@@ -46,13 +46,13 @@
                     <div class="col-12 col-md-4">
                          <label [for]="'data-inicio-vendas-' + lot.id">Início das vendas</label>
                         <div class="input-group">                    
-                            <input type="date" [attr.min]="today" class="form-control" [id]="'data-inicio-vendas-' + lot.id" [name]="'data-inicio-vendas-' + lot.id" [(ngModel)]="lot.salesStart" aria-label="Data início das vendas"/>
+                            <input type="date" [attr.min]="today" class="form-control" [id]="'data-inicio-vendas-' + lot.id" [(ngModel)]="lot.salesStart" [ngModelOptions]="{standalone: true}" aria-label="Data início das vendas" required/>
                         </div>
                     </div>
                     <div class="col-12 col-md-4">
                          <label [for]="'data-fim-vendas-' + lot.id">Fim das vendas</label>
                         <div class="input-group">                    
-                            <input type="date" [attr.min]="today" class="form-control" [id]="'data-fim-vendas-' + lot.id" [name]="'data-fim-vendas-' + lot.id" [(ngModel)]="lot.salesEnd" aria-label="Data fim das vendas"/>
+                            <input type="date" [attr.min]="today" class="form-control" [id]="'data-fim-vendas-' + lot.id" [(ngModel)]="lot.salesEnd" [ngModelOptions]="{standalone: true}" aria-label="Data fim das vendas" required/>
                         </div>
                     </div>
                 </div>

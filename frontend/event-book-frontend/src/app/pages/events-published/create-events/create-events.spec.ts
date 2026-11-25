@@ -38,7 +38,14 @@ describe('Create event navigation', () => {
     const values = {
       eventName: 'Conferência',
       eventDescription: 'Encontro de tecnologia',
-      eventLocation: 'Fortaleza',
+      venueName: 'Centro de Convenções',
+      street: 'Av. Principal',
+      number: '100',
+      complement: 'Sala 1',
+      neighborhood: 'Centro',
+      city: 'Fortaleza',
+      state: 'CE',
+      zipCode: '60000-000',
       eventStartedDate: '2026-12-10',
       eventStartedTime: '09:30',
       eventEndDate: '2026-12-11',
@@ -71,6 +78,7 @@ describe('Create event navigation', () => {
     expect(TestBed.inject(Router).url).toBe('/events/lots/create');
     const updatedLots = harness.routeDebugElement!.componentInstance as CreateLotsComponents;
     expect(updatedLots.event?.title).toBe('Conferência atualizada');
-    expect(updatedLots.event?.location).toBe(values.eventLocation);
+    expect(updatedLots.event?.city).toBe(values.city);
+    expect(updatedLots.event?.state).toBe(values.state);
   });
 });

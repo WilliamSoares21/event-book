@@ -36,11 +36,13 @@ export class CreateLotsComponents {
   readonly event: Event | undefined;
   private nextLotId = 1;
   lots: EventLot[] = [];
+  private pendingCoverFile: File | null = null;
 
   constructor(location: Location, router: Router) {
     const state = (router.currentNavigation()?.extras.state ?? location.getState()) as
-      { event?: Event } | null;
+      { event?: Event; pendingCoverFile?: File } | null;
     this.event = state?.event;
+    this.pendingCoverFile = state?.pendingCoverFile ?? null;
     this.addLot();
   }
 
@@ -126,7 +128,12 @@ export class CreateLotsComponents {
           this.success.set(true);
           this.message.set('Evento e lotes criados com sucesso!');
           this.toast.show(this.message(), true);
-          void this.router.navigate(['/events']);
+          // Upload cover image if pending
+          if (this.pendingCoverFile && this.createdEventId) {
+            this.uploadCoverImage(this.createdEventId);
+          } else {
+            void this.router.navigate(['/events']);
+          }
         },
         error: () => {
           this.saving.set(false);
@@ -149,6 +156,72 @@ export class CreateLotsComponents {
         this.showError('Não foi possível criar o evento. Verifique os dados e sua sessão e tente novamente.');
       },
     });
+  }
+
+  private async uploadCoverImage(eventId: string) {
+    if (!this.pendingCoverFile) {
+      void this.router.navigate(['/events']);
+      return;
+    }
+    
+    try {
+      // Import the crypto utility dynamically
+      const { calculateSha256Base64 } = await import('../../../utils/crypto');
+      const sha256Base64 = await calculateSha256Base64(this.pendingCoverFile);
+      const writeId = crypto.randomUUID();
+      const sizeBytes = this.pendingCoverFile.size;
+      const contentType = this.pendingCoverFile.type;
+
+      // 1. Get pre-signed URL
+      this.eventsService.getUploadUrl(eventId, {
+        contentType,
+        sha256Base64,
+        writeId,
+        sizeBytes
+      }).subscribe({
+        next: (urlRes) => {
+          // 2. Direct PUT to R2 pre-signed URL
+          this.eventsService.httpClient.put(urlRes.uploadUrl, this.pendingCoverFile, {
+            headers: { 'Content-Type': contentType }
+          }).subscribe({
+            next: () => {
+              // 3. Confirm upload
+              this.eventsService.confirmUploadImage(eventId, {
+                objectKey: urlRes.objectKey,
+                writeId,
+                sha256Base64,
+                sizeBytes
+              }).subscribe({
+                next: () => {
+                  this.toast.show('Imagem de capa enviada com sucesso!');
+                  void this.router.navigate(['/events']);
+                },
+                error: (err) => {
+                  this.toast.show('Evento criado, mas erro ao confirmar upload da imagem.');
+                  console.error(err);
+                  void this.router.navigate(['/events']);
+                }
+              });
+            },
+            error: (err) => {
+              this.toast.show('Evento criado, mas erro ao enviar arquivo para o armazenamento.');
+              console.error(err);
+              void this.router.navigate(['/events']);
+            }
+          });
+        },
+        error: (err) => {
+          this.toast.show('Evento criado, mas erro ao obter URL de upload.');
+          console.error(err);
+          void this.router.navigate(['/events']);
+        }
+      });
+
+    } catch (e) {
+      this.toast.show('Evento criado, mas erro ao processar imagem.');
+      console.error(e);
+      void this.router.navigate(['/events']);
+    }
   }
 
   private showError(message: string) {

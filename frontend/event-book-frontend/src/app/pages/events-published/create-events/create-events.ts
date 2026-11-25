@@ -1,105 +1,183 @@
-import { Component, inject } from '@angular/core';
-import { MenuSideBarComponent } from '../../../components/menu-side-bar/menu-side-bar';
-import { Router, RouterLink } from '@angular/router';
-import { SessionService } from '../../../services/session/session';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Location } from '@angular/common';
+import { Component, inject, signal, effect, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
 import { ToastService } from '../../../services/toast/toast';
-import type { Event } from '../../../model/event.model';
+import { ViaCepService, ViaCepResponse } from '../../../services/viacep/viacep';
+import { UfSelectorComponent } from '../../../components/uf-selector/uf-selector';
+import { ImageUploaderComponent } from '../../../components/image-uploader/image-uploader';
 
 @Component({
-  imports: [MenuSideBarComponent, RouterLink, ReactiveFormsModule],
+  imports: [ReactiveFormsModule, UfSelectorComponent, ImageUploaderComponent],
   selector: 'app-create-events',
   styleUrl: './create-events.css',
   templateUrl: './create-events.html',
 })
 export class CreateEventsComponent {
-  private readonly session = inject(SessionService);
   private readonly toast = inject(ToastService);
-  get today(): string { return this.toLocalFields(new Date()).date; }
-  get roleUser() { return this.session.user()?.role; }
-
+  private readonly fb = inject(FormBuilder);
+  private readonly viaCepService = inject(ViaCepService);
+  readonly router = inject(Router);
+  
+  @ViewChild(ImageUploaderComponent) imageUploader!: ImageUploaderComponent;
+  
   singUpForm: FormGroup;
+  
+  // State for CEP lookup
+  isLoadingCep = signal(false);
+  cepError = signal<string>('');
+  isCepFieldTouched = signal(false);
+  
+  // State controls for UF selector
+  stateControl = new FormControl<string>('', { 
+    nonNullable: true, 
+    validators: [Validators.required, Validators.pattern(/^[A-Z]{2}$/)] 
+  });
+  
+  zipCodeControl = new FormControl<string>('', {
+    nonNullable: true,
+    validators: [Validators.pattern(/^\d{5}-?\d{3}$/)]
+  });
 
-  constructor(private router: Router, private fb: FormBuilder, location: Location) {
+  // Pending file to upload after event creation
+  private pendingCoverFile: File | null = null;
+
+  constructor() {
     this.singUpForm = this.fb.group({
-      eventName: [''],
+      eventName: ['', Validators.required],
       eventDescription: [''],
-      eventStartedDate: [''],
-      eventEndDate: [''],
-      eventStartedTime: [''],
-      eventEndTime: [''],
-      venueName: [''],
-      street: [''],
+      eventStartedDate: ['', Validators.required],
+      eventStartedTime: ['', Validators.required],
+      eventEndDate: ['', Validators.required],
+      eventEndTime: ['', Validators.required],
+      venueName: ['', Validators.required],
+      street: ['', Validators.required],
       number: [''],
       complement: [''],
-      neighborhood: [''],
-      city: [''],
-      state: [''],
-      zipCode: ['']
+      neighborhood: ['', Validators.required],
+      city: ['', Validators.required],
+      state: this.stateControl,
+      zipCode: this.zipCodeControl
     });
+    
+    // Effect to watch for CEP changes and trigger ViaCEP lookup
+    effect(() => {
+      const zipCode = this.zipCodeControl.value;
+      const cleanCep = zipCode.replace(/\D/g, '');
+      
+      // Only lookup if CEP has 8 digits and field was touched
+      if (cleanCep.length === 8 && this.isCepFieldTouched()) {
+        this.lookupCep(cleanCep);
+      }
+    });
+  }
 
-    const state = (this.router.currentNavigation()?.extras.state ?? location.getState()) as
-      { event?: Event } | null;
-    if (state?.event) {
-      const event = state.event;
-      const start = this.toLocalFields(new Date(event.startsAt));
-      const end = this.toLocalFields(new Date(event.endsAt));
-      this.singUpForm.patchValue({
-        eventName: event.title,
-        eventDescription: event.description,
-        eventLocation: event.location,
-        eventStartedDate: start.date,
-        eventStartedTime: start.time,
-        eventEndDate: end.date,
-        eventEndTime: end.time,
+  private toISOLocal(dateStr: string, timeStr: string): string {
+    const d = new Date(dateStr + 'T' + timeStr);
+    return d.toISOString();
+  }
+
+  onCepBlur() {
+    this.isCepFieldTouched.set(true);
+    const zipCode = this.zipCodeControl.value;
+    const cleanCep = zipCode.replace(/\D/g, '');
+    
+    if (cleanCep.length === 8) {
+      this.lookupCep(cleanCep);
+    } else if (zipCode && cleanCep.length > 0) {
+      this.cepError.set('CEP deve ter 8 dígitos (formato: 00000-000 ou 00000000)');
+    }
+  }
+
+  onCepInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    let value = input.value.replace(/\D/g, '');
+    
+    // Format as 00000-000
+    if (value.length > 5) {
+      value = value.slice(0, 5) + '-' + value.slice(5, 8);
+    }
+    
+    this.zipCodeControl.setValue(value, { emitEvent: true });
+  }
+
+  private lookupCep(cep: string) {
+    this.isLoadingCep.set(true);
+    this.cepError.set('');
+    
+    this.viaCepService.getAddressByCep(cep).subscribe({
+      next: (response: ViaCepResponse) => {
+        this.isLoadingCep.set(false);
+        
+        if (response.erro) {
+          this.cepError.set('CEP não encontrado');
+          return;
+        }
+        
+        // Fill address fields with ViaCEP data
+        // Only fill if field is empty or user hasn't manually edited
+        if (!this.singUpForm.get('street')?.value) {
+          this.singUpForm.get('street')?.setValue(response.logradouro);
+        }
+        if (!this.singUpForm.get('neighborhood')?.value) {
+          this.singUpForm.get('neighborhood')?.setValue(response.bairro);
+        }
+        if (!this.singUpForm.get('city')?.value) {
+          this.singUpForm.get('city')?.setValue(response.localidade);
+        }
+        // Always update UF from CEP as it's authoritative
+        this.stateControl.setValue(response.uf.toUpperCase());
+      },
+      error: (error) => {
+        this.isLoadingCep.set(false);
+        this.cepError.set('Erro ao consultar CEP. Verifique sua conexão.');
+        console.error('ViaCEP error:', error);
+      }
+    });
+  }
+
+  onFileSelectedForLater(file: File) {
+    this.pendingCoverFile = file;
+  }
+
+  async createLots() {
+    if (this.singUpForm.invalid) {
+      this.toast.show('Preencha todos os campos obrigatórios corretamente.');
+      Object.keys(this.singUpForm.controls).forEach(key => {
+        this.singUpForm.get(key)?.markAsTouched();
       });
-    }
-  }
-
-  private toLocalFields(date: Date): { date: string; time: string } {
-    if (Number.isNaN(date.getTime())) {
-      return { date: '', time: '' };
-    }
-
-    const pad = (part: number) => String(part).padStart(2, '0');
-    return {
-      date: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
-      time: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
-    };
-  }
-
-  private toDateTime(dateControl: string, timeControl: string): string {
-    const date = this.singUpForm.get(dateControl)?.value;
-    const time = this.singUpForm.get(timeControl)?.value;
-    return date && time ? new Date(`${date}T${time}`).toISOString() : '';
-  }
-
-  createLots() {
-    const { eventStartedDate, eventEndDate } = this.singUpForm.value;
-    const earliestDate = new Date(`${this.today}T00:00:00`);
-    if (new Date(`${eventStartedDate}T00:00:00`) < earliestDate ||
-        new Date(`${eventEndDate}T00:00:00`) < earliestDate) {
-      this.toast.show('As datas do evento devem ser de hoje em diante.');
       return;
     }
 
-    this.toast.dismiss();
+    const { eventStartedDate, eventStartedTime, eventEndDate, eventEndTime } = this.singUpForm.value;
+    const startsAt = this.toISOLocal(eventStartedDate, eventStartedTime);
+    const endsAt = this.toISOLocal(eventEndDate, eventEndTime);
+
+    if (new Date(endsAt) <= new Date(startsAt)) {
+      this.toast.show('Data/hora de término deve ser posterior à de início.');
+      return;
+    }
+
     const event = {
       title: this.singUpForm.get('eventName')?.value,
       description: this.singUpForm.get('eventDescription')?.value,
-      startsAt: this.toDateTime('eventStartedDate', 'eventStartedTime'),
-      endsAt: this.toDateTime('eventEndDate', 'eventEndTime'),
+      startsAt: startsAt,
+      endsAt: endsAt,
       venueName: this.singUpForm.get('venueName')?.value,
       street: this.singUpForm.get('street')?.value,
-      number: this.singUpForm.get('number')?.value,
-      complement: this.singUpForm.get('complement')?.value,
+      number: this.singUpForm.get('number')?.value || null,
+      complement: this.singUpForm.get('complement')?.value || null,
       neighborhood: this.singUpForm.get('neighborhood')?.value,
       city: this.singUpForm.get('city')?.value,
-      state: this.singUpForm.get('state')?.value,
-      zipCode: this.singUpForm.get('zipCode')?.value
+      state: this.stateControl.value.toUpperCase(),
+      zipCode: this.zipCodeControl.value.replace(/\D/g, '') || null
     };
 
-    this.router.navigate(['/events/lots/create'], { state: { event } });
+    // Navigate to lots creation, passing both event and pending cover file
+    this.router.navigate(['/events/lots/create'], { 
+      state: { 
+        event, 
+        pendingCoverFile: this.pendingCoverFile 
+      } 
+    });
   }
 }

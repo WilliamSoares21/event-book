@@ -1,0 +1,70 @@
+.hero-section {
+  background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-bg-secondary) 100%);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.hero-section h1 {
+  color: var(--color-primary-text);
+}
+
+.hero-section .lead {
+  color: var(--color-text-secondary);
+}
+
+.features-section {
+  padding: var(--space-12) 0;
+}
+
+.features-section .card {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+  height: 100%;
+}
+
+.features-section .card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.features-section .card h3 {
+  color: var(--color-primary);
+  font-size: var(--text-lg);
+}
+
+.features-section .card p {
+  color: var(--color-text-secondary);
+  font-size: var(--text-base);
+}
+
+.cta-section {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  padding: var(--space-12) 0;
+}
+
+.cta-section h2 {
+  color: var(--color-text-inverse);
+}
+
+.cta-section .btn-light {
+  background: var(--color-text-inverse);
+  color: var(--color-primary);
+  border: none;
+}
+
+.cta-section .btn-light:hover {
+  background: var(--color-gray-100);
+  color: var(--color-primary-hover);
+}
+
+.cta-section .btn-outline-light {
+  border-color: var(--color-text-inverse);
+  color: var(--color-text-inverse);
+}
+
+.cta-section .btn-outline-light:hover {
+  background: var(--color-text-inverse);
+  color: var(--color-primary);
+}

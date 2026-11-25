@@ -1,15 +1,53 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
   <div class="container">
-    <a class="navbar-brand" routerLink="/">EventBook</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+    <a class="navbar-brand fw-bold" routerLink="/">EventBook</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link" routerLink="/shop-events" routerLinkActive="active">Eventos</a></li>
+      <ul class="navbar-nav ms-auto align-items-center">
+        <li class="nav-item"><a class="nav-link" routerLink="/shop-events" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Explorar</a></li>
         <li class="nav-item"><a class="nav-link" routerLink="/about" routerLinkActive="active">Sobre</a></li>
         <li class="nav-item"><a class="nav-link" routerLink="/contact" routerLinkActive="active">Contato</a></li>
-        <li class="nav-item"><a class="nav-link btn btn-outline-primary" routerLink="/login">Entrar</a></li>
+
+        @if (!session.user()) {
+          <li class="nav-item"><a class="nav-link btn btn-outline-light ms-lg-3 px-3" routerLink="/login">Entrar</a></li>
+        } @else {
+          <li class="nav-item dropdown ms-lg-3">
+            <button #dropdownTrigger class="nav-link dropdown-toggle d-flex align-items-center gap-2 p-0 border-0 bg-transparent text-white" 
+                    type="button" 
+                    data-bs-toggle="dropdown" 
+                    aria-expanded="false"
+                    aria-label="Menu do usuário {{ session.user()?.name }}">
+              <span class="user-avatar">{{ session.user()?.name?.charAt(0).toUpperCase() }}</span>
+              <span class="d-none d-md-inline">{{ session.user()?.name }}</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <div class="dropdown-header px-3 py-2">
+                  <div class="fw-semibold">{{ session.user()?.name }}</div>
+                  <div class="text-muted small">{{ session.user()?.email }}</div>
+                  <div class="badge bg-secondary mt-1">{{ session.user()?.role }}</div>
+                </div>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              @if (session.user()?.role === 'ORGANIZADOR') {
+                <li><a class="dropdown-item" routerLink="/events">Meus Eventos</a></li>
+                <li><a class="dropdown-item" routerLink="/events/create">Criar Evento</a></li>
+              }
+              @if (session.user()?.role === 'COMPRADOR') {
+                <li><a class="dropdown-item" routerLink="/tickets">Meus Ingressos</a></li>
+                <li><a class="dropdown-item" routerLink="/orders">Meus Pedidos</a></li>
+                <li><a class="dropdown-item" routerLink="/my-cards">Meus Cartões</a></li>
+              }
+              @if (session.user()?.role === 'STAFF') {
+                <li><a class="dropdown-item" routerLink="/staff/events">Eventos Atribuídos</a></li>
+              }
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item text-danger" (click)="logout()">Sair</a></li>
+            </ul>
+          </li>
+        }
       </ul>
     </div>
   </div>

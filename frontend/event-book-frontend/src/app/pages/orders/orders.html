@@ -1,41 +1,70 @@
 <section class="side-page">
     <app-menu-side-bar [roleUser]="roleUser"></app-menu-side-bar>
-    <div class="side-page-content">
-        <header class="brand-header">
-            <div class="brand-header-content">
-                <h2>Meus Pedidos</h2>
-                <p>Visualize os pedidos que você realizou e gerencie-os.</p>
-            </div>
+    <div class="side-page-content container-fluid py-4">
+        <header class="mb-4">
+            <h2>Meus Pedidos</h2>
+            <p class="text-muted">Acompanhe seus pedidos, status de pagamento e gerencie cancelamentos permitidos.</p>
         </header>
-        <main class="side-page-main col-12">
+
+        <main>
             @if (loading()) {
-                <p role="status">Carregando seus pedidos...</p>
+                <div class="d-flex justify-content-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                </div>
             } @else if (error()) {
-                <p role="alert">{{ error() }}</p>
+                <div class="alert alert-danger" role="alert">{{ error() }}</div>
             } @else if (!orders().length) {
-                <p>Você ainda não realizou pedidos.</p>
-            }
-            @for (order of orders(); track order.id) {
-            <section class="card" style="max-width: 300px">
-                <div class="card-body">
-                    <h4 class="card-title">Pedido {{ order.id }}</h4>
-                    <p class="card-text">Evento ID: {{ order.ticketLotId }}</p>
-                    <p class="card-text">Quantidade: {{ order.quantity }}</p>
-                    <p class="card-text">Valor unitário: {{ order.unitPriceSnapshot | currency:'BRL':'code':'symbol':'1.2-2' }}</p>
-                    <p class="card-text">Valor total: {{ order.totalPrice | currency:'BRL':'code':'symbol':'1.2-2' }}</p>
-                    <p class="card-text">Status: {{ statusLabels[order.status] }}</p>
-                    <p class="card-text">Criado em: {{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</p>
-                    @if (order.expiresAt) {
-                        <p class="card-text">Expira em: {{ order.expiresAt | date:'dd/MM/yyyy HH:mm' }}</p>
-                    }
-                    @if (canCancel(order) && !isCancelling(order.id)) {
-                        <button class="btn-solid theme-danger" (click)="onCancel(order.id)">Cancelar Pedido</button>
-                    }
-                    @if (isCancelling(order.id)) {
-                        <p class="card-text">Cancelando...</p>
+                <div class="text-center py-5 bg-light rounded shadow-sm">
+                    <h4>Você ainda não realizou nenhum pedido.</h4>
+                    <p class="text-muted">Explore os eventos disponíveis e garanta seus ingressos!</p>
+                    <a routerLink="/shop-events" class="btn btn-primary mt-2">Explorar Eventos</a>
+                </div>
+            } @else {
+                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+                    @for (order of orders(); track order.id) {
+                        <div class="col">
+                            <div class="card h-100 shadow-sm border-0">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                                    <span class="badge" [ngClass]="{
+                                        'bg-warning text-dark': order.status === 'PENDING',
+                                        'bg-success': order.status === 'PAID',
+                                        'bg-danger': order.status === 'CANCELLED',
+                                        'bg-secondary': order.status === 'EXPIRED'
+                                    }">{{ statusLabels[order.status] }}</span>
+                                    <small class="text-muted">ID: {{ order.id | slice:0:8 }}...</small>
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title mb-3">Lote ID: {{ order.ticketLotId | slice:0:8 }}...</h5>
+                                    <ul class="list-unstyled mb-3 text-muted small">
+                                        <li class="mb-1"><strong>Quantidade:</strong> {{ order.quantity }}</li>
+                                        <li class="mb-1"><strong>Valor Unitário:</strong> {{ order.unitPriceSnapshot | currency:'BRL':'symbol':'1.2-2' }}</li>
+                                        <li class="mb-1"><strong>Total:</strong> <span class="text-dark fw-bold fs-6">{{ order.totalPrice | currency:'BRL':'symbol':'1.2-2' }}</span></li>
+                                        <li class="mb-1"><strong>Criado em:</strong> {{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}</li>
+                                        @if (order.expiresAt) {
+                                            <li class="text-danger"><strong>Expira em:</strong> {{ order.expiresAt | date:'dd/MM/yyyy HH:mm' }}</li>
+                                        }
+                                    </ul>
+                                </div>
+                                <div class="card-footer bg-white border-top-0 pb-3">
+                                    @if (canCancel(order)) {
+                                        <button class="btn btn-outline-danger w-100 btn-sm" 
+                                                [disabled]="isCancelling(order.id)" 
+                                                (click)="onCancel(order.id)">
+                                            @if (isCancelling(order.id)) {
+                                                <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                                Cancelando...
+                                            } @else {
+                                                Cancelar Pedido
+                                            }
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
                     }
                 </div>
-            </section>
             }
         </main>
     </div>

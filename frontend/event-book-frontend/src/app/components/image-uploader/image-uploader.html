@@ -1,4 +1,37 @@
-<div class="image-uploader">
-  <input type="file" (change)="onFileSelected($event)" accept="image/webp,image/jpeg,image/png">
-  @if (uploading()) { <p>Processando...</p> }
+<div class="image-uploader-container">
+  <label class="form-label fw-semibold">Imagem de Capa do Evento</label>
+  
+  <div class="card bg-light border-0 p-3 text-center">
+    @if (previewUrl()) {
+      <div class="position-relative mb-3 d-inline-block mx-auto">
+        <img [src]="previewUrl()" alt="Preview da capa" class="img-fluid rounded shadow-sm" style="max-height: 200px; object-fit: cover; width: 100%;">
+        <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2 rounded-circle" (click)="removeImage()" title="Remover imagem" aria-label="Remover imagem">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    } @else {
+      <div class="py-4 text-muted border border-dash rounded mb-3 bg-white">
+        <i class="bi bi-cloud-arrow-up display-4 mb-2 d-block text-primary"></i>
+        <span>Nenhuma imagem selecionada</span>
+        <div class="small text-muted mt-1">JPEG, PNG ou WebP (Máx. 5 MB)</div>
+      </div>
+    }
+
+    <div class="d-flex justify-content-center gap-2">
+      <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/webp,image/jpeg,image/png" class="d-none" id="coverImageFile">
+      <label for="coverImageFile" class="btn btn-outline-primary btn-sm" [class.disabled]="uploading()">
+        @if (uploading()) {
+          <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+          Enviando...
+        } @else {
+          <i class="bi bi-upload me-1"></i> Escolher Imagem
+        }
+      </label>
+      @if (previewUrl()) {
+        <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeImage()" [disabled]="uploading()">
+          Remover
+        </button>
+      }
+    </div>
+  </div>
 </div>

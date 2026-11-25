@@ -1,12 +1,18 @@
 <main class="shop-events">
-  <header class="catalog-banner">
-    <div class="banner-content">
-      <div class="catalog-brand">
-        <img src="assets/logo.png" width="36" height="36" alt="">
-        <span>EventBook</span>
+  <header class="catalog-banner bg-dark text-white p-4">
+    <div class="container">
+      <h1>Explore Eventos</h1>
+      <div class="row g-2 mt-3">
+        <div class="col-md-4">
+          <input type="text" class="form-control" placeholder="Pesquisar por nome..." (input)="onFilterChange($event)">
+        </div>
+        <div class="col-md-3">
+          <input type="text" class="form-control" placeholder="Cidade..." (input)="onCityChange($event)">
+        </div>
+        <div class="col-md-2">
+          <input type="text" class="form-control" placeholder="UF..." (input)="onStateChange($event)" maxlength="2">
+        </div>
       </div>
-      <h1>Explore os eventos</h1>
-      <p>Encontre seu próximo evento e confira datas, locais e detalhes.</p>
     </div>
   </header>
 

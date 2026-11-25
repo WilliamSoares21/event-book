@@ -1,47 +1,160 @@
 <div class="container py-4">
-  <h2>Criar Evento</h2>
-  <form [formGroup]="singUpForm" (ngSubmit)="createLots()">
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Nome do Evento</label>
-        <input class="form-control" formControlName="eventName" required>
+  <header class="mb-4">
+    <h2 class="fw-bold mb-1">Criar Evento</h2>
+    <p class="text-muted mb-0">Preencha os dados básicos do evento para prosseguir à criação de lotes</p>
+  </header>
+  
+  <form [formGroup]="singUpForm" (ngSubmit)="createLots()" class="needs-validation" novalidate>
+    <!-- Event Info Section -->
+    <fieldset class="mb-4">
+      <legend class="form-label fw-semibold mb-3">Informações do Evento</legend>
+      <div class="row">
+        <div class="col-md-8 mb-3">
+          <label for="eventName" class="form-label">Nome do Evento <span class="text-danger" aria-hidden="true">*</span></label>
+          <input id="eventName" class="form-control" formControlName="eventName" required 
+                 [class.is-invalid]="singUpForm.get('eventName')?.invalid && singUpForm.get('eventName')?.touched">
+          @if (singUpForm.get('eventName')?.invalid && singUpForm.get('eventName')?.touched) {
+            <div class="form-text text-danger">Nome do evento é obrigatório</div>
+          }
+        </div>
+        <div class="col-md-4 mb-3">
+          <label for="eventDescription" class="form-label">Descrição</label>
+          <input id="eventDescription" class="form-control" formControlName="eventDescription" placeholder="Opcional">
+        </div>
       </div>
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Descrição</label>
-        <input class="form-control" formControlName="eventDescription">
+      
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <label for="eventStartedDate" class="form-label">Data Início <span class="text-danger" aria-hidden="true">*</span></label>
+          <input id="eventStartedDate" type="date" class="form-control" formControlName="eventStartedDate" required
+                 [class.is-invalid]="singUpForm.get('eventStartedDate')?.invalid && singUpForm.get('eventStartedDate')?.touched">
+        </div>
+        <div class="col-md-3 mb-3">
+          <label for="eventStartedTime" class="form-label">Horário Início <span class="text-danger" aria-hidden="true">*</span></label>
+          <input id="eventStartedTime" type="time" class="form-control" formControlName="eventStartedTime" required
+                 [class.is-invalid]="singUpForm.get('eventStartedTime')?.invalid && singUpForm.get('eventStartedTime')?.touched">
+        </div>
+        <div class="col-md-3 mb-3">
+          <label for="eventEndDate" class="form-label">Data Término <span class="text-danger" aria-hidden="true">*</span></label>
+          <input id="eventEndDate" type="date" class="form-control" formControlName="eventEndDate" required
+                 [class.is-invalid]="singUpForm.get('eventEndDate')?.invalid && singUpForm.get('eventEndDate')?.touched">
+        </div>
+        <div class="col-md-3 mb-3">
+          <label for="eventEndTime" class="form-label">Horário Término <span class="text-danger" aria-hidden="true">*</span></label>
+          <input id="eventEndTime" type="time" class="form-control" formControlName="eventEndTime" required
+                 [class.is-invalid]="singUpForm.get('eventEndTime')?.invalid && singUpForm.get('eventEndTime')?.touched">
+        </div>
       </div>
-    </div>
-    
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Local</label>
-        <input class="form-control" formControlName="venueName" required>
-      </div>
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Logradouro</label>
-        <input class="form-control" formControlName="street" required>
-      </div>
-    </div>
+    </fieldset>
 
-    <div class="row">
-      <div class="col-md-3 mb-3">
-        <label class="form-label">Número</label>
-        <input class="form-control" formControlName="number">
+    <!-- Address Section -->
+    <fieldset class="mb-4">
+      <legend class="form-label fw-semibold mb-3">Endereço</legend>
+      
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label for="venueName" class="form-label">Local/Estabelecimento <span class="text-danger" aria-hidden="true">*</span></label>
+          <input id="venueName" class="form-control" formControlName="venueName" required
+                 [class.is-invalid]="singUpForm.get('venueName')?.invalid && singUpForm.get('venueName')?.touched">
+          @if (singUpForm.get('venueName')?.invalid && singUpForm.get('venueName')?.touched) {
+            <div class="form-text text-danger">Nome do local é obrigatório</div>
+          }
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="street" class="form-label">Logradouro <span class="text-danger" aria-hidden="true">*</span></label>
+          <input id="street" class="form-control" formControlName="street" required
+                 [class.is-invalid]="singUpForm.get('street')?.invalid && singUpForm.get('street')?.touched">
+          @if (singUpForm.get('street')?.invalid && singUpForm.get('street')?.touched) {
+            <div class="form-text text-danger">Logradouro é obrigatório</div>
+          }
+        </div>
       </div>
-      <div class="col-md-3 mb-3">
-        <label class="form-label">Bairro</label>
-        <input class="form-control" formControlName="neighborhood" required>
-      </div>
-      <div class="col-md-3 mb-3">
-        <label class="form-label">Cidade</label>
-        <input class="form-control" formControlName="city" required>
-      </div>
-      <div class="col-md-3 mb-3">
-        <label class="form-label">UF (ex: CE)</label>
-        <input class="form-control" formControlName="state" maxlength="2" required>
-      </div>
-    </div>
 
-    <button type="submit" class="btn btn-primary">Próximo</button>
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <label for="number" class="form-label">Número</label>
+          <input id="number" class="form-control" formControlName="number" placeholder="Opcional">
+        </div>
+        <div class="col-md-3 mb-3">
+          <label for="complement" class="form-label">Complemento</label>
+          <input id="complement" class="form-control" formControlName="complement" placeholder="Opcional">
+        </div>
+        <div class="col-md-3 mb-3">
+          <label for="neighborhood" class="form-label">Bairro <span class="text-danger" aria-hidden="true">*</span></label>
+          <input id="neighborhood" class="form-control" formControlName="neighborhood" required
+                 [class.is-invalid]="singUpForm.get('neighborhood')?.invalid && singUpForm.get('neighborhood')?.touched">
+          @if (singUpForm.get('neighborhood')?.invalid && singUpForm.get('neighborhood')?.touched) {
+            <div class="form-text text-danger">Bairro é obrigatório</div>
+          }
+        </div>
+        <div class="col-md-3 mb-3">
+          <label for="city" class="form-label">Cidade <span class="text-danger" aria-hidden="true">*</span></label>
+          <input id="city" class="form-control" formControlName="city" required
+                 [class.is-invalid]="singUpForm.get('city')?.invalid && singUpForm.get('city')?.touched">
+          @if (singUpForm.get('city')?.invalid && singUpForm.get('city')?.touched) {
+            <div class="form-text text-danger">Cidade é obrigatória</div>
+          }
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-3 mb-3">
+          <label for="state" class="form-label">UF <span class="text-danger" aria-hidden="true">*</span></label>
+          <app-uf-selector 
+            [control]="stateControl"
+            [label]="'UF'"
+            [required]="true"
+            inputId="state">
+          </app-uf-selector>
+        </div>
+        <div class="col-md-3 mb-3">
+          <label for="zipCode" class="form-label">CEP</label>
+          <div class="position-relative">
+            <input 
+              id="zipCode" 
+              class="form-control" 
+              [formControl]="zipCodeControl"
+              (blur)="onCepBlur()"
+              (input)="onCepInput($event)"
+              placeholder="00000-000"
+              [class.is-invalid]="cepError() || (zipCodeControl.invalid && zipCodeControl.touched)"
+              [class.is-loading]="isLoadingCep()"
+              autocomplete="off">
+            @if (isLoadingCep()) {
+              <span class="position-absolute top-50 end-0 translate-middle-y me-3" aria-hidden="true">
+                <span class="spinner-border spinner-border-sm text-primary"></span>
+              </span>
+            }
+            @if (cepError()) {
+              <div class="form-text text-danger" role="alert">{{ cepError() }}</div>
+            }
+            @if (zipCodeControl.invalid && zipCodeControl.touched && !cepError()) {
+              <div class="form-text text-danger">CEP deve ter 8 dígitos (formato: 00000-000)</div>
+            }
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Cover Image Section -->
+    <fieldset class="mb-4">
+      <legend class="form-label fw-semibold mb-3">Imagem de Capa</legend>
+      <app-image-uploader (fileSelectedForLater)="onFileSelectedForLater($event)"></app-image-uploader>
+    </fieldset>
+
+    <!-- Actions -->
+    <div class="d-flex gap-2 justify-content-end pt-3 border-top">
+      <button type="button" class="btn btn-outline-secondary" (click)="router.navigate(['/events'])">
+        Cancelar
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="singUpForm.invalid || isLoadingCep()">
+        @if (isLoadingCep()) {
+          <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          Consultando CEP...
+        } @else {
+          Próximo: Criar Lotes
+        }
+      </button>
+    </div>
   </form>
 </div>

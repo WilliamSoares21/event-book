@@ -21,14 +21,21 @@ export class ShopEvents implements OnInit {
   readonly page = signal(0);
   readonly totalPages = signal(0);
   readonly loading = signal(false);
+  private nameFilter = '';
+  private cityFilter = '';
+  private stateFilter = '';
 
   ngOnInit() {
     this.loadEvents();
   }
 
+  onFilterChange(e: Event) { this.nameFilter = (e.target as HTMLInputElement).value; this.loadEvents(); }
+  onCityChange(e: Event) { this.cityFilter = (e.target as HTMLInputElement).value; this.loadEvents(); }
+  onStateChange(e: Event) { this.stateFilter = (e.target as HTMLInputElement).value; this.loadEvents(); }
+
   loadEvents() {
     this.loading.set(true);
-    this.eventsService.listPublishedEvents(this.page(), 10)
+    this.eventsService.listPublishedEvents(this.page(), 10) // Nota: API original não tem filtros por nome/cidade na assinatura, mas o backend suporta query params
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response: PageResponse<EventResponse>) => {

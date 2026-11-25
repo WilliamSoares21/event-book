@@ -1,0 +1,48 @@
+.card-hover {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card-hover:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-2px);
+}
+
+.status-active {
+  background-color: #198754 !important;
+  color: white;
+}
+
+.status-inactive {
+  background-color: #6c757d !important;
+  color: white;
+}
+
+.status-blocked {
+  background-color: #dc3545 !important;
+  color: white;
+}
+
+.card-header {
+  padding-top: 1rem !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.card-body {
+  padding: 1rem !important;
+}
+
+/* Loading state for buttons */
+.btn:disabled {
+  opacity: 0.65;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card-header {
+    padding-top: 0.75rem !important;
+  }
+
+  .card-body {
+    padding: 0.75rem !important;
+  }
+}

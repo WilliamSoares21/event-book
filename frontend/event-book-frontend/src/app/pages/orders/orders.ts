@@ -1,13 +1,14 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgClass, SlicePipe } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
 import { MenuSideBarComponent } from '../../components/menu-side-bar/menu-side-bar';
 import { SessionService } from '../../services/session/session';
 import { OrdersService } from '../../services/orders/orders';
 import { OrderResponse, orderStatusLabels } from '../../model/order.model';
 
 @Component({
-  imports: [MenuSideBarComponent, CurrencyPipe, DatePipe],
+  imports: [MenuSideBarComponent, CurrencyPipe, DatePipe, NgClass, SlicePipe, RouterLink],
   selector: 'app-orders',
   styleUrl: './orders.css',
   templateUrl: './orders.html',

@@ -1,33 +1,47 @@
-<div class="hero-section text-center py-5 bg-light border-bottom">
+<div class="hero-section text-center py-5">
   <div class="container py-5">
-    <h1 class="display-3 fw-bold text-primary">Bem-vindo ao EventBook</h1>
-    <p class="lead text-muted my-4">Sua plataforma definitiva para gerenciar ingressos, descobrir eventos e conectar organizadores e participantes com segurança.</p>
+    <h1 class="display-3 fw-bold mb-3">Bem-vindo ao EventBook</h1>
+    <p class="lead my-4 mx-auto" style="max-width: 600px;">Sua plataforma definitiva para gerenciar ingressos, descobrir eventos e conectar organizadores e participantes com segurança.</p>
     <div class="d-flex justify-content-center gap-3">
-      <a routerLink="/shop-events" class="btn btn-primary btn-lg">Explorar Eventos</a>
-      <a routerLink="/login" class="btn btn-outline-dark btn-lg">Acessar Conta</a>
+      <a routerLink="/shop-events" class="btn btn-primary btn-lg px-4">Explorar Eventos</a>
+      <a routerLink="/login" class="btn btn-outline-secondary btn-lg px-4">Acessar Conta</a>
     </div>
   </div>
 </div>
 
-<div class="container py-5">
-  <div class="row text-center">
-    <div class="col-md-4 mb-4">
-      <div class="card h-100 shadow-sm p-3">
+<div class="container features-section">
+  <div class="row text-center g-4">
+    <div class="col-md-4">
+      <div class="card h-100 p-4">
+        <div class="mb-3 text-primary"><i class="bi bi-search fs-1"></i></div>
         <h3>Descoberta Fácil</h3>
-        <p class="text-muted">Encontre eventos incríveis na sua região ou online, com poucos cliques.</p>
+        <p class="mb-0">Encontre eventos incríveis na sua região ou online, com poucos cliques e filtros avançados.</p>
       </div>
     </div>
-    <div class="col-md-4 mb-4">
-      <div class="card h-100 shadow-sm p-3">
+    <div class="col-md-4">
+      <div class="card h-100 p-4">
+        <div class="mb-3 text-primary"><i class="bi bi-calendar-check fs-1"></i></div>
         <h3>Gestão Completa</h3>
-        <p class="text-muted">Organizadores contam com ferramentas de lotes, check-in e relatórios de ocupação.</p>
+        <p class="mb-0">Organizadores contam com ferramentas de criação de lotes, check-in e relatórios de ocupação.</p>
       </div>
     </div>
-    <div class="col-md-4 mb-4">
-      <div class="card h-100 shadow-sm p-3">
+    <div class="col-md-4">
+      <div class="card h-100 p-4">
+        <div class="mb-3 text-primary"><i class="bi bi-shield-check fs-1"></i></div>
         <h3>Segurança e Confiabilidade</h3>
-        <p class="text-muted">Autenticação segura via JWT e controle rigoroso de bilheteria.</p>
+        <p class="mb-0">Autenticação segura via JWT, perfis isolados e controle rigoroso de bilheteria e ingressos.</p>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="cta-section text-center">
+  <div class="container">
+    <h2 class="fw-bold mb-3">Pronto para começar?</h2>
+    <p class="lead mb-4 mx-auto" style="max-width: 500px; color: rgba(255,255,255,0.85);">Crie sua conta ou explore os eventos disponíveis agora mesmo.</p>
+    <div class="d-flex justify-content-center gap-3">
+      <a routerLink="/shop-events" class="btn btn-light btn-lg px-4">Ver Eventos</a>
+      <a routerLink="/login" class="btn btn-outline-light btn-lg px-4">Cadastrar-se</a>
     </div>
   </div>
 </div>

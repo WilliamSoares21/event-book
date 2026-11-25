@@ -3,7 +3,14 @@ export interface Event {
   description: string;
   startsAt: string;
   endsAt: string;
-  location: string;
+  venueName: string;
+  street: string;
+  number?: string;
+  complement?: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  zipCode?: string;
 }
 
 export type EventListItem = Pick<EventResponse, 'id' | 'title' | 'startsAt' | 'location' | 'coverImageUrl'>;
@@ -13,6 +20,7 @@ export interface EventResponse extends Event {
   organizerId: string;
   status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED' | 'FINISHED';
   version: number;
+  location: string;
   coverImageUrl?: string;
   availableTicketLots?: AvailableTicketLot[];
 }

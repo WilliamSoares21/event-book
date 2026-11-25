@@ -17,6 +17,7 @@ import { OrdersComponent } from './pages/orders/orders';
 import { LandingComponent } from './pages/landing/landing/landing';
 import { AboutComponent } from './pages/about/about/about';
 import { ContactComponent } from './pages/contact/contact/contact';
+import { MyCardsComponent } from './pages/my-cards/my-cards';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -37,4 +38,5 @@ export const routes: Routes = [
   { path: 'tickets', component: TicketsComponent, canActivate: [AcessoGuard] },
   { path: 'tickets/:id', component: DetailsTickets, canActivate: [AcessoGuard] },
   { path: 'orders', component: OrdersComponent, canActivate: [AcessoGuard], data: { allowedRoles: ['COMPRADOR'] } },
+  { path: 'my-cards', component: MyCardsComponent, canActivate: [AcessoGuard] },
 ];
