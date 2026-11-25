@@ -53,18 +53,18 @@ class EventUpdateDTOJacksonTest {
     }
 
     @Test
-    void numberComplementPreservamEmptyString() throws Exception {
-        // number e complement SEM deserializador; "" chega como "", não null
+    void numberComplementEmptyStringVirouNull() throws Exception {
+        // number e complement COM EmptyStringAsNullDeserializer; "" vira null
         EventUpdateDTO dto = mapper.readValue("{\"number\": \"\", \"complement\": \"\"}", EventUpdateDTO.class);
-        assertThat(dto.getNumber()).isEqualTo("");
-        assertThat(dto.getComplement()).isEqualTo("");
+        assertThat(dto.getNumber()).isNull();
+        assertThat(dto.getComplement()).isNull();
     }
 
     @Test
-    void numberComplementEspacosPreservados() throws Exception {
+    void numberComplementEspacosViramNull() throws Exception {
         EventUpdateDTO dto = mapper.readValue("{\"number\": \"   \", \"complement\": \"  \"}", EventUpdateDTO.class);
-        assertThat(dto.getNumber()).isEqualTo("   ");
-        assertThat(dto.getComplement()).isEqualTo("  ");
+        assertThat(dto.getNumber()).isNull();
+        assertThat(dto.getComplement()).isNull();
     }
 
     @Test

@@ -101,15 +101,21 @@ public class EventService {
     // necessários.
     var organizer = userRepository.getReferenceById(organizerId);
 
+    // Constrói o campo location a partir dos campos estruturados de endereço
+    String location = buildLocationFromStructuredAddress(dto);
+
     Event event = Event.builder()
         .title(dto.getTitle().trim())
         .description(normalizeOptionalText(dto.getDescription()))
         .startsAt(dto.getStartsAt())
         .endsAt(dto.getEndsAt())
-        .location(normalizeOptionalText(dto.getLocation()))
+        .location(location)
         .organizer(organizer)
         .status(EventStatus.DRAFT) // Todo evento nasce como rascunho e precisa ser publicado posteriormente.
         .build();
+
+    // Copia os campos estruturados de endereço para a entidade
+    copyStructuredAddressToEntity(dto, event);
 
     return toResponseDTO(eventRepository.save(event));
   }
@@ -261,6 +267,54 @@ public class EventService {
     // zipCode: null/omitido não altera; "" limpa (null); valor válido substitui.
     if (dto.getZipCode() != null || dto.isZipCodeCleared()) {
       event.setZipCode(dto.getZipCode());
+    }
+
+    // Atualiza campos estruturados de endereço se fornecidos e reconstrói location
+    boolean addressFieldsUpdated = false;
+    if (dto.getVenueName() != null) {
+      event.setVenueName(normalizeOptionalText(dto.getVenueName()));
+      addressFieldsUpdated = true;
+    }
+    if (dto.getStreet() != null) {
+      event.setStreet(normalizeOptionalText(dto.getStreet()));
+      addressFieldsUpdated = true;
+    }
+    if (dto.getNumber() != null) {
+      event.setNumber(normalizeOptionalText(dto.getNumber()));
+      addressFieldsUpdated = true;
+    }
+    if (dto.getComplement() != null) {
+      event.setComplement(normalizeOptionalText(dto.getComplement()));
+      addressFieldsUpdated = true;
+    }
+    if (dto.getNeighborhood() != null) {
+      event.setNeighborhood(normalizeOptionalText(dto.getNeighborhood()));
+      addressFieldsUpdated = true;
+    }
+    if (dto.getCity() != null) {
+      event.setCity(normalizeOptionalText(dto.getCity()));
+      addressFieldsUpdated = true;
+    }
+    if (dto.getState() != null) {
+      event.setState(normalizeOptionalText(dto.getState()));
+      addressFieldsUpdated = true;
+    }
+    if (dto.getZipCode() != null || dto.isZipCodeCleared()) {
+      event.setZipCode(normalizeOptionalText(dto.getZipCode()));
+      addressFieldsUpdated = true;
+    }
+
+    // Se algum campo de endereço foi atualizado, reconstrói o location
+    if (addressFieldsUpdated) {
+      event.setLocation(buildLocationFromEntity(event));
+    } else if (dto.getLocation() != null) {
+      // Fallback para compatibilidade: se location explícito foi enviado
+      if (dto.getLocation().isBlank()) {
+        throw new BusinessException(
+            "A localização não pode ficar vazia",
+            HttpStatus.UNPROCESSABLE_CONTENT);
+      }
+      event.setLocation(dto.getLocation().trim());
     }
 
     // Combina os valores recebidos com os já existentes para validar
@@ -448,6 +502,67 @@ public class EventService {
     // Isso evita armazenar descrições contendo apenas espaços em branco.
     String normalized = value.trim();
     return normalized.isEmpty() ? null : normalized;
+  }
+
+  /**
+   * Constrói o campo location a partir dos campos estruturados de endereço.
+   * Formato: "venueName, street, number, complement, neighborhood, city, state, zipCode"
+   * Campos vazios/nulos são omitidos.
+   */
+  private String buildLocationFromStructuredAddress(EventRequestDTO dto) {
+    StringBuilder sb = new StringBuilder();
+
+    appendIfPresent(sb, dto.getVenueName());
+    appendIfPresent(sb, dto.getStreet());
+    appendIfPresent(sb, dto.getNumber());
+    appendIfPresent(sb, dto.getComplement());
+    appendIfPresent(sb, dto.getNeighborhood());
+    appendIfPresent(sb, dto.getCity());
+    appendIfPresent(sb, dto.getState());
+    appendIfPresent(sb, dto.getZipCode());
+
+    return sb.length() > 0 ? sb.toString() : "Endereço não informado";
+  }
+
+  private void appendIfPresent(StringBuilder sb, String value) {
+    if (value != null && !value.trim().isEmpty()) {
+      if (sb.length() > 0) {
+        sb.append(", ");
+      }
+      sb.append(value.trim());
+    }
+  }
+
+  /**
+   * Constrói o campo location a partir dos campos da entidade Event.
+   */
+  private String buildLocationFromEntity(Event event) {
+    StringBuilder sb = new StringBuilder();
+
+    appendIfPresent(sb, event.getVenueName());
+    appendIfPresent(sb, event.getStreet());
+    appendIfPresent(sb, event.getNumber());
+    appendIfPresent(sb, event.getComplement());
+    appendIfPresent(sb, event.getNeighborhood());
+    appendIfPresent(sb, event.getCity());
+    appendIfPresent(sb, event.getState());
+    appendIfPresent(sb, event.getZipCode());
+
+    return sb.length() > 0 ? sb.toString() : "Endereço não informado";
+  }
+
+  /**
+   * Copia os campos estruturados de endereço do DTO para a entidade.
+   */
+  private void copyStructuredAddressToEntity(EventRequestDTO dto, Event event) {
+    event.setVenueName(normalizeOptionalText(dto.getVenueName()));
+    event.setStreet(normalizeOptionalText(dto.getStreet()));
+    event.setNumber(normalizeOptionalText(dto.getNumber()));
+    event.setComplement(normalizeOptionalText(dto.getComplement()));
+    event.setNeighborhood(normalizeOptionalText(dto.getNeighborhood()));
+    event.setCity(normalizeOptionalText(dto.getCity()));
+    event.setState(normalizeOptionalText(dto.getState()));
+    event.setZipCode(normalizeOptionalText(dto.getZipCode()));
   }
 
   private EventResponseDTO toResponseDTO(Event event) {

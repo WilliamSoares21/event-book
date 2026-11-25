@@ -1,10 +1,13 @@
 package com.eventbook.backend.events.dto;
 
+import com.eventbook.backend.common.deserializer.EmptyStringAsNullDeserializer;
+import com.eventbook.backend.common.deserializer.UpperCaseTrimDeserializer;
 import com.eventbook.backend.common.validation.ValidBrazilianState;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -31,29 +34,46 @@ public class EventUpdateDTO {
     @Future
     private OffsetDateTime endsAt;
 
-    @Schema(description = "Novo local do evento", example = "São Paulo")
-    @Size(min = 1, max = 255)
+    @Schema(description = "Novo local do evento (legado)", example = "São Paulo")
+    @Size(max = 255)
     private String location;
+
+    @Schema(description = "Nome do estabelecimento/local", example = "Arena Castelão")
+    @Size(max = 255)
+    private String venueName;
+
+    @Schema(description = "Logradouro", example = "Av. Alberto Craveiro")
+    @Size(max = 255)
+    private String street;
 
     @Schema(description = "Número do endereço", example = "2901")
     @Size(max = 20)
+    @JsonDeserialize(using = EmptyStringAsNullDeserializer.class)
     private String number;
 
     @Schema(description = "Complemento", example = "Bloco B")
     @Size(max = 100)
+    @JsonDeserialize(using = EmptyStringAsNullDeserializer.class)
     private String complement;
+
+    @Schema(description = "Bairro", example = "Castelão")
+    @Size(max = 100)
+    private String neighborhood;
 
     @Schema(description = "Cidade", example = "Fortaleza")
     @Size(max = 100)
+    @JsonDeserialize(using = EmptyStringAsNullDeserializer.class)
     private String city;
 
     @Schema(description = "UF 2 letras maiúsculas", example = "CE")
     @ValidBrazilianState
+    @JsonDeserialize(using = UpperCaseTrimDeserializer.class)
     private String state;
 
     @Schema(description = "CEP formato 00000-000 ou 00000000", example = "60000-000")
     @Pattern(regexp = "^\\d{5}-?\\d{3}$", message = "CEP deve estar no formato 00000-000 ou 00000000")
     @Size(max = 9)
+    @JsonDeserialize(using = EmptyStringAsNullDeserializer.class)
     private String zipCode;
 
     // PATCH: "" limpa o CEP; null/omitido não altera. Boolean (não boolean) porque o
@@ -79,20 +99,32 @@ public class EventUpdateDTO {
         this.city = (city == null || city.isBlank()) ? null : city.trim();
     }
 
+    public void setNumber(String number) {
+        this.number = (number == null || number.isBlank()) ? null : number.trim();
+    }
+
+    public void setComplement(String complement) {
+        this.complement = (complement == null || complement.isBlank()) ? null : complement.trim();
+    }
+
     // Builder sobre um construtor privado: se o all-args fosse público, o Jackson 3 o
     // escolheria como creator implícito e ignoraria os setters de normalização.
     @Builder
     private EventUpdateDTO(String title, String description, OffsetDateTime startsAt,
-                           OffsetDateTime endsAt, String location, String number,
-                           String complement, String city, String state, String zipCode,
+                           OffsetDateTime endsAt, String location, String venueName,
+                           String street, String number, String complement,
+                           String neighborhood, String city, String state, String zipCode,
                            Boolean zipCodeCleared) {
         this.title = title;
         this.description = description;
         this.startsAt = startsAt;
         this.endsAt = endsAt;
         this.location = location;
+        this.venueName = venueName;
+        this.street = street;
         this.number = number;
         this.complement = complement;
+        this.neighborhood = neighborhood;
         this.city = city;
         this.state = state;
         this.zipCode = zipCode;

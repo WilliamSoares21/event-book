@@ -78,8 +78,7 @@ public class EventRequestDTO {
     @JsonDeserialize(using = EmptyStringAsNullDeserializer.class)
     private String zipCode;
 
-    @Schema(description = "Local do evento legado/computado", example = "São Paulo")
-    @NotBlank
+    @Schema(description = "Local do evento legado/computado (preenchido automaticamente)", example = "São Paulo")
     @Size(max = 255)
     private String location;
 

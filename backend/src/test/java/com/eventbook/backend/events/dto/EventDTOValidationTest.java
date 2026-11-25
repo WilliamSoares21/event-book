@@ -342,7 +342,24 @@ class EventDTOValidationTest {
     }
 
     @Test
-    void request_comLocationVazio_deveFalhar() {
+    void request_semLocation_passa() {
+        // location não é mais obrigatório; é derivado dos campos estruturados
+        EventRequestDTO dto = EventRequestDTO.builder()
+                .title("Festival")
+                .startsAt(java.time.OffsetDateTime.now().plusDays(10))
+                .endsAt(java.time.OffsetDateTime.now().plusDays(10).plusHours(2))
+                .venueName("Arena")
+                .street("Av. Principal")
+                .neighborhood("Centro")
+                .city("Fortaleza")
+                .state("CE")
+                .build();
+        Set<ConstraintViolation<EventRequestDTO>> violations = validator.validate(dto);
+        assertThat(violations).noneMatch(v -> v.getPropertyPath().toString().equals("location"));
+    }
+    @Test
+    void request_comLocationVazio_passa() {
+        // location vazio é aceito no DTO; Service usa campos estruturados
         EventRequestDTO dto = EventRequestDTO.builder()
                 .title("Festival")
                 .startsAt(java.time.OffsetDateTime.now().plusDays(10))
@@ -354,13 +371,12 @@ class EventDTOValidationTest {
                 .state("CE")
                 .location("")
                 .build();
-
         Set<ConstraintViolation<EventRequestDTO>> violations = validator.validate(dto);
-        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("location"));
+        assertThat(violations).noneMatch(v -> v.getPropertyPath().toString().equals("location"));
     }
-
     @Test
-    void request_comLocationEspacos_deveFalhar() {
+    void request_comLocationEspacos_passa() {
+        // location com espaços é aceito no DTO
         EventRequestDTO dto = EventRequestDTO.builder()
                 .title("Festival")
                 .startsAt(java.time.OffsetDateTime.now().plusDays(10))
@@ -372,26 +388,8 @@ class EventDTOValidationTest {
                 .state("CE")
                 .location("   ")
                 .build();
-
         Set<ConstraintViolation<EventRequestDTO>> violations = validator.validate(dto);
-        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("location"));
-    }
-
-    @Test
-    void request_semLocation_deveFalhar() {
-        EventRequestDTO dto = EventRequestDTO.builder()
-                .title("Festival")
-                .startsAt(java.time.OffsetDateTime.now().plusDays(10))
-                .endsAt(java.time.OffsetDateTime.now().plusDays(10).plusHours(2))
-                .venueName("Arena")
-                .street("Av. Principal")
-                .neighborhood("Centro")
-                .city("Fortaleza")
-                .state("CE")
-                .build();
-
-        Set<ConstraintViolation<EventRequestDTO>> violations = validator.validate(dto);
-        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("location"));
+        assertThat(violations).noneMatch(v -> v.getPropertyPath().toString().equals("location"));
     }
 
     @Test
@@ -450,16 +448,17 @@ class EventDTOValidationTest {
     }
 
     @Test
-    void update_locationVazio_deveFalhar() {
+    void update_locationVazio_passa() {
+        // location não é mais obrigatório no DTO
         EventUpdateDTO dto = EventUpdateDTO.builder().location("").build();
 
         Set<ConstraintViolation<EventUpdateDTO>> violations = validator.validate(dto);
-        assertThat(violations).anyMatch(v -> v.getPropertyPath().toString().equals("location"));
+        assertThat(violations).noneMatch(v -> v.getPropertyPath().toString().equals("location"));
     }
 
     @Test
     void update_camposOpcionaisVazios_preservadosNoDTO_serviceLimpa() throws Exception {
-        // Testa desserialização Jackson: number="", complement="   " → preserva strings (não null)
+        // Testa desserialização Jackson: number="", complement="   " → EmptyStringAsNullDeserializer converte para null
         // O Service trata isBlank() e limpa para NULL
         String json = """
                 {
@@ -469,9 +468,9 @@ class EventDTOValidationTest {
                 }
                 """;
         EventUpdateDTO dto = objectMapper.readValue(json, EventUpdateDTO.class);
-        // Jackson preserva "" e "   " (sem EmptyStringAsNullDeserializer)
-        assertThat(dto.getNumber()).isEqualTo("");
-        assertThat(dto.getComplement()).isEqualTo("   ");
+        // number e complement usam EmptyStringAsNullDeserializer: "" → null
+        assertThat(dto.getNumber()).isNull();
+        assertThat(dto.getComplement()).isNull();
         // zipCode usa setter customizado: "" → null + cleared=true
         assertThat(dto.getZipCode()).isNull();
         assertThat(dto.isZipCodeCleared()).isTrue();
