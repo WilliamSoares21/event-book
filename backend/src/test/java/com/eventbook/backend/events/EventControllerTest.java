@@ -183,6 +183,31 @@ class EventControllerTest {
     }
 
     @Test
+    void deveRetornar200AoListarEventosDisponiveisParaCompra() throws Exception {
+        EventResponseDTO event = EventResponseDTO.builder()
+                .id(UUID.randomUUID())
+                .title("Conferência Tech")
+                .startsAt(OffsetDateTime.parse("2026-12-10T12:00:00-03:00"))
+                .endsAt(OffsetDateTime.parse("2026-12-11T21:00:00-03:00"))
+                .location("Fortaleza - CE")
+                .status(EventStatus.PUBLISHED)
+                .build();
+        when(eventService.findAvailableForPurchase(any(Pageable.class), eq("tech"), eq("Fortaleza"), eq("CE")))
+                .thenReturn(PageResponse.from(new PageImpl<>(java.util.List.of(event))));
+
+        mockMvc.perform(get("/api/events/available")
+                        .param("q", "tech")
+                        .param("city", "Fortaleza")
+                        .param("state", "CE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].title").value("Conferência Tech"))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        verify(eventService).findAvailableForPurchase(any(Pageable.class), eq("tech"), eq("Fortaleza"), eq("CE"));
+    }
+
+    @Test
     void deveRetornar200AoConsultarEvento() throws Exception {
         UUID eventId = UUID.randomUUID();
 

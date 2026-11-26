@@ -1,6 +1,8 @@
 package com.eventbook.backend.events;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,6 +21,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
@@ -27,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.eventbook.backend.checkin.CheckInRepository;
 import com.eventbook.backend.common.exception.BusinessException;
+import com.eventbook.backend.common.dto.PageResponse;
 import com.eventbook.backend.events.dto.EventRequestDTO;
 import com.eventbook.backend.events.dto.EventResponseDTO;
 import com.eventbook.backend.events.dto.EventUpdateDTO;
@@ -175,6 +181,26 @@ public class EventServiceTest {
         assertThat(response).hasSize(1);
         assertThat(response.get(0).getStatus()).isEqualTo(EventStatus.PUBLISHED);
         verify(eventRepository).findByStatus(EventStatus.PUBLISHED);
+    }
+
+    @Test
+    void deveListarEventosDisponiveisParaCompraComFiltrosSanitizados() {
+        Event published = event(EventStatus.PUBLISHED, UUID.randomUUID());
+
+        when(eventRepository.findPublishedWithFilters(
+                eq("50\\%"), eq("Fortaleza"), eq("ce"), isNull(), isNull(), eq(true),
+                any(OffsetDateTime.class), any(Instant.class), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(published)));
+
+        PageResponse<EventResponseDTO> response = eventService.findAvailableForPurchase(
+                PageRequest.of(0, 10), " 50% ", " Fortaleza ", " ce ");
+
+        assertThat(response.content()).hasSize(1);
+        assertThat(response.totalElements()).isEqualTo(1);
+
+        verify(eventRepository).findPublishedWithFilters(
+                eq("50\\%"), eq("Fortaleza"), eq("ce"), isNull(), isNull(), eq(true),
+                any(OffsetDateTime.class), any(Instant.class), any(Pageable.class));
     }
 
     @Test

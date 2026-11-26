@@ -58,6 +58,29 @@ public class EventController {
         return ResponseEntity.ok(events);
     }
 
+    @GetMapping("/available")
+    @Operation(summary = "Lista eventos disponíveis para compra (paginado)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Eventos retornados com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Parâmetros de paginação inválidos")
+    })
+    public ResponseEntity<PageResponse<EventResponseDTO>> listAvailableEvents(
+            @Parameter(description = "Número da página (base 0)", example = "0")
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @Parameter(description = "Tamanho da página (máx 50)", example = "10")
+            @RequestParam(defaultValue = "10") @Min(1) @Max(50) int size,
+            @Parameter(description = "Termo de busca (título, descrição, local ou nome do venue)")
+            @RequestParam(required = false) String q,
+            @Parameter(description = "Cidade (correspondência exata, sem diferenciar maiúsculas)")
+            @RequestParam(required = false) String city,
+            @Parameter(description = "UF (correspondência exata, sem diferenciar maiúsculas)")
+            @RequestParam(required = false) String state) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("startsAt").ascending().and(Sort.by("id").ascending()));
+        PageResponse<EventResponseDTO> events = eventService.findAvailableForPurchase(pageable, q, city, state);
+        return ResponseEntity.ok(events);
+    }
+
     @GetMapping("/{eventId}")
     @Operation(summary = "Consulta um evento")
     @ApiResponses({

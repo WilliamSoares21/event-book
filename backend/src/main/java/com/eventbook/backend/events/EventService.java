@@ -186,6 +186,55 @@ public class EventService {
     );
   }
 
+  /**
+   * Catálogo de compra: eventos publicados que ainda não terminaram e que possuem
+   * ao menos um lote vendável (ACTIVE, janela de vendas vigente e estoque livre).
+   *
+   * <p>A busca e a disponibilidade são aplicadas no banco antes da paginação,
+   * evitando carregar todos os eventos e filtrar apenas a página atual.
+   */
+  @Transactional(readOnly = true)
+  public PageResponse<EventResponseDTO> findAvailableForPurchase(
+          Pageable pageable, String q, String city, String state) {
+
+    OffsetDateTime now = OffsetDateTime.now(clock);
+    Instant lotNow = clock.instant();
+
+    return PageResponse.from(
+        eventRepository.findPublishedWithFilters(
+                escapeSearchTerm(q),
+                normalizeFilter(city),
+                normalizeFilter(state),
+                null,
+                null,
+                true,
+                now,
+                lotNow,
+                pageable)
+            .map(this::toResponseDTO)
+    );
+  }
+
+  private String normalizeFilter(String value) {
+    if (value == null) {
+      return null;
+    }
+    String trimmed = value.trim();
+    return trimmed.isEmpty() ? null : trimmed;
+  }
+
+  /** Escapa curingas do LIKE para que o termo seja pesquisado literalmente. */
+  private String escapeSearchTerm(String value) {
+    String normalized = normalizeFilter(value);
+    if (normalized == null) {
+      return null;
+    }
+    return normalized
+        .replace("\\", "\\\\")
+        .replace("%", "\\%")
+        .replace("_", "\\_");
+  }
+
   // Versão simples sem paginação (para o endpoint do organizador)
   @Transactional(readOnly = true)
   public List<EventResponseDTO> findAllPublished() {
