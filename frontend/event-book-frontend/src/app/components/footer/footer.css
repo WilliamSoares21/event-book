@@ -1,0 +1,4 @@
+/* O rodapé usa fundo escuro: o texto precisa de contraste inverso. */
+p {
+  color: var(--color-text-inverse);
+}

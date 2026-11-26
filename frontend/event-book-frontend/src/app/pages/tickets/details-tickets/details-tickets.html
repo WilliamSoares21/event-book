@@ -25,12 +25,20 @@
                                     <dt>Horário do evento</dt>
                                     <dd>{{ ticket.eventStartsAt | date:'HH:mm' }}</dd>
                                 </div>
+                                <div>
+                                    <dt>Lote</dt>
+                                    <dd>{{ ticket.ticketLotName }}</dd>
+                                </div>
                             </dl>
-                            <h4 class="ticket-code-heading">Código para check-in</h4>
-                            @if (qrImage() | async; as qr) {
-                                <img class="ticket-qr" [src]="qr" alt="QR Code do ticket para check-in" width="192" height="192">
-                            }
-                            <code class="ticket-code">{{ ticket.uniqueCode }}</code>
+                            <section class="ticket-checkin" aria-labelledby="ticket-code-heading">
+                                <h4 id="ticket-code-heading" class="ticket-code-heading">Código para check-in</h4>
+                                @if (qrImage() | async; as qr) {
+                                    <div class="ticket-qr-frame">
+                                        <img class="ticket-qr" [src]="qr" alt="QR Code do ticket para check-in" width="192" height="192">
+                                    </div>
+                                }
+                                <code class="ticket-code">{{ ticket.uniqueCode }}</code>
+                            </section>
                         </div>
                     </article>
                 } @else {

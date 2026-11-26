@@ -9,11 +9,13 @@ import { ToastService } from './services/toast/toast';
   standalone: true,
   imports: [RouterOutlet, NavbarComponent, FooterComponent],
   template: `
-    <app-navbar></app-navbar>
-    <main class="flex-grow-1">
-      <router-outlet></router-outlet>
-    </main>
-    <app-footer></app-footer>
+    <div class="page-wrapper">
+      <app-navbar></app-navbar>
+      <main class="flex-grow-1">
+        <router-outlet></router-outlet>
+      </main>
+      <app-footer></app-footer>
+    </div>
     @if (toast.notification(); as notification) {
       <div class="notification-toast" [class.notification-success]="notification.success"
         [class.notification-error]="!notification.success"

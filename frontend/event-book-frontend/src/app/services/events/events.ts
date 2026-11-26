@@ -49,6 +49,15 @@ export class EventsService {
     return this.httpClient.get<PageResponse<EventResponse>>(`${this.apiUrl}/events`, { params });
   }
 
+  /** Catálogo público de compra: só eventos com lote vendável e busca no servidor. */
+  listAvailableEvents(page = 0, size = 10, filters: { q?: string; city?: string; state?: string } = {}) {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (filters.q) params = params.set('q', filters.q);
+    if (filters.city) params = params.set('city', filters.city);
+    if (filters.state) params = params.set('state', filters.state);
+    return this.httpClient.get<PageResponse<EventResponse>>(`${this.apiUrl}/events/available`, { params });
+  }
+
   listOwnEvents() {
     return this.httpClient.get<EventListItem[]>(`${this.apiUrl}/organizer/events`, this.authOptions());
   }

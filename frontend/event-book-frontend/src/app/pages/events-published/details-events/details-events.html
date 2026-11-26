@@ -49,7 +49,7 @@
                                     <h4 id="available-lots-title" class="description-heading">Lotes disponíveis</h4>
                                     
                                     <div class="table-responsive">
-                                        <table class="table table-hover align-middle">
+                                        <table class="table table-hover align-middle lot-table">
                                             <thead class="table-light">
                                                 <tr>
                                                     <th scope="col">Lote</th>
@@ -62,20 +62,20 @@
                                             <tbody>
                                                 @for (lot of availableLots(); track lot.id) {
                                                     <tr [class.table-secondary]="getQuantity(lot) > 0">
-                                                        <td>
+                                                        <td data-label="Lote">
                                                             <strong>{{ lot.name }}</strong>
                                                         </td>
-                                                        <td class="text-center">
+                                                        <td class="text-center" data-label="Preço">
                                                             {{ ticketPrice.format(lot.unitPrice) }}
                                                         </td>
-                                                        <td class="text-center">
+                                                        <td class="text-center" data-label="Disponíveis">
                                                             <span [class.text-danger]="lot.availableQuantity <= 5" [class.fw-bold]="lot.availableQuantity <= 5">
                                                                 {{ lot.availableQuantity }}
                                                             </span>
                                                             {{ lot.availableQuantity === 1 ? 'ingresso' : 'ingressos' }}
                                                         </td>
-                                                        <td class="text-center">
-                                                            <div class="input-group input-group-sm" style="max-width: 140px; margin: 0 auto;">
+                                                        <td class="text-center" data-label="Quantidade">
+                                                            <div class="input-group input-group-sm lot-stepper">
                                                                 <button class="btn btn-outline-secondary" type="button" 
                                                                         (click)="decrementQuantity(lot)"
                                                                         [disabled]="getQuantity(lot) === 0 || ordering()"
@@ -96,19 +96,18 @@
                                                                 </button>
                                                             </div>
                                                         </td>
-                                                        <td class="text-end fw-semibold">
+                                                        <td class="text-end fw-semibold" data-label="Subtotal">
                                                             {{ ticketPrice.format(lotSubtotals().get(lot.id) ?? 0) }}
                                                         </td>
                                                     </tr>
                                                 }
                                             </tbody>
-                                            <tfoot class="table-light">
-                                                <tr>
-                                                    <th colspan="4" class="text-end">Total</th>
-                                                    <th class="text-end fs-5">{{ ticketPrice.format(orderTotal()) }}</th>
-                                                </tr>
-                                            </tfoot>
                                         </table>
+                                    </div>
+
+                                    <div class="order-total">
+                                        <span>Total</span>
+                                        <strong>{{ ticketPrice.format(orderTotal()) }}</strong>
                                     </div>
                                 </section>
 
@@ -119,24 +118,23 @@
                                 </form>
 
                                 <dialog #confirmation class="order-dialog" aria-labelledby="order-dialog-title">
-                                    <h4 id="order-dialog-title">Confirmar compra</h4>
-                                    <div class="order-summary mb-3">
+                                    <h4 id="order-dialog-title" class="order-dialog-title">Confirmar compra</h4>
+                                    <div class="order-summary">
                                         @for (lot of availableLots(); track lot.id) {
                                             @if (getQuantity(lot) > 0) {
-                                                <div class="d-flex justify-content-between mb-1">
-                                                    <span>{{ lot.name }} × {{ getQuantity(lot) }}</span>
-                                                    <span>{{ ticketPrice.format(lotSubtotals().get(lot.id) ?? 0) }}</span>
+                                                <div class="order-line">
+                                                    <span class="order-line-name">{{ lot.name }} <span class="order-line-qty">× {{ getQuantity(lot) }}</span></span>
+                                                    <span class="order-line-value">{{ ticketPrice.format(lotSubtotals().get(lot.id) ?? 0) }}</span>
                                                 </div>
                                             }
                                         }
-                                        <hr>
-                                        <div class="d-flex justify-content-between fw-bold">
-                                            <span>Total</span>
-                                            <span>{{ ticketPrice.format(orderTotal()) }}</span>
-                                        </div>
                                     </div>
-                                    <p>O pagamento será simulado com seu cartão fictício. Se você ainda não tiver um cartão ativo, ele será cadastrado na confirmação.</p>
-                                    <div class="d-flex flex-wrap justify-content-end gap-2">
+                                    <div class="order-dialog-total">
+                                        <span>Total</span>
+                                        <strong>{{ ticketPrice.format(orderTotal()) }}</strong>
+                                    </div>
+                                    <p class="order-dialog-note">O pagamento será simulado com seu cartão fictício. Se você ainda não tiver um cartão ativo, ele será cadastrado na confirmação.</p>
+                                    <div class="order-dialog-actions">
                                         <button class="btn btn-outline-secondary" type="button" autofocus
                                                 (click)="confirmation.close()">Cancelar</button>
                                         <button class="btn btn-primary" type="button"

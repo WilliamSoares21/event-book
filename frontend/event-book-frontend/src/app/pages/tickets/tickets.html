@@ -24,31 +24,31 @@
                 <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
                     @for (ticket of tickets(); track ticket.id) {
                         <div class="col">
-                            <div class="card h-100 shadow-sm border-0">
+                            <article class="card h-100 ticket-card">
                                 <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="ticket-card-top">
                                         <span class="badge" [ngClass]="{
                                             'bg-success': ticket.status === 'VALID',
                                             'bg-info': ticket.status === 'CHECKED_IN',
                                             'bg-secondary': ticket.status === 'CANCELLED'
                                         }">{{ statusLabels[ticket.status] }}</span>
+                                        <span class="ticket-card-price">{{ ticket.unitPriceSnapshot | currency:'BRL':'symbol':'1.2-2' }}</span>
                                     </div>
-                                    <h5 class="card-title">{{ ticket.eventTitle }}</h5>
-                                    <p class="card-text text-muted small mb-1">
-                                        <strong>Lote:</strong> {{ ticket.ticketLotName }}
-                                    </p>
-                                    <p class="card-text text-muted small mb-1">
-                                        <strong>Valor:</strong> {{ ticket.unitPriceSnapshot | currency:'BRL':'symbol':'1.2-2' }}
-                                    </p>
-                                    <p class="card-text text-muted small mb-1">
-                                        <strong>Início:</strong> {{ ticket.eventStartsAt | date:'dd/MM/yyyy HH:mm' }}
-                                    </p>
-                                    <p class="card-text small mb-3">
-                                        <strong>Código:</strong> <code class="bg-light px-2 py-1 rounded">{{ ticket.uniqueCode }}</code>
-                                    </p>
+                                    <h3 class="card-title ticket-card-title">{{ ticket.eventTitle }}</h3>
+                                    <p class="ticket-card-lot">{{ ticket.ticketLotName }}</p>
+                                    <dl class="ticket-card-meta">
+                                        <div>
+                                            <dt>Data</dt>
+                                            <dd>{{ ticket.eventStartsAt | date:'dd/MM/yyyy HH:mm' }}</dd>
+                                        </div>
+                                        <div>
+                                            <dt>Código</dt>
+                                            <dd><code class="ticket-card-code">{{ ticket.uniqueCode }}</code></dd>
+                                        </div>
+                                    </dl>
                                     <a [routerLink]="['/tickets', ticket.id]" class="btn btn-primary w-100">Ver Detalhes</a>
                                 </div>
-                            </div>
+                            </article>
                         </div>
                     }
                 </div>

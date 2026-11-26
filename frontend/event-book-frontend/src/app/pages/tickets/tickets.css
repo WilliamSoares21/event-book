@@ -1,65 +1,71 @@
-.side-page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 2rem;
+.ticket-card {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
-.brand-header-content {
+.ticket-card .card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1.25rem;
+}
+
+.ticket-card-top {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  display: inline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
-.brand-header {
-    display: flex;
-    justify-content: space-between;
-    padding: 1rem;
+.ticket-card-price {
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
-.brand-header-content {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    display: inline;
+.ticket-card-title {
+  margin-bottom: 0.25rem;
+  font-size: 1.125rem;
+  line-height: 1.35;
 }
 
-.brand-header-content h2 {
-    margin: 0;
-    font-weight: 600;
+.ticket-card-lot {
+  margin-bottom: 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
 }
 
-.brand-header-content p {
-    margin: 0;
-    font-weight: 400;
-    color: #9DA1A7;
-    font-size: 1rem;
+.ticket-card-meta {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
 }
 
-.side-page-main {
-    padding: 2rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
+.ticket-card-meta dt {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
-.side-page-main section {
-    flex: 1 1 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+.ticket-card-meta dd {
+  margin: 0;
+  font-size: 0.9375rem;
 }
 
-.side-page-main > nav {
-    flex: 0 0 100%;
+.ticket-card-code {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
 }
 
-.side-page-main section p {
-    font-size: 1rem;
-    color: #9DA1A7;
-}
-
-.side-page-main section a {
-    font-size: 1.25rem;
+.ticket-card .btn {
+  margin-top: auto;
 }

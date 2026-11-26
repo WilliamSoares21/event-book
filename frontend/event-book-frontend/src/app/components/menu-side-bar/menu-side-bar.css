@@ -88,3 +88,10 @@
 .side-page-nav li label {
   cursor: pointer;
 }
+
+/* Em telas estreitas o menu lateral não cabe; a navegação segue no menu do usuário. */
+@media (max-width: 991.98px) {
+  :host {
+    display: none;
+  }
+}

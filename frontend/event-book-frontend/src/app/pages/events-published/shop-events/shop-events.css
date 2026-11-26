@@ -1,6 +1,6 @@
 :host {
   display: block;
-  min-height: 100vh;
+  min-height: 100%;
   background: #f3f8fc;
   color: #102a43;
 }
@@ -28,6 +28,11 @@
   color: #fff;
 }
 
+/* O banner é flex: o container precisa ocupar a largura disponível. */
+.catalog-banner > .container {
+  width: 100%;
+}
+
 .banner-content {
   max-width: 31rem;
 }
@@ -43,6 +48,7 @@
 
 .catalog-banner h1 {
   margin: 0 0 0.75rem;
+  color: var(--color-text-inverse);
   font-size: clamp(2.25rem, 5vw, 4rem);
   font-weight: 800;
   line-height: 1.05;
@@ -143,6 +149,93 @@
   border-radius: 1rem;
   background: #fff;
   color: #425d73;
+}
+
+.catalog-status p {
+  margin: 0 0 0.75rem;
+}
+
+.catalog-status p:last-child {
+  margin-bottom: 0;
+}
+
+/* Carregamento */
+.catalog-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.catalog-spinner {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 3px solid var(--color-border-light);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: catalog-spin 0.8s linear infinite;
+}
+
+.catalog-spinner-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+@keyframes catalog-spin {
+  to { transform: rotate(360deg); }
+}
+
+.catalog-skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+  width: 100%;
+}
+
+.skeleton-card {
+  overflow: hidden;
+  border: 1px solid #d7e6f1;
+  border-radius: 1rem;
+  background: #fff;
+  animation: catalog-pulse 1.6s ease-in-out infinite;
+}
+
+.skeleton-media {
+  aspect-ratio: 16 / 9;
+  background: #e3f2fd;
+}
+
+.skeleton-line {
+  height: 0.875rem;
+  margin: 0.875rem 1.25rem;
+  border-radius: 0.5rem;
+  background: #e3f2fd;
+}
+
+.skeleton-line:last-child {
+  width: 55%;
+  margin-bottom: 1.5rem;
+}
+
+@keyframes catalog-pulse {
+  50% { opacity: 0.55; }
+}
+
+.catalog-updating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog-spinner,
+  .skeleton-card {
+    animation: none;
+  }
 }
 
 @media (max-width: 700px) {

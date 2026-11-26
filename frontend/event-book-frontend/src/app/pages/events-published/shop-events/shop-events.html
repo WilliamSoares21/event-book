@@ -1,62 +1,100 @@
 <main class="shop-events">
-  <header class="catalog-banner bg-dark text-white p-4">
+  <header class="catalog-banner">
     <div class="container">
       <h1>Explore Eventos</h1>
       <div class="row g-2 mt-3">
-        <div class="col-md-4">
-          <input type="text" class="form-control" placeholder="Pesquisar por nome..." (input)="onFilterChange($event)">
+        <div class="col-12 col-md-4">
+          <label class="visually-hidden" for="search-name">Pesquisar eventos por nome</label>
+          <input id="search-name" type="search" class="form-control" placeholder="Pesquisar por nome..."
+            (input)="onFilterChange($event)">
         </div>
-        <div class="col-md-3">
-          <input type="text" class="form-control" placeholder="Cidade..." (input)="onCityChange($event)">
+        <div class="col-12 col-md-3">
+          <label class="visually-hidden" for="search-city">Filtrar eventos por cidade</label>
+          <input id="search-city" type="search" class="form-control" placeholder="Cidade..."
+            (input)="onCityChange($event)">
         </div>
-        <div class="col-md-2">
-          <input type="text" class="form-control" placeholder="UF..." (input)="onStateChange($event)" maxlength="2">
+        <div class="col-12 col-md-2">
+          <label class="visually-hidden" for="search-state">Filtrar eventos por UF</label>
+          <input id="search-state" type="search" class="form-control" placeholder="UF..."
+            (input)="onStateChange($event)" maxlength="2">
         </div>
       </div>
     </div>
   </header>
 
   @if (loadError()) {
-    <p class="catalog-status" role="alert">Não foi possível carregar os eventos. Tente novamente mais tarde.</p>
-  } @else if (loading()) {
-    <p class="catalog-status" role="status">Carregando eventos…</p>
-  } @else if (events(); as publishedEvents) {
-    @if (publishedEvents.length) {
-      <section aria-labelledby="published-events-title">
-        <h2 class="section-title" id="published-events-title">Eventos publicados</h2>
-        <div class="event-grid">
-          @for (event of publishedEvents; track event.id) {
-            <article class="card">
-              <img [src]="event.coverImageUrl || 'assets/events/default-event.png'" class="card-img-top" alt="" loading="lazy">
-              <div class="card-body">
-                <h3 class="card-title">{{ event.title }}</h3>
-                <p class="card-text">
-                  <time [attr.datetime]="event.startsAt">{{ event.startsAt | date:'dd/MM/yyyy · HH:mm' }}</time>
-                </p>
-                <p class="card-text">{{ event.location }}</p>
-                <a [routerLink]="['/shop-events', event.id]" class="btn btn-primary">
-                  Mais Informações <span aria-hidden="true">→</span>
-                </a>
-              </div>
-            </article>
+    <div class="catalog-status" role="alert">
+      <p>Não foi possível carregar os eventos. Verifique sua conexão e tente novamente.</p>
+      <button type="button" class="btn btn-primary" (click)="loadEvents()">Tentar novamente</button>
+    </div>
+  } @else if (loading() && !loaded()) {
+    <div class="catalog-loading" role="status" aria-busy="true">
+      <span class="catalog-spinner" aria-hidden="true"></span>
+      <span class="visually-hidden">Carregando eventos...</span>
+      <div class="catalog-skeleton" aria-hidden="true">
+        @for (placeholder of skeletonCards; track placeholder) {
+          <div class="skeleton-card">
+            <div class="skeleton-media"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line"></div>
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    @if (loading()) {
+      <p class="catalog-updating" role="status">
+        <span class="catalog-spinner catalog-spinner-sm" aria-hidden="true"></span>
+        Atualizando resultados...
+      </p>
+    }
+
+    @if (events(); as publishedEvents) {
+      @if (publishedEvents.length) {
+        <section aria-labelledby="published-events-title">
+          <h2 class="section-title" id="published-events-title">Eventos publicados</h2>
+          <div class="event-grid">
+            @for (event of publishedEvents; track event.id) {
+              <article class="card">
+                <img [src]="event.coverImageUrl || 'assets/events/default-event.png'" class="card-img-top" alt="" loading="lazy">
+                <div class="card-body">
+                  <h3 class="card-title">{{ event.title }}</h3>
+                  <p class="card-text">
+                    <time [attr.datetime]="event.startsAt">{{ event.startsAt | date:'dd/MM/yyyy · HH:mm' }}</time>
+                  </p>
+                  <p class="card-text">{{ event.location }}</p>
+                  <a [routerLink]="['/shop-events', event.id]" class="btn btn-primary">
+                    Mais Informações <span aria-hidden="true">→</span>
+                  </a>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+        <nav aria-label="Paginação de eventos" class="pagination-nav">
+          <ul class="pagination">
+            <li class="page-item" [class.disabled]="page() === 0">
+              <button class="page-link" (click)="prevPage()" [disabled]="page() === 0">Anterior</button>
+            </li>
+            <li class="page-item" [class.active]="true">
+              <span class="page-link">{{ page() + 1 }} de {{ totalPages() }}</span>
+            </li>
+            <li class="page-item" [class.disabled]="page() >= totalPages() - 1">
+              <button class="page-link" (click)="nextPage()" [disabled]="page() >= totalPages() - 1">Próxima</button>
+            </li>
+          </ul>
+        </nav>
+      } @else {
+        <div class="catalog-status">
+          @if (searchTerm()) {
+            <p>Nenhum evento encontrado para “{{ searchTerm() }}”.</p>
+          } @else if (cityTerm() || stateTerm()) {
+            <p>Nenhum evento encontrado para os filtros aplicados.</p>
+          } @else {
+            <p>Nenhum evento disponível para compra no momento.</p>
           }
         </div>
-      </section>
-      <nav aria-label="Paginação de eventos" class="pagination-nav">
-        <ul class="pagination">
-          <li class="page-item" [class.disabled]="page() === 0">
-            <button class="page-link" (click)="prevPage()" [disabled]="page() === 0">Anterior</button>
-          </li>
-          <li class="page-item" [class.active]="true">
-            <span class="page-link">{{ page() + 1 }} de {{ totalPages() }}</span>
-          </li>
-          <li class="page-item" [class.disabled]="page() >= totalPages() - 1">
-            <button class="page-link" (click)="nextPage()" [disabled]="page() >= totalPages() - 1">Próxima</button>
-          </li>
-        </ul>
-      </nav>
-    } @else {
-      <p class="catalog-status">Nenhum evento publicado no momento.</p>
+      }
     }
   }
 </main>

@@ -22,7 +22,7 @@ describe('ShopEvents', () => {
       location: 'Centro de convenções',
     };
 
-    http.expectOne((req) => req.url.endsWith('/api/events')).flush({
+    http.expectOne((req) => req.url.endsWith('/api/events/available')).flush({
       content: [event],
       page: 0, size: 10, totalElements: 1, totalPages: 1, first: true, last: true
     });
@@ -75,5 +75,38 @@ describe('ShopEvents', () => {
       .toContain('Comprar');
     http.verify();
     TestBed.inject(SessionService).clear();
+  });
+
+  it('debounce a busca e envia apenas uma requisição por pausa', async () => {
+    TestBed.configureTestingModule({
+      providers: [provideRouter(routes), provideHttpClient(), provideHttpClientTesting()],
+    });
+    const http = TestBed.inject(HttpTestingController);
+    const harness = await RouterTestingHarness.create('/shop-events');
+
+    http.expectOne((req) => req.url.endsWith('/api/events/available')).flush({
+      content: [], page: 0, size: 10, totalElements: 0, totalPages: 0, first: true, last: true
+    });
+    harness.detectChanges();
+
+    const input = harness.routeNativeElement!.querySelector<HTMLInputElement>('#search-name')!;
+    input.value = 'te';
+    input.dispatchEvent(new Event('input'));
+    input.value = 'tech';
+    input.dispatchEvent(new Event('input'));
+
+    await new Promise(resolve => setTimeout(resolve, 350));
+
+    const searches = http.match((req) => req.url.endsWith('/api/events/available'));
+    expect(searches).toHaveLength(1);
+    expect(searches[0].request.params.get('q')).toBe('tech');
+    searches[0].flush({
+      content: [{ id: 'event-2', title: 'Conferência Tech', startsAt: '2027-06-15T18:30:00', location: 'Fortaleza' }],
+      page: 0, size: 10, totalElements: 1, totalPages: 1, first: true, last: true
+    });
+    harness.detectChanges();
+
+    expect(harness.routeNativeElement!.textContent).toContain('Conferência Tech');
+    http.verify();
   });
 });
