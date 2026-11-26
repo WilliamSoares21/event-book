@@ -2,8 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { SessionService } from '../session/session';
-import { OrderResponse } from '../../model/order.model';
-import { orderStatusLabels } from '../../model/order.model';
+import { OrderResponse, orderStatusLabels } from '../../model/order.model';
 
 export { orderStatusLabels } from '../../model/order.model';
 

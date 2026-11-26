@@ -4,7 +4,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, EMPTY, switchMap, tap } from 'rxjs';
 import { MenuSideBarComponent } from '../../../components/menu-side-bar/menu-side-bar';
-import type { EventResponse } from '../../../model/event.model';
+import type { EventResponse, AvailableTicketLot } from '../../../model/event.model';
+import type { OrderItemRequest } from '../../../model/order.model';
 import { EventsService } from '../../../services/events/events';
 import { SessionService } from '../../../services/session/session';
 
@@ -27,23 +28,56 @@ export class DetailsEvents implements OnInit {
   readonly publishing = signal(false);
   readonly publicationError = signal('');
   readonly published = signal(false);
-  readonly quantity = signal(1);
   readonly ordering = signal(false);
   readonly orderFeedback = signal<{ message: string; error: boolean } | null>(null);
   readonly ticketPrice = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  // Quantidades por lote: Map<lotId, quantity>
+  readonly lotQuantities = signal<Map<string, number>>(new Map());
+
   readonly availableLots = computed(() =>
     this.event()?.availableTicketLots?.filter((lot) => lot.availableQuantity > 0) ?? [],
   );
-  readonly maxQuantity = computed(() =>
-    Math.max(0, ...this.availableLots().map((lot) => lot.availableQuantity)),
-  );
 
-  readonly orderSelection = computed(() => {
-    const quantity = this.quantity();
-    if (!Number.isInteger(quantity) || quantity < 1) return null;
+  // Subtotal por lote
+  readonly lotSubtotals = computed(() => {
+    const map = new Map<string, number>();
+    const quantities = this.lotQuantities();
+    for (const lot of this.availableLots()) {
+      const qty = quantities.get(lot.id) ?? 0;
+      map.set(lot.id, qty * lot.unitPrice);
+    }
+    return map;
+  });
 
-    const lot = this.availableLots().find((entry) => entry.availableQuantity >= quantity);
-    return lot ? { ticketLotId: lot.id, quantity } : null;
+  // Total geral
+  readonly orderTotal = computed(() => {
+    let total = 0;
+    for (const subtotal of this.lotSubtotals().values()) {
+      total += subtotal;
+    }
+    return total;
+  });
+
+  // Verifica se há pelo menos 1 item selecionado
+  readonly hasSelection = computed(() => {
+    for (const qty of this.lotQuantities().values()) {
+      if (qty > 0) return true;
+    }
+    return false;
+  });
+
+  // Itens para envio ao backend
+  readonly orderItems = computed((): OrderItemRequest[] => {
+    const items: OrderItemRequest[] = [];
+    const quantities = this.lotQuantities();
+    for (const lot of this.availableLots()) {
+      const qty = quantities.get(lot.id) ?? 0;
+      if (qty > 0) {
+        items.push({ ticketLotId: lot.id, quantity: qty });
+      }
+    }
+    return items;
   });
 
   readonly statusLabels: Record<EventResponse['status'], string> = {
@@ -73,7 +107,7 @@ export class DetailsEvents implements OnInit {
         this.publishing.set(false);
         this.publicationError.set('');
         this.published.set(false);
-        this.quantity.set(1);
+        this.lotQuantities.set(new Map());
         this.ordering.set(false);
         this.orderFeedback.set(null);
 
@@ -97,11 +131,51 @@ export class DetailsEvents implements OnInit {
     });
   }
 
+  incrementQuantity(lot: AvailableTicketLot) {
+    const current = this.lotQuantities().get(lot.id) ?? 0;
+    if (current < lot.availableQuantity) {
+      this.lotQuantities.update(map => {
+        const newMap = new Map(map);
+        newMap.set(lot.id, current + 1);
+        return newMap;
+      });
+    }
+  }
+
+  decrementQuantity(lot: AvailableTicketLot) {
+    const current = this.lotQuantities().get(lot.id) ?? 0;
+    if (current > 0) {
+      this.lotQuantities.update(map => {
+        const newMap = new Map(map);
+        newMap.set(lot.id, current - 1);
+        return newMap;
+      });
+    }
+  }
+
+  onQuantityInput(lot: AvailableTicketLot, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = Math.max(0, Math.min(lot.availableQuantity, input.valueAsNumber || 0));
+    this.lotQuantities.update(map => {
+      const newMap = new Map(map);
+      if (value > 0) {
+        newMap.set(lot.id, value);
+      } else {
+        newMap.delete(lot.id);
+      }
+      return newMap;
+    });
+  }
+
+  getQuantity(lot: AvailableTicketLot): number {
+    return this.lotQuantities().get(lot.id) ?? 0;
+  }
+
   confirmOrder(dialog: HTMLDialogElement) {
     const event = this.event();
-    const selection = this.orderSelection();
+    const items = this.orderItems();
     if (this.roleUser() !== 'COMPRADOR' || event?.status !== 'PUBLISHED'
-        || !selection || !dialog.open || this.ordering()) return;
+        || items.length === 0 || !dialog.open || this.ordering()) return;
 
     dialog.close();
     this.ordering.set(true);
@@ -109,19 +183,24 @@ export class DetailsEvents implements OnInit {
     let reservationCreated = false;
     let displayedEvent = event;
     this.eventsService.getOrCreateSimulatedCard().pipe(
-      switchMap((card) => this.eventsService.createOrder(selection.ticketLotId, selection.quantity).pipe(
+      switchMap((card) => this.eventsService.createOrderGrouped(items).pipe(
         tap(() => {
           reservationCreated = true;
           if (this.event() !== displayedEvent) return;
 
+          // Atualizar disponibilidade local
           displayedEvent = {
             ...event,
-            availableTicketLots: event.availableTicketLots?.map((lot) => lot.id === selection.ticketLotId
-              ? { ...lot, availableQuantity: lot.availableQuantity - selection.quantity }
-              : lot),
+            availableTicketLots: event.availableTicketLots?.map((lot) => {
+              const item = items.find(i => i.ticketLotId === lot.id);
+              if (item) {
+                return { ...lot, availableQuantity: lot.availableQuantity - item.quantity };
+              }
+              return lot;
+            }),
           };
           this.event.set(displayedEvent);
-          this.quantity.set(1);
+          this.lotQuantities.set(new Map());
         }),
         switchMap((order) => this.eventsService.checkoutOrder(order.id, card.id)),
       )),

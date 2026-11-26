@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgClass } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -7,7 +7,7 @@ import { SessionService } from '../../services/session/session';
 import { BuyerTicket, TicketsService, ticketStatusLabels } from '../../services/tickets/tickets';
 
 @Component({
-  imports: [MenuSideBarComponent, DatePipe, RouterLink],
+  imports: [MenuSideBarComponent, CurrencyPipe, DatePipe, NgClass, RouterLink],
   selector: 'app-tickets',
   styleUrl: './tickets.css',
   templateUrl: './tickets.html',

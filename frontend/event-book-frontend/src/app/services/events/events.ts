@@ -88,8 +88,15 @@ export class EventsService {
   }
 
   createOrder(ticketLotId: string, quantity: number) {
+    // Legacy method for backward compatibility
     return this.httpClient.post<{ id: string }>(
       `${this.apiUrl}/orders`, { ticketLotId, quantity }, this.authOptions(),
+    );
+  }
+
+  createOrderGrouped(items: { ticketLotId: string; quantity: number }[]) {
+    return this.httpClient.post<{ id: string }>(
+      `${this.apiUrl}/orders`, { items }, this.authOptions(),
     );
   }
 

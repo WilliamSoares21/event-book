@@ -9,6 +9,8 @@ export interface BuyerTicket {
   eventStartsAt: string;
   uniqueCode: string;
   status: 'VALID' | 'CHECKED_IN' | 'CANCELLED';
+  ticketLotName: string;
+  unitPriceSnapshot: number;
 }
 
 export const ticketStatusLabels: Record<BuyerTicket['status'], string> = {
