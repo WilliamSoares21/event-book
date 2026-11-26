@@ -53,6 +53,13 @@ class OrderConcurrencyTest {
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("security.jwt.secret", () -> "9843575ce52ce3295ae06df9de4fd1f64f4c55243a02da9efc2c102c8555343e");
+        registry.add("r2.endpoint", () -> "https://dummy.r2.cloudflarestorage.com");
+        registry.add("r2.access-key", () -> "dummy");
+        registry.add("r2.secret-key", () -> "dummy");
+        registry.add("r2.bucket", () -> "dummy-bucket");
+        registry.add("r2.public-base-url", () -> "https://dummy.r2.cloudflarestorage.com");
+        registry.add("security.jwt.secret", () -> "9843575ce52ce3295ae06df9de4fd1f64f4c55243a02da9efc2c102c8555343e");
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
@@ -133,8 +140,9 @@ class OrderConcurrencyTest {
     private String createRequestBody(UUID lotId, int quantity) {
         return """
             {
-                "ticketLotId": "%s",
-                "quantity": %d
+                "items": [
+                    { "ticketLotId": "%s", "quantity": %d }
+                ]
             }
             """.formatted(lotId, quantity);
     }

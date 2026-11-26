@@ -34,6 +34,11 @@ class EventRepositoryTest {
         registry.add("spring.flyway.enabled", () -> "false");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "none");
         registry.add("security.jwt.secret", () -> "test-secret-key-for-testing-purposes-only-32chars");
+        registry.add("r2.endpoint", () -> "https://dummy.r2.cloudflarestorage.com");
+        registry.add("r2.access-key", () -> "dummy");
+        registry.add("r2.secret-key", () -> "dummy");
+        registry.add("r2.bucket", () -> "dummy");
+        registry.add("r2.public-url", () -> "https://dummy.r2.cloudflarestorage.com");
     }
 
     @Autowired

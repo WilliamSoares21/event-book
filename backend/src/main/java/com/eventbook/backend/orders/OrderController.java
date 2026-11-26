@@ -42,7 +42,7 @@ public class OrderController {
     @PostMapping
     @PreAuthorize("hasRole('COMPRADOR')")
     @SecurityRequirement(name = "bearerAuth")
-    @Operation(summary = "Cria um pedido e reserva ingressos")
+    @Operation(summary = "Cria um pedido agrupado e reserva ingressos de múltiplos lotes")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Pedido criado"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos"),
@@ -61,10 +61,9 @@ public class OrderController {
                         "Comprador não encontrado"
                 ));
 
-        Order order = orderService.reserve(
+        Order order = orderService.reserveItems(
                 buyer,
-                dto.ticketLotId(),
-                dto.quantity()
+                dto.items()
         );
 
         OrderResponseDTO response = OrderResponseDTO.from(order);

@@ -15,7 +15,8 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
 
     @Query("""
             SELECT o FROM Order o
-            JOIN FETCH o.ticketLot lot
+            LEFT JOIN FETCH o.items items
+            LEFT JOIN FETCH items.ticketLot lot
             WHERE o.buyer.id = :buyerId
             ORDER BY o.createdAt DESC
             """)
@@ -39,4 +40,13 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select o from Order o where o.id = :id")
     Optional<Order> findByIdForUpdate(@Param("id") UUID id);
+    
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT o FROM Order o
+            LEFT JOIN FETCH o.items items
+            LEFT JOIN FETCH items.ticketLot lot
+            WHERE o.id = :id
+            """)
+    Optional<Order> findByIdWithItemsForUpdate(@Param("id") UUID id);
 }

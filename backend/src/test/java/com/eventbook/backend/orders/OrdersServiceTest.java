@@ -180,6 +180,7 @@ class OrderServiceTest {
         .event(PUBLISHED_EVENT)
         .id(ticketLotId)
         .status(LotStatus.INACTIVE)
+        .name("Lote Teste")
         .build();
 
     when(ticketLotRepository.findByIdForUpdate(ticketLotId))
@@ -187,7 +188,7 @@ class OrderServiceTest {
 
     assertThatThrownBy(() -> orderService.reserve(buyer, ticketLotId, 2))
         .isInstanceOf(LotNotActiveException.class)
-        .hasMessage("Lote não está ativo para venda");
+        .hasMessageContaining("Lote não está ativo para venda");
 
     verify(ticketLotRepository, never()).save(any());
     verify(orderRepository, never()).save(any());
@@ -382,7 +383,7 @@ class OrderServiceTest {
         .capacity(100)
         .unitPrice(unitPrice)
         .build();
-    return Order.builder()
+    Order order = Order.builder()
         .id(orderId)
         .buyer(buyer)
         .ticketLot(lot)
@@ -391,6 +392,15 @@ class OrderServiceTest {
         .status(OrderStatus.PENDING)
         .expiresAt(expiresAt)
         .build();
+    // Adicionar item para compatibilidade com novo método findByIdWithItemsForUpdate
+    OrderItem item = OrderItem.builder()
+        .order(order)
+        .ticketLot(lot)
+        .quantity(quantity)
+        .unitPriceSnapshot(unitPrice)
+        .build();
+    order.getItems().add(item);
+    return order;
   }
 
   private TicketLot createTicketLot(UUID lotId, int capacity, int sold, int reserved) {
@@ -416,7 +426,7 @@ class OrderServiceTest {
     Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
     TicketLot lot = createTicketLot(lotId, 100, 10, 5);
 
-    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
     when(ticketLotRepository.findByIdForUpdate(lotId)).thenReturn(Optional.of(lot));
     when(ticketRepository.existsByUniqueCode(anyString())).thenReturn(false);
     when(ticketRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
@@ -442,7 +452,7 @@ class OrderServiceTest {
     assertThat(lot.getReserved()).isEqualTo(3); // 5 - 2
     assertThat(lot.getSold()).isEqualTo(12); // 10 + 2
 
-    verify(orderRepository).findByIdForUpdate(orderId);
+    verify(orderRepository).findByIdWithItemsForUpdate(orderId);
     verify(ticketLotRepository).findByIdForUpdate(lotId);
     verify(ticketRepository).saveAll(anyList());
   }
@@ -452,13 +462,13 @@ class OrderServiceTest {
     UUID orderId = UUID.randomUUID();
     UUID buyerId = UUID.randomUUID();
 
-    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.empty());
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderNotFoundException.class)
         .hasMessageContaining("Pedido não encontrado");
 
-    verify(orderRepository).findByIdForUpdate(orderId);
+    verify(orderRepository).findByIdWithItemsForUpdate(orderId);
     verify(ticketLotRepository, never()).findByIdForUpdate(any());
     verify(ticketRepository, never()).saveAll(anyList());
   }
@@ -473,13 +483,13 @@ class OrderServiceTest {
 
     Order order = createPendingOrder(orderId, otherBuyerId, lotId, 2, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
 
-    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
 
     assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderAccessDeniedException.class)
         .hasMessageContaining("Acesso negado");
 
-    verify(orderRepository).findByIdForUpdate(orderId);
+    verify(orderRepository).findByIdWithItemsForUpdate(orderId);
     verify(ticketLotRepository, never()).findByIdForUpdate(any());
   }
 
@@ -493,13 +503,13 @@ class OrderServiceTest {
     Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
     order.setStatus(OrderStatus.PAID);
 
-    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
 
     assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderInvalidStatusException.class)
         .hasMessageContaining("não está pendente");
 
-    verify(orderRepository).findByIdForUpdate(orderId);
+    verify(orderRepository).findByIdWithItemsForUpdate(orderId);
     verify(ticketLotRepository, never()).findByIdForUpdate(any());
   }
 
@@ -512,13 +522,13 @@ class OrderServiceTest {
 
     Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.minus(10, ChronoUnit.MINUTES));
 
-    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
 
     assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderExpiredException.class)
         .hasMessageContaining("expirado");
 
-    verify(orderRepository).findByIdForUpdate(orderId);
+    verify(orderRepository).findByIdWithItemsForUpdate(orderId);
     verify(ticketLotRepository, never()).findByIdForUpdate(any());
   }
 
@@ -532,13 +542,13 @@ class OrderServiceTest {
     Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
     order.setStatus(OrderStatus.CANCELLED);
 
-    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
 
     assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderInvalidStatusException.class)
         .hasMessageContaining("não está pendente");
 
-    verify(orderRepository).findByIdForUpdate(orderId);
+    verify(orderRepository).findByIdWithItemsForUpdate(orderId);
   }
 
   @Test
@@ -551,7 +561,9 @@ class OrderServiceTest {
     Order order = createPendingOrder(orderId, buyerId, lotId, 5, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
     TicketLot lot = createTicketLot(lotId, 100, 10, 5);
 
-    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
     when(ticketLotRepository.findByIdForUpdate(lotId)).thenReturn(Optional.of(lot));
     when(ticketRepository.existsByUniqueCode(anyString())).thenReturn(false);
     when(ticketRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
@@ -589,7 +601,9 @@ class OrderServiceTest {
         .unitPrice(lotCurrentPrice)
         .build();
 
-    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
     when(ticketLotRepository.findByIdForUpdate(lotId)).thenReturn(Optional.of(lot));
     when(ticketRepository.existsByUniqueCode(anyString())).thenReturn(false);
     when(ticketRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
@@ -614,7 +628,8 @@ class OrderServiceTest {
     Order order = createPendingOrder(orderId, buyerId, lotId, 3, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
     TicketLot lot = createTicketLot(lotId, 100, 20, 10);
 
-    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
     when(ticketLotRepository.findByIdForUpdate(lotId)).thenReturn(Optional.of(lot));
     when(ticketRepository.existsByUniqueCode(anyString())).thenReturn(false);
     when(ticketRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
@@ -639,7 +654,8 @@ class OrderServiceTest {
     Order order = createPendingOrder(orderId, buyerId, lotId, 3, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
     TicketLot lot = createTicketLot(lotId, 100, 10, 5);
 
-    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
     when(ticketLotRepository.findByIdForUpdate(lotId)).thenReturn(Optional.of(lot));
     when(ticketRepository.existsByUniqueCode(anyString())).thenReturn(false);
     // Mock saveAll to return tickets with generated IDs and uniqueCodes
@@ -679,7 +695,7 @@ class OrderServiceTest {
     Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
     TicketLot lot = createTicketLot(lotId, 100, 10, 5);
 
-    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
     when(ticketLotRepository.findByIdForUpdate(lotId)).thenReturn(Optional.of(lot));
     when(ticketRepository.existsByUniqueCode(anyString())).thenReturn(false);
     when(ticketRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
@@ -705,7 +721,7 @@ class OrderServiceTest {
     Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.minus(10, ChronoUnit.MINUTES));
     order.setStatus(OrderStatus.PAID);
 
-    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
 
     assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderInvalidStatusException.class)
@@ -727,7 +743,7 @@ class OrderServiceTest {
     Order order = createPendingOrder(orderId, buyerId, lotId, 2, new BigDecimal("50.00"), now.plus(10, ChronoUnit.MINUTES));
     order.setStatus(OrderStatus.CANCELLED);
 
-    when(orderRepository.findByIdForUpdate(orderId)).thenReturn(Optional.of(order));
+    when(orderRepository.findByIdWithItemsForUpdate(orderId)).thenReturn(Optional.of(order));
 
     assertThatThrownBy(() -> orderService.checkout(orderId, buyerId, cardId))
         .isInstanceOf(OrderInvalidStatusException.class)

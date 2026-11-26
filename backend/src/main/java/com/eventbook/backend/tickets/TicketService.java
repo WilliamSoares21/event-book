@@ -1,10 +1,12 @@
 package com.eventbook.backend.tickets;
 
+import com.eventbook.backend.lots.TicketLot;
 import com.eventbook.backend.tickets.dto.BuyerTicketResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,12 +24,17 @@ public class TicketService {
     }
 
     private BuyerTicketResponse toBuyerTicketResponse(Ticket ticket) {
+        TicketLot ticketLot = ticket.getTicketLot();
         return new BuyerTicketResponse(
                 ticket.getId(),
-                ticket.getOrder().getTicketLot().getEvent().getTitle(),
-                ticket.getOrder().getTicketLot().getEvent().getStartsAt().toInstant(),
+                ticketLot.getEvent().getTitle(),
+                ticketLot.getEvent().getStartsAt().toInstant(),
                 ticket.getUniqueCode(),
-                ticket.getStatus()
+                ticket.getStatus(),
+                ticketLot.getName(),
+                ticket.getOrderItem() != null 
+                    ? ticket.getOrderItem().getUnitPriceSnapshot()
+                    : ticket.getOrder().getUnitPriceSnapshot()
         );
     }
 }

@@ -48,13 +48,38 @@ public class EventUpdateDTO {
 
     @Schema(description = "Número do endereço", example = "2901")
     @Size(max = 20)
-    @JsonDeserialize(using = EmptyStringAsNullDeserializer.class)
     private String number;
 
     @Schema(description = "Complemento", example = "Bloco B")
     @Size(max = 100)
-    @JsonDeserialize(using = EmptyStringAsNullDeserializer.class)
     private String complement;
+
+    // PATCH: "" limpa o campo; null/omitido não altera.
+    @Getter(lombok.AccessLevel.NONE)
+    @Setter(lombok.AccessLevel.NONE)
+    private Boolean numberCleared;
+
+    @Getter(lombok.AccessLevel.NONE)
+    @Setter(lombok.AccessLevel.NONE)
+    private Boolean complementCleared;
+
+    public boolean isNumberCleared() {
+        return Boolean.TRUE.equals(numberCleared);
+    }
+
+    public boolean isComplementCleared() {
+        return Boolean.TRUE.equals(complementCleared);
+    }
+
+    public void setNumber(String number) {
+        this.numberCleared = number != null && number.isBlank();
+        this.number = this.numberCleared ? null : number;
+    }
+
+    public void setComplement(String complement) {
+        this.complementCleared = complement != null && complement.isBlank();
+        this.complement = this.complementCleared ? null : complement;
+    }
 
     @Schema(description = "Bairro", example = "Castelão")
     @Size(max = 100)
@@ -73,7 +98,6 @@ public class EventUpdateDTO {
     @Schema(description = "CEP formato 00000-000 ou 00000000", example = "60000-000")
     @Pattern(regexp = "^\\d{5}-?\\d{3}$", message = "CEP deve estar no formato 00000-000 ou 00000000")
     @Size(max = 9)
-    @JsonDeserialize(using = EmptyStringAsNullDeserializer.class)
     private String zipCode;
 
     // PATCH: "" limpa o CEP; null/omitido não altera. Boolean (não boolean) porque o
@@ -99,14 +123,6 @@ public class EventUpdateDTO {
         this.city = (city == null || city.isBlank()) ? null : city.trim();
     }
 
-    public void setNumber(String number) {
-        this.number = (number == null || number.isBlank()) ? null : number.trim();
-    }
-
-    public void setComplement(String complement) {
-        this.complement = (complement == null || complement.isBlank()) ? null : complement.trim();
-    }
-
     // Builder sobre um construtor privado: se o all-args fosse público, o Jackson 3 o
     // escolheria como creator implícito e ignoraria os setters de normalização.
     @Builder
@@ -114,7 +130,7 @@ public class EventUpdateDTO {
                            OffsetDateTime endsAt, String location, String venueName,
                            String street, String number, String complement,
                            String neighborhood, String city, String state, String zipCode,
-                           Boolean zipCodeCleared) {
+                           Boolean zipCodeCleared, Boolean numberCleared, Boolean complementCleared) {
         this.title = title;
         this.description = description;
         this.startsAt = startsAt;
@@ -129,5 +145,7 @@ public class EventUpdateDTO {
         this.state = state;
         this.zipCode = zipCode;
         this.zipCodeCleared = zipCodeCleared;
+        this.numberCleared = numberCleared;
+        this.complementCleared = complementCleared;
     }
 }

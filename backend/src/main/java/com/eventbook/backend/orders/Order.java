@@ -7,6 +7,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -26,18 +28,27 @@ public class Order {
     @JoinColumn(name = "buyer_id", nullable = false)
     private User buyer;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "ticket_lot_id", nullable = false)
+    // @Deprecated: Mantido para compatibilidade com pedidos legados (migração V12)
+    // Será removido em versão futura após migração completa
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ticket_lot_id")
     private TicketLot ticketLot;
 
-
-    @Column(nullable = false)
+    // @Deprecated: Mantido para compatibilidade com pedidos legados
+    @Column
     private Integer quantity;
 
-
-    @Column(name = "unit_price_snapshot", nullable = false, precision = 10, scale = 2)
-    @Setter(AccessLevel.NONE)
+    // @Deprecated: Mantido para compatibilidade com pedidos legados
+    @Column(name = "unit_price_snapshot", precision = 10, scale = 2)
     private BigDecimal unitPriceSnapshot;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<OrderItem> items = new ArrayList<>();
+
+    @Column(name = "total_price_snapshot", nullable = false, precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal totalPriceSnapshot = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -63,5 +74,19 @@ public class Order {
         if (status == null) {
             status = OrderStatus.PENDING;
         }
+        if (totalPriceSnapshot == null) {
+            totalPriceSnapshot = BigDecimal.ZERO;
+        }
+    }
+
+    // Métodos de conveniência para compatibilidade
+    public boolean isLegacyOrder() {
+        return ticketLot != null && quantity != null && unitPriceSnapshot != null;
+    }
+
+    public BigDecimal calculateTotal() {
+        return items.stream()
+            .map(OrderItem::getTotalPrice)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

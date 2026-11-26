@@ -57,6 +57,13 @@ class PurchaseEligibilityIntegrationTest {
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("security.jwt.secret", () -> "9843575ce52ce3295ae06df9de4fd1f64f4c55243a02da9efc2c102c8555343e");
+        registry.add("r2.endpoint", () -> "https://dummy.r2.cloudflarestorage.com");
+        registry.add("r2.access-key", () -> "dummy");
+        registry.add("r2.secret-key", () -> "dummy");
+        registry.add("r2.bucket", () -> "dummy-bucket");
+        registry.add("r2.public-base-url", () -> "https://dummy.r2.cloudflarestorage.com");
+        registry.add("security.jwt.secret", () -> "9843575ce52ce3295ae06df9de4fd1f64f4c55243a02da9efc2c102c8555343e");
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
@@ -172,7 +179,7 @@ class PurchaseEligibilityIntegrationTest {
         return mockMvc.perform(post("/api/orders")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + buyerToken)
-                .content("{\"ticketLotId\":\"%s\",\"quantity\":%d}".formatted(lotId, quantity)));
+                .content("{\"items\":[{\"ticketLotId\":\"%s\",\"quantity\":%d}]}".formatted(lotId, quantity)));
     }
 
     private UUID reserveOk(TicketLot lot, int quantity) throws Exception {
@@ -241,7 +248,7 @@ class PurchaseEligibilityIntegrationTest {
 
         reserve(lot.getId(), 1)
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.error").value("Vendas ainda não iniciadas para este lote"));
+                .andExpect(jsonPath("$.error").value("Vendas ainda não iniciadas para o lote: " + lot.getName()));
 
         assertThat(orderRepository.count()).isZero();
     }
@@ -255,7 +262,7 @@ class PurchaseEligibilityIntegrationTest {
 
         reserve(lot.getId(), 1)
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.error").value("Vendas encerradas para este lote"));
+                .andExpect(jsonPath("$.error").value("Vendas encerradas para o lote: " + lot.getName()));
 
         assertThat(orderRepository.count()).isZero();
     }
@@ -268,7 +275,7 @@ class PurchaseEligibilityIntegrationTest {
 
         reserve(lot.getId(), 1)
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.error").value("Lote não está ativo para venda"));
+                .andExpect(jsonPath("$.error").value("Lote não está ativo para venda: " + lot.getName()));
 
         assertThat(orderRepository.count()).isZero();
     }
@@ -322,7 +329,7 @@ class PurchaseEligibilityIntegrationTest {
 
         checkout(orderId)
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.error").value("Lote não está ativo para venda"));
+                .andExpect(jsonPath("$.error").value("Lote não está ativo para venda: " + lot.getName()));
 
         assertThat(orderRepository.findById(orderId).orElseThrow().getStatus()).isEqualTo(OrderStatus.PENDING);
         assertThat(ticketRepository.findByOrderId(orderId)).isEmpty();

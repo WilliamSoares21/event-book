@@ -248,12 +248,12 @@ public class EventService {
     }
 
     // Campos opcionais de endereço: "" limpa o valor; omitido/null não altera.
-    if (dto.getNumber() != null) {
-      event.setNumber(normalizeOptionalText(dto.getNumber()));
+    if (dto.getNumber() != null || dto.isNumberCleared()) {
+      event.setNumber(dto.getNumber());
     }
 
-    if (dto.getComplement() != null) {
-      event.setComplement(normalizeOptionalText(dto.getComplement()));
+    if (dto.getComplement() != null || dto.isComplementCleared()) {
+      event.setComplement(dto.getComplement());
     }
 
     if (dto.getCity() != null) {
@@ -279,12 +279,12 @@ public class EventService {
       event.setStreet(normalizeOptionalText(dto.getStreet()));
       addressFieldsUpdated = true;
     }
-    if (dto.getNumber() != null) {
-      event.setNumber(normalizeOptionalText(dto.getNumber()));
+    if (dto.getNumber() != null || dto.isNumberCleared()) {
+      event.setNumber(dto.getNumber());
       addressFieldsUpdated = true;
     }
-    if (dto.getComplement() != null) {
-      event.setComplement(normalizeOptionalText(dto.getComplement()));
+    if (dto.getComplement() != null || dto.isComplementCleared()) {
+      event.setComplement(dto.getComplement());
       addressFieldsUpdated = true;
     }
     if (dto.getNeighborhood() != null) {

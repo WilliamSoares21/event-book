@@ -50,6 +50,11 @@ class EventUpdatePatchIntegrationTest {
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
         registry.add("security.jwt.secret", () -> "9843575ce52ce3295ae06df9de4fd1f64f4c55243a02da9efc2c102c8555343e");
+        registry.add("r2.endpoint", () -> "https://dummy.r2.cloudflarestorage.com");
+        registry.add("r2.access-key", () -> "dummy");
+        registry.add("r2.secret-key", () -> "dummy");
+        registry.add("r2.bucket", () -> "dummy");
+        registry.add("r2.public-url", () -> "https://dummy.r2.cloudflarestorage.com");
     }
 
     private static final String PASSWORD = "password123";
@@ -236,8 +241,8 @@ class EventUpdatePatchIntegrationTest {
         assertThat(vazio.isZipCodeCleared()).isTrue();
 
         EventUpdateDTO numero = jsonMapper.readValue("{\"number\":\"\",\"complement\":\"\"}", EventUpdateDTO.class);
-        assertThat(numero.getNumber()).isEmpty();
-        assertThat(numero.getComplement()).isEmpty();
+        assertThat(numero.getNumber()).isNull();
+        assertThat(numero.getComplement()).isNull();
 
         EventUpdateDTO normalizado = jsonMapper.readValue("{\"state\":\" ce \",\"city\":\" Fortaleza \"}", EventUpdateDTO.class);
         assertThat(normalizado.getState()).isEqualTo("CE");

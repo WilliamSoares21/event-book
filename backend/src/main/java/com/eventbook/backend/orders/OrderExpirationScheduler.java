@@ -57,11 +57,23 @@ public class OrderExpirationScheduler {
     @Transactional
     public void processSingleExpiredOrder(Order order) {
         // Lock the Order first to ensure atomicity
-        Order lockedOrder = orderRepository.findByIdForUpdate(order.getId())
+        Order lockedOrder = orderRepository.findByIdWithItemsForUpdate(order.getId())
                 .orElseThrow(() -> new IllegalStateException("Pedido não encontrado: " + order.getId()));
 
-        UUID lotId = lockedOrder.getTicketLot().getId();
-        int quantity = lockedOrder.getQuantity();
+        // Handle both grouped and legacy orders
+        UUID lotId;
+        int quantity;
+        if (!lockedOrder.getItems().isEmpty()) {
+            OrderItem firstItem = lockedOrder.getItems().get(0);
+            lotId = firstItem.getTicketLot().getId();
+            quantity = firstItem.getQuantity();
+        } else if (lockedOrder.isLegacyOrder() && lockedOrder.getTicketLot() != null) {
+            lotId = lockedOrder.getTicketLot().getId();
+            quantity = lockedOrder.getQuantity();
+        } else {
+            log.warn("Pedido {} sem lote associado", order.getId());
+            return;
+        }
 
         // Re-validate within the lock
         if (lockedOrder.getStatus() != OrderStatus.PENDING) {

@@ -66,6 +66,13 @@ class OrderCheckoutConcurrencyTest {
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("security.jwt.secret", () -> "9843575ce52ce3295ae06df9de4fd1f64f4c55243a02da9efc2c102c8555343e");
+        registry.add("r2.endpoint", () -> "https://dummy.r2.cloudflarestorage.com");
+        registry.add("r2.access-key", () -> "dummy");
+        registry.add("r2.secret-key", () -> "dummy");
+        registry.add("r2.bucket", () -> "dummy-bucket");
+        registry.add("r2.public-base-url", () -> "https://dummy.r2.cloudflarestorage.com");
+        registry.add("security.jwt.secret", () -> "9843575ce52ce3295ae06df9de4fd1f64f4c55243a02da9efc2c102c8555343e");
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
@@ -181,7 +188,7 @@ class OrderCheckoutConcurrencyTest {
                 new Class<?>[]{LockProbeRepository.class},
                 (proxy, method, args) -> {
                     try {
-                        if ("findByIdForUpdate".equals(method.getName()) && probe.takeArmed()) {
+                        if ("findByIdWithItemsForUpdate".equals(method.getName()) && probe.takeArmed()) {
                             Object result = method.invoke(delegate, args);
                             probe.signalLocked();
                             probe.awaitRelease();
@@ -277,11 +284,12 @@ class OrderCheckoutConcurrencyTest {
         return ticketLotRepository.save(lot);
     }
 
-    private String createRequestBody(UUID lotId, int quantity) {
+        private String createRequestBody(UUID lotId, int quantity) {
         return """
             {
-                "ticketLotId": "%s",
-                "quantity": %d
+                "items": [
+                    { "ticketLotId": "%s", "quantity": %d }
+                ]
             }
             """.formatted(lotId, quantity);
     }
@@ -568,6 +576,8 @@ class OrderCheckoutConcurrencyTest {
 
                 var result = mockMvc.perform(request);
                 int status = result.andReturn().getResponse().getStatus();
+                String responseBody = result.andReturn().getResponse().getContentAsString();
+                System.out.println("Thread 1 (order 1): status=" + status + ", body=" + responseBody);
 
                 if (status == 200) {
                     successCount.incrementAndGet();
@@ -576,6 +586,8 @@ class OrderCheckoutConcurrencyTest {
                 }
             } catch (Exception e) {
                 errorCount.incrementAndGet();
+                System.out.println("Thread 1 exception: " + e.getMessage());
+                e.printStackTrace();
             } finally {
                 endLatch.countDown();
             }
@@ -592,6 +604,8 @@ class OrderCheckoutConcurrencyTest {
 
                 var result = mockMvc.perform(request);
                 int status = result.andReturn().getResponse().getStatus();
+                String responseBody = result.andReturn().getResponse().getContentAsString();
+                System.out.println("Thread 2 (order 2): status=" + status + ", body=" + responseBody);
 
                 if (status == 200) {
                     successCount.incrementAndGet();
@@ -600,6 +614,8 @@ class OrderCheckoutConcurrencyTest {
                 }
             } catch (Exception e) {
                 errorCount.incrementAndGet();
+                System.out.println("Thread 2 exception: " + e.getMessage());
+                e.printStackTrace();
             } finally {
                 endLatch.countDown();
             }
